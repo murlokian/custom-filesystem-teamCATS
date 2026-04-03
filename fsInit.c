@@ -41,8 +41,8 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 
 
 	// allocate one block for VCB (LBA block 0)
-	VCB_t *VCBptr = malloc(blockSize); 
-	if VCBptr == NULL {
+	volume_control_block *VCBptr = malloc(blockSize); 
+	if (VCBptr == NULL) {
 		perror("malloc failure"); // consider using calloc instead?
 		return -1;
 	}
