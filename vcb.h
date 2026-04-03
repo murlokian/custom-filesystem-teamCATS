@@ -1,7 +1,7 @@
 /**************************************************************
 * Class::  CSC-415-03 Fall 2026
-* Name::  Allie Young
-* Student IDs::  923129607
+* Name::  Allie Young, Milo Pesce Ares
+* Student IDs::  923129607, 921926821
 * GitHub-Name::  milo-pa
 * Group-Name::  CATS
 * Project:: Basic File System
