@@ -42,15 +42,24 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 
 	// allocate one block for VCB (LBA block 0)
 	volume_control_block *VCBptr = malloc(blockSize); 
+
 	if (VCBptr == NULL) {
 		perror("malloc failure"); // consider using calloc instead?
 		return -1;
 	}
-	VCBptr->signature;
 
-	// init root dir
+	// check if vcb's signature matches fs's signature
+	// return 0 if matching, vcb is already formatted
+	// if (VCBptr->signature == SIGNATURE ) 
+	// 	{
+	// 		return 0; // volume already formatted 
+	// 	}
 
-	// init free space
+
+	// init root dir ()
+
+	// init free space ()
+
 	return 0;
 	}
 	
@@ -58,4 +67,6 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 void exitFileSystem ()
 	{
 	printf ("System exiting\n");
+
+	// free our vcb ptr
 	}
