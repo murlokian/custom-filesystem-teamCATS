@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include "mfs.h"
 #include "fsFreeSpace.h"
+#include "extent.h"
 
 //init function needs to malloc memory
 //set extents
@@ -23,9 +24,15 @@
 
 int initFreeSpace(uint64_t blockSize, uint64_t blockCount){
     //malloc space for extent array 
-    //-- let C figure it out. How many bytes to allocate?
+    extent *extents = malloc(sizeof(extent)*10);
     
+    //assign each variable
+    extents[0].location = 6;
+    extents[0].length = blockCount - 6;
+
     //LBAwrite to write the array to disk
+    LBAwrite(extents, (sizeof(extent)*10 + blockSize - 1) / blockSize, 1);
     //return the start block so VCB can store it
+    
     
 }
