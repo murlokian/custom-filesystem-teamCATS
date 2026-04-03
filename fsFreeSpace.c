@@ -11,11 +11,15 @@
 * Description::
 *
 **************************************************************/
+
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+
 #include "mfs.h"
 #include "fsFreeSpace.h"
 #include "extent.h"
+#include "fsLow.h"
 
 //init function needs to malloc memory
 //set extents
@@ -34,5 +38,5 @@ int initFreeSpace(uint64_t blockSize, uint64_t blockCount){
     LBAwrite(extents, (sizeof(extent)*10 + blockSize - 1) / blockSize, 1);
     //return the start block so VCB can store it
     
-    
+    // TODO: free the malloced space
 }

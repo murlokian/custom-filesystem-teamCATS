@@ -55,12 +55,15 @@ typedef struct volume_control_block {
 
 // Read block 0 from disk and allocate memory for vcb  
 volume_control_block* loadVCB();
+
 // Formats volume control block with signature SIG, NUMBLOCKS blocks,
 // ROOTLOC as the location of the root directory, block size BLOCKSIZE.
 // Initializes BLOCKSIZEGLOBAL variable.  
-int initVCB(volume_control_block vcb, uint32_t sig, uint64_t numBlocks, 
+int initVCB(volume_control_block *vcb, 
+    uint32_t sig, uint64_t numBlocks, 
     uint32_t rootLoc, uint16_t blockSize);
+
 // Checks if VCB is formatted using its signature  
-bool isVCBOurs(volume_control_block vcb);
+bool isVCBOurs(const volume_control_block * vcb);
 
 #endif

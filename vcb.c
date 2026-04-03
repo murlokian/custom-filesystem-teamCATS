@@ -13,16 +13,17 @@
 **************************************************************/
 
 #include "vcb.h"
+#include <stddef.h> // for returning NULL
 
 volume_control_block* loadVCB() {
-    
+    return NULL;
 }
 
-int initVCB(volume_control_block vcb, uint32_t sig, uint64_t numBlocks, 
+int initVCB(volume_control_block *vcb, uint32_t sig, uint64_t numBlocks, 
     uint32_t rootLoc, uint16_t blockSize) {
-    
+    return 0;
 }
 
-bool isVCBOurs(volume_control_block vcb) {
-
+bool isVCBOurs(const volume_control_block *vcb) {
+    return false;
 }
