@@ -1,9 +1,9 @@
 /**************************************************************
-* Class::  CSC-415-0# Spring 2024
-* Name::
-* Student IDs::
-* GitHub-Name::
-* Group-Name::
+* Class::  CSC-415-03 Spring 2026
+* Name:: Rosa Melton, 
+* Student IDs:: 921337778, 
+* GitHub-Name:: milo-pa
+* Group-Name:: CATS
 * Project:: Basic File System
 *
 * File:: fsInit.c
@@ -23,13 +23,34 @@
 
 #include "fsLow.h"
 #include "mfs.h"
+#include "vcb.h"
 
+// 	 In fsInit is the initFileSystem function where you want to start this code
+//   Malloc a Block of memory as your VCB pointer and LBAread block 0
+//   You now have a pointer to a structure, so look at the signature (magic number)
+//   in your structure and see if it matches.
+
+//   If it matches you have initialized your volume already – If not you need to
+//   initialize it
 
 int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	{
 	printf ("Initializing File System with %ld blocks with a block size of %ld\n", numberOfBlocks, blockSize);
 	/* TODO: Add any code you need to initialize your file system. */
 
+
+
+	// allocate one block for VCB (LBA block 0)
+	VCB_t *VCBptr = malloc(blockSize); 
+	if VCBptr == NULL {
+		perror("malloc failure"); // consider using calloc instead?
+		return -1;
+	}
+	VCBptr->signature 
+
+	// init root dir 
+
+	// init free space
 	return 0;
 	}
 	
