@@ -46,9 +46,9 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 		perror("malloc failure"); // consider using calloc instead?
 		return -1;
 	}
-	VCBptr->signature 
+	VCBptr->signature;
 
-	// init root dir 
+	// init root dir
 
 	// init free space
 	return 0;
