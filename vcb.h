@@ -27,10 +27,6 @@
 // Set at initialization  
 extern uint32_t blockSizeGlobal;
 
-// VBC will be global so we can access it across many functions and files
-// and because there is only one VCB per volume.
-extern volume_control_block *VCBGlobal = NULL;
-
 typedef struct volume_control_block {
 
    // blockCount member is an unsigned 64-bit value which is the amount of blocks
@@ -57,6 +53,10 @@ typedef struct volume_control_block {
    // to indicate file system type? Unclear if we need to support multiple
    // file systems
 } volume_control_block;
+
+// VBC will be global so we can access it across many functions and files
+// and because there is only one VCB per volume.
+extern volume_control_block *VCBGlobal;
 
 // Read block 0 from disk and allocate memory for vcb  
 volume_control_block* loadVCB();
