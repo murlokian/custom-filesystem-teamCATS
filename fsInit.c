@@ -25,10 +25,6 @@
 #include "vcb.h"
 #include "fsFreeSpace.h"
 
-// VBC will be global so we can access it across many functions and files
-// and there is only one VCB per volume.
-volume_control_block *VCBptr = NULL;
-
 int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	{
 	printf ("Initializing File System with %ld blocks with a block size of %ld\n", numberOfBlocks, blockSize);
@@ -38,7 +34,7 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	int blocksNeeded = (memoryNeeded + blockSize - 1) / blockSize;
 	memoryNeeded = blocksNeeded * blockSize;
 
-	VCBptr = malloc(memoryNeeded);
+	volume_control_block *VCBptr = malloc(memoryNeeded);
 
 	if (VCBptr == NULL) {
 		perror("malloc failure");
@@ -77,8 +73,7 @@ void exitFileSystem ()
 	{
 	printf ("System exiting\n");
 
-	// free our vcb ptr. 
-	if (VCBptr != NULL)
-		free(VCBptr);
-	
+	// Free the global VCB variable if it has been allocated
+	if (VCBGlobal != NULL)
+		free(VCBGlobal);
 	}

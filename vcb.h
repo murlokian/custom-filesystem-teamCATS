@@ -11,6 +11,7 @@
 * Description::  This is a header file for the volume control block.  
 *
 **************************************************************/
+
 #ifndef VCB_H
 #define VCB_H
 
@@ -25,6 +26,10 @@
 
 // Set at initialization  
 extern uint32_t blockSizeGlobal;
+
+// VBC will be global so we can access it across many functions and files
+// and because there is only one VCB per volume.
+extern volume_control_block *VCBGlobal = NULL;
 
 typedef struct volume_control_block {
 
@@ -58,7 +63,7 @@ volume_control_block* loadVCB();
 
 // Formats volume control block with signature SIG, NUMBLOCKS blocks,
 // ROOTLOC as the location of the root directory, block size BLOCKSIZE.
-// Initializes BLOCKSIZEGLOBAL variable.  
+// Initializes BLOCKSIZEGLOBAL and VCB variable
 int initVCB(volume_control_block *vcb, 
     uint32_t sig, uint64_t numBlocks, 
     uint32_t rootLoc, uint16_t blockSize);

@@ -21,6 +21,10 @@ volume_control_block* loadVCB() {
 
 int initVCB(volume_control_block *vcb, uint32_t sig, uint64_t numBlocks, 
     uint32_t rootLoc, uint16_t blockSize) {
+    
+    // Initialize the globalVCB struct with the parameters
+    VCBGlobal = vcb;
+
     return 0;
 }
 
