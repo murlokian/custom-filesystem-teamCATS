@@ -15,10 +15,16 @@
 #define VCB_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "extent.h"
 
 #define NUM_FREESPACE_EXTS 10
+// NOTE: signature is all of our initials -- AD, AY, MP, RM, TP :)
+#define OUR_SIGNATURE 2329677687
+
+// Set at initialization  
+extern uint32_t blockSizeGlobal;
 
 typedef struct volume_control_block {
 
@@ -38,10 +44,6 @@ typedef struct volume_control_block {
    // disk of the root directory
    uint32_t rootLocation;
 
-   // etreeLocation is an unsigned 32-bit value which is the block location on
-   // disk of the root extent table for free space in the volume
-   uint32_t etreeLocation;
-
    // blockSize member is an unsigned 16-bit value that represents the size
    // of a volume in bytes
    uint16_t blockSize;
@@ -50,5 +52,15 @@ typedef struct volume_control_block {
    // to indicate file system type? Unclear if we need to support multiple
    // file systems
 } volume_control_block;
+
+// Read block 0 from disk and allocate memory for vcb  
+volume_control_block* loadVCB();
+// Formats volume control block with signature SIG, NUMBLOCKS blocks,
+// ROOTLOC as the location of the root directory, block size BLOCKSIZE.
+// Initializes BLOCKSIZEGLOBAL variable.  
+int initVCB(volume_control_block vcb, uint32_t sig, uint64_t numBlocks, 
+    uint32_t rootLoc, uint16_t blockSize);
+// Checks if VCB is formatted using its signature  
+bool isVCBOurs(volume_control_block vcb);
 
 #endif

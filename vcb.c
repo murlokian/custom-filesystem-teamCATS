@@ -13,3 +13,16 @@
 **************************************************************/
 
 #include "vcb.h"
+
+volume_control_block* loadVCB() {
+    
+}
+
+int initVCB(volume_control_block vcb, uint32_t sig, uint64_t numBlocks, 
+    uint32_t rootLoc, uint16_t blockSize) {
+    
+}
+
+bool isVCBOurs(volume_control_block vcb) {
+
+}
