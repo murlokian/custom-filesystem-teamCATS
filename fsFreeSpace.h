@@ -1,6 +1,6 @@
 /**************************************************************
 * Class::  CSC-415-03 Spring 2026
-* Name:: milo-pa
+* Name:: Milo Pesce Ares
 * Student IDs:: 921296281
 * GitHub-Name:: milo-pa
 * Group-Name:: CATS
