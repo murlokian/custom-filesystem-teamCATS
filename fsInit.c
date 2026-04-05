@@ -1,7 +1,7 @@
 /**************************************************************
 * Class::  CSC-415-03 Spring 2026
-* Name:: Rosa Melton, Milo Pesce Ares
-* Student IDs:: 921337778, 921926821
+* Name:: Rosa Melton, Milo Pesce Ares, Patricia Ann Payumo
+* Student IDs:: 921337778, 921926821, 923555591
 * GitHub-Name:: milo-pa
 * Group-Name:: CATS
 * Project:: Basic File System
@@ -58,17 +58,46 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	// init free space ()
 	// TODO: Assign the returned valued to the initVCB().
 	// function is currently missing parameter for that
-	initFreeSpace(blockSize, numberOfBlocks);
 
-	initVCB(VCBptr, OUR_SIGNATURE, numberOfBlocks, 0, blockSize);
+	// initialize free space
+	int freeSpaceStart = initFreeSpace(blockSize, numberOfBlocks);
+    if (freeSpaceStart < 0)
+    {
+        printf("Failed to initialize free space.\n");
+        free(VCBptr);
+        return -1;
+    }
 
-	// write VCB back to disk at block 0
-	LBAwrite(VCBptr, blocksNeeded, 0);
+	// initialize root directory
+	int rootLoc = initRootDirectory(blockSize);
+    if (rootLoc < 0)
+    {
+        printf("Failed to initialize root directory.\n");
+        free(VCBptr);
+        return -1;
+    }
 
-	return 0;
-	}
-	
-	
+	// initialize VCB with file sys metadata
+	if (initVCB(VCBptr, OUR_SIGNATURE, numberOfBlocks, rootLoc, blockSize) != 0)
+    {
+        printf("Failed to initialize VCB.\n");
+        free(VCBptr);
+        return -1;
+    }
+
+	// write VCB block 0 
+    if (LBAwrite(VCBptr, blocksNeeded, 0) != blocksNeeded)
+    {
+        printf("Failed to write VCB to disk.\n");
+        free(VCBptr);
+        return -1;
+    }
+
+    VCBGlobal = VCBptr;
+
+    return 0;
+}
+		
 void exitFileSystem ()
 	{
 	printf ("System exiting\n");
