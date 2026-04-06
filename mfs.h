@@ -25,7 +25,7 @@
 #include <stdio.h>
 
 #include "b_io.h"
-#include "extent.h"
+#include "fsFreeSpace.h"
 
 #include <dirent.h>
 #define FT_REGFILE	DT_REG

@@ -69,11 +69,13 @@ extern volume_control_block *VCBGlobal;
 // Read block 0 from disk and allocate memory for vcb
 volume_control_block *loadVCB();
 
-// Formats volume control block with signature SIG, NUMBLOCKS blocks,
-// ROOTLOC as the location of the root directory, block size BLOCKSIZE.
+// Formats volume control block with NUMBLOCKS blocks, signature SIG,
+// block size BLOCKSIZE, ROOTLOC as block location of the root directory,
+// root directory length ROOTLEN, FSLOC as block location of first freespace extent,
+// FSLEN as number of blocks for freespace map
 // Initializes BLOCKSIZEGLOBAL and VCB variable
-int initVCB(volume_control_block *vcb, uint32_t sig, uint64_t numBlocks, 
-            uint32_t rootLoc, uint16_t blockSize);
+int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint32_t sig, uint16_t blockSize,
+            uint8_t rootLoc, uint8_t rootLen, uint8_t fsLoc, uint8_t fsLen);
 
 // Checks if VCB is formatted using its signature
 bool isVCBOurs(const volume_control_block *vcb);
