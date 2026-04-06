@@ -25,7 +25,7 @@
 #define MAX_ENTRY_NAME_SIZE 255
 #define NUM_DIR_EXTENTS       5
 
-typedef struct extent {  // 8 bytes
+typedef struct extent {  // 16 bytes
 	
     // location is an unsigned 64-bit value which is the location of a starting
     // block of contiguous free space. 0 signifies invalid/unused extent  
