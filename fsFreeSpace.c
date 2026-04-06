@@ -24,6 +24,10 @@
 int initFreeSpace(uint16_t blockSize, uint64_t blockCount){
     //malloc space for extent array 
     extent *extents = malloc(sizeof(extent)*10);
+
+    //zero out all extents so unused entries are clean and detectable
+    memset(extents, 0, sizeof(extent) * 10);
+
     
     //assign each variable
     extents[0].location = 6;
@@ -33,5 +37,7 @@ int initFreeSpace(uint16_t blockSize, uint64_t blockCount){
     LBAwrite(extents, (sizeof(extent)*10 + blockSize - 1) / blockSize, 1);
     //return the start block so VCB can store it
     return 1;
+   
+
     
 }
