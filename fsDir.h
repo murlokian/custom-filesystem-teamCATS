@@ -27,13 +27,13 @@
 
 typedef struct extent {  // 8 bytes
 	
-    // location is an unsigned 32-bit value which is the location of a starting
+    // location is an unsigned 64-bit value which is the location of a starting
     // block of contiguous free space. 0 signifies invalid/unused extent  
-    uint32_t location;
+    uint64_t location;
   
-    // length is an unsigned 32-bit value which contains the total amount of blocks
+    // length is an unsigned 64-bit value which contains the total amount of blocks
     // that this extent spans
-    uint32_t length;
+    uint64_t length;
 
 } extent;
 
