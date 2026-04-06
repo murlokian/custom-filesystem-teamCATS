@@ -18,9 +18,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "fsFreeSpace.h"
-
-#define NUM_FREESPACE_EXTS 10
 // NOTE: signature is all of our initials -- AD, AY, MP, RM, TP :)
 #define OUR_SIGNATURE 2329677687
 

@@ -1,7 +1,7 @@
 /**************************************************************
 * Class::  CSC-415-03 Spring 2026
-* Name::
-* Student IDs::
+* Name::  Abha Deshpande, Allie Young
+* Student IDs::  [ABHA ID], 923129607
 * GitHub-Name::  milo-pa
 * Group-Name::  CATS
 * Project:: Basic File System
@@ -22,26 +22,75 @@
 #include "fsFreeSpace.h"
 #include "fsLow.h"
 #include "fsDir.h"
+#include "fsVCB.h"
 
-//init function needs to malloc memory
-//set extents
-//Write it to disk with LBA write 
+extent* freespaceExtsGlobal = NULL;
 
 int initFreeSpace(uint64_t blockSize, uint64_t blockCount){
-    //malloc space for extent array 
-    extent *extents = malloc(sizeof(extent)*10);
-    
-    //assign each variable
-    extents[0].location = 6;
-    extents[0].length = blockCount - 6;
+    // *** FIX: is this fine hardcoded? will it always be 1? if so, put in define? ***
+    VCBGlobal->freespaceLocation = 1;
 
-    //LBAwrite to write the array to disk
-    LBAwrite(extents, (sizeof(extent)*10 + blockSize - 1) / blockSize, 1);
-    //return the start block so VCB can store it
-    
-    // TODO: free the malloced space
+    // Allocate memory on heap for freespace extents  
+    int bytesNeeded = sizeof(extent) * NUM_FREESPACE_EXTS;
+    extent* extents = malloc(bytesNeeded);
+    if(extents == NULL) {
+        perror("malloc failed");
+        return -1;
+    }
+
+    // Initialize freespace extents  
+    int blocksNeeded = (bytesNeeded + blockSize - 1) / blockSize;
+    int firstFreeBlock = VCBGlobal->freespaceLocation + blocksNeeded;
+
+    extents[0].location = firstFreeBlock;
+    extents[0].length = blockCount - firstFreeBlock;
+    for(int i = 1; i < NUM_FREESPACE_EXTS; i++) {
+        extents[i].location = 0;
+        extents[i].length = 0;
+    }
+
+    // Keep runtime extents copy  
+    freespaceExtsGlobal = extents;
+
+    // Write extents to disk  
+    if(LBAwrite(extents, blocksNeeded, VCBGlobal->freespaceLocation) != blocksNeeded) {
+        perror("lbawrite failed");
+        free(extents);
+        freespaceExtsGlobal = NULL;
+        return -1;
+    }
+
+    return VCBGlobal->freespaceLocation;
 }
 
+// *** FIX: this is currently first fit, maybe change later? ***
 int getBlocks(int numBlocks) {
-    return 0;
+    // Iterate through freespace extents  
+    for(int i = 0; i < NUM_FREESPACE_EXTS; i++) {
+        // Found large enough extent  
+        if(freespaceExtsGlobal[i].length >= numBlocks) {
+            int loc = freespaceExtsGlobal[i].location;
+
+            // Shrink freespace extent  
+            if(freespaceExtsGlobal[i].length == numBlocks) {
+                freespaceExtsGlobal[i].location = 0;
+            } else {
+                freespaceExtsGlobal[i].location += numBlocks;
+            }
+            freespaceExtsGlobal[i].length -= numBlocks;
+
+            // Write updated extents to disk  
+            int bytesNeeded = sizeof(extent) * NUM_FREESPACE_EXTS;
+            int blocksNeeded = (bytesNeeded + blockSizeGlobal - 1) / blockSizeGlobal;
+            if(LBAwrite(freespaceExtsGlobal, blocksNeeded, VCBGlobal->freespaceLocation) 
+                != blocksNeeded) {
+                perror("lbawrite failed");
+                return -1;
+            }
+
+            return loc;
+        }
+    }
+    // No space available  
+    return -1;
 }

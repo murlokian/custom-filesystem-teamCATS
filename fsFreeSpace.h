@@ -17,9 +17,19 @@
 
 #include <stdint.h>
 
+#include "fsDir.h"
+
+#define NUM_FREESPACE_EXTS 10
+
+extern extent* freespaceExtsGlobal;
+
+// Initialize freespace map with BLOCKCOUNT blocks of size BLOCKSIZE.  
+// Returns start block of free space.  
 int initFreeSpace(uint64_t blockSize, uint64_t blockCount);
 
-// Allocates NUMBLOCKS contiguous blocks if possible. Returns disk address to extent table  
+// *** FIX: what if there is enough but not contiguous. could possibly have a mergeFreespace
+// which is called if getBlocks fails (-1) then call getBlocks again ***
+// Allocates NUMBLOCKS contiguous blocks if possible. Returns disk address to extent  
 int getBlocks(int numBlocks);
 
 #endif
