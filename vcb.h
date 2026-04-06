@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "extent.h"
+#include "fsFreeSpace.h"
 
 #define NUM_FREESPACE_EXTS 10
 // NOTE: signature is all of our initials -- AD, AY, MP, RM, TP :)
@@ -49,12 +49,12 @@ typedef struct volume_control_block {
    // of a volume in bytes
    uint16_t blockSize;
 
-   // NOTE: there are 2 bytes of external padding. Could be used as a bitmap 
+   // NOTE: there are 6 bytes of external padding. Could be used as a bitmap 
    // to indicate file system type? Unclear if we need to support multiple
    // file systems
 } volume_control_block;
 
-// VBC will be global so we can access it across many functions and files
+// VCB will be global so we can access it across many functions and files
 // and because there is only one VCB per volume.
 extern volume_control_block *VCBGlobal;
 

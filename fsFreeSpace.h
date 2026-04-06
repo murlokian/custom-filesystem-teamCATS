@@ -17,6 +17,18 @@
 
 #include <stdint.h>
 
+typedef struct extent {  // 8 bytes
+	
+   // location is an unsigned 32-bit value which is the location of a starting
+   // block of contiguous free space
+   uint32_t location;
+  
+   // length is an unsigned 32-bit value which contains the 
+   // total amount of bytes that this extent spans
+   uint32_t length;
+
+} extent;
+
 int initFreeSpace(uint64_t blockSize, uint64_t blockCount);
 
 #endif
