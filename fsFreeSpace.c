@@ -81,7 +81,8 @@ int getBlocks(int numBlocks) {
 
             // Write updated extents to disk  
             int bytesNeeded = sizeof(extent) * NUM_FREESPACE_EXTS;
-            int blocksNeeded = (bytesNeeded + blockSizeGlobal - 1) / blockSizeGlobal;
+            int blockSize = VCBGlobal->blockSize;
+            int blocksNeeded = (bytesNeeded + blockSize - 1) / blockSize;
             if(LBAwrite(freespaceExtsGlobal, blocksNeeded, VCBGlobal->freespaceLocation) 
                 != blocksNeeded) {
                 perror("lbawrite failed");

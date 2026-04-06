@@ -20,7 +20,6 @@
 #include "fsLow.h"
 
 volume_control_block* VCBGlobal = NULL;
-uint32_t blockSizeGlobal = 0;
 
 volume_control_block* loadVCB() {
     // Allocate memory on heap for vcb  
@@ -39,7 +38,6 @@ volume_control_block* loadVCB() {
 
     // Set global vcb and block size  
     VCBGlobal = vcbBuffer;
-    blockSizeGlobal = vcbBuffer->blockSize;
 
     // Return runtime vcb  
     return vcbBuffer;
@@ -62,7 +60,6 @@ int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint8_t rootLoc,
 
     // Set global vcb and block size  
     VCBGlobal = vcb;
-    blockSizeGlobal = blockSize;
 
     return 0;
 }

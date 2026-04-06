@@ -21,9 +21,6 @@
 // NOTE: signature is all of our initials -- AD, AY, MP, RM, TP :)
 #define OUR_SIGNATURE 2329677687
 
-// Set at initialization
-extern uint32_t blockSizeGlobal;
-
 typedef struct volume_control_block {
 
     // blockCount member is an unsigned 64-bit value which is the amount of blocks
