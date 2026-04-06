@@ -63,18 +63,18 @@ typedef struct volume_control_block {
 // and because there is only one VCB per volume.
 extern volume_control_block *VCBGlobal;
 
-// Read block 0 from disk and allocate memory for vcb
+// Read block 0 from disk, set global VCBGLOBAL and allocate memory for runtime vcb  
 volume_control_block *loadVCB();
 
 // Formats volume control block with NUMBLOCKS blocks, signature SIG,
 // block size BLOCKSIZE, ROOTLOC as block location of the root directory,
 // root directory length ROOTLEN, FSLOC as block location of first freespace extent,
-// FSLEN as number of blocks for freespace map
-// Initializes BLOCKSIZEGLOBAL and VCB variable
+// FSLEN as number of blocks for freespace map  
+// Initializes globals VCBGLOBAL and BLOCKSIZEGLOBAL  
 int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint8_t rootLoc, 
             uint8_t fsLoc, uint32_t sig, uint16_t blockSize, uint8_t rootLen);
 
-// Checks if VCB is formatted using its signature
+// Checks if VCB is formatted using its signature  
 bool isVCBOurs(const volume_control_block *vcb);
 
 #endif

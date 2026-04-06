@@ -15,8 +15,12 @@
 #include "vcb.h"
 #include <stddef.h> // for returning NULL
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "fsLow.h"
+
+volume_control_block* VCBGlobal = NULL;
+uint32_t blockSizeGlobal = 0;
 
 volume_control_block* loadVCB() {
     // Allocate memory on heap for vcb  

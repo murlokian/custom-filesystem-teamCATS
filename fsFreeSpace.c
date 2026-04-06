@@ -18,7 +18,6 @@
 
 #include "mfs.h"
 #include "fsFreeSpace.h"
-#include "extent.h"
 #include "fsLow.h"
 
 //init function needs to malloc memory
