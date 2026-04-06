@@ -1,14 +1,17 @@
 /**************************************************************
-* Class::  CSC-415-0# Fall 2025
+* Class::  CSC-415-03 Spring 2026
 * Name::
 * Student IDs::
-* GitHub-Name::
-* Group-Name::
+* GitHub-Name::  milo-pa
+* Group-Name::  CATS
 * Project:: Basic File System
 *
-* File:: <name of this file>
+* File:: fsFreeSpace.c
 *
-* Description::
+* Description::  This is the freespace system.  We are using a three-level extent 
+* table system to track free space.  Extents will be organized into primary, 
+* secondary, and tertiary levels which are created as needed as the disk becomes 
+* fragmented and the number of free extents increases.  
 *
 **************************************************************/
 
@@ -16,14 +19,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "mfs.h"
 #include "fsFreeSpace.h"
 #include "fsLow.h"
+#include "fsDir.h"
 
 //init function needs to malloc memory
 //set extents
 //Write it to disk with LBA write 
-
 
 int initFreeSpace(uint64_t blockSize, uint64_t blockCount){
     //malloc space for extent array 

@@ -1,7 +1,7 @@
 /**************************************************************
-* Class::  CSC-415-0# Spring 2024
-* Name::  Allie Young, 
-* Student IDs::  923129607, 
+* Class::  CSC-415-03 Spring 2026
+* Name::  
+* Student IDs::  
 * GitHub-Name::  milo-pa
 * Group-Name::  CATS
 * Project:: Basic File System
@@ -20,23 +20,13 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <time.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-
-#include "b_io.h"
-#include "fsFreeSpace.h"
 
 #include <dirent.h>
 #define FT_REGFILE	DT_REG
 #define FT_DIRECTORY DT_DIR
 #define FT_LINK	DT_LNK
-
-// MAX_ENTRY_NAME_SIZE shall be defined as 255 in order to provide a reasonable
-// file name length that is similar to other major operating systems but fills in 
-// all padding
-#define MAX_ENTRY_NAME_SIZE 255
-#define NUM_DIR_EXTENTS       5
 
 #ifndef uint64_t
 typedef u_int64_t uint64_t;
@@ -44,34 +34,6 @@ typedef u_int64_t uint64_t;
 #ifndef uint32_t
 typedef u_int32_t uint32_t;
 #endif
-
-typedef struct directory_entry {
-
-    // size member is an unsigned 64-bit value which is the size of the entry
-    // measured in bytes
-    uint64_t size;
-
-    // creationDate, lastEditDate, and lastAccessDate are all time_t (8 byte)
-    // that represents the number of seconds since some common epoch (tbd)
-    time_t creationDate;
-    time_t lastEditDate;
-    time_t lastAccessDate;
-
-    // exts is an array of extents for indexing each entry's data in memory  
-    extent exts[NUM_DIR_EXTENTS];
-
-    // entryType member is a boolean that represents whether an entry is
-    // a directory or a file. 
-    // 0 for file, 1 for directory
-    bool entryType;
-
-    // name member is a char array that contains the name of the entry
-    // Names are unique within the scope of a directory
-    // Max size of name is defined by a macro
-    // if value is "\0" then the entry is unused
-    char name[MAX_ENTRY_NAME_SIZE];
-
-} directory_entry;
 
 // This structure is returned by fs_readdir to provide the caller with information
 // about each file as it iterates through a directory

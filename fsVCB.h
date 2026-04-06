@@ -6,14 +6,14 @@
  * Group-Name::  CATS
  * Project:: Basic File System
  *
- * File:: vcb.h
+ * File:: fsVCB.h
  *
  * Description::  This is a header file for the volume control block.
  *
  **************************************************************/
 
-#ifndef VCB_H
-#define VCB_H
+#ifndef FSVCB_H
+#define FSVCB_H
 
 #include <stdint.h>
 #include <stdbool.h>

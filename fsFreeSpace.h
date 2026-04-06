@@ -1,33 +1,21 @@
 /**************************************************************
 * Class::  CSC-415-03 Spring 2026
-* Name:: Milo Pesce Ares
-* Student IDs:: 921296281
+* Name:: Milo Pesce Ares, Allie Young
+* Student IDs:: 921296281, 923129607
 * GitHub-Name:: milo-pa
 * Group-Name:: CATS
 * Project:: Basic File System
 *
-* File:: freeSpace.h
+* File:: fsFreeSpace.h
 *
-* Description:: header for freeSpace.h
+* Description:: This is a header file for our freespace system.  
 *
 **************************************************************/
 
-#ifndef FSFREE_SPACE_H
-#define FSFREE_SPACE_H
+#ifndef FSFREESPACE_H
+#define FSFREESPACE_H
 
 #include <stdint.h>
-
-typedef struct extent {  // 8 bytes
-	
-   // location is an unsigned 32-bit value which is the location of a starting
-   // block of contiguous free space
-   uint32_t location;
-  
-   // length is an unsigned 32-bit value which contains the 
-   // total amount of bytes that this extent spans
-   uint32_t length;
-
-} extent;
 
 int initFreeSpace(uint64_t blockSize, uint64_t blockCount);
 

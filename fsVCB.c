@@ -6,13 +6,13 @@
 * Group-Name::  CATS
 * Project:: Basic File System
 *
-* File:: vcb.c
+* File:: fsVCB.c
 *
 * Description::  This is the volume control block struct and related functions.  
 *
 **************************************************************/
 
-#include <stddef.h> // for returning NULL
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
