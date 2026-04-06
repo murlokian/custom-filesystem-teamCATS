@@ -33,6 +33,14 @@ typedef struct volume_control_block {
     // in the volume
     uint64_t blockCount;
 
+    // rootLocation is an unsigned 64-bit value which is the block location on disk
+    // of the root directory
+    uint64_t rootLocation;
+
+    // freespaceLocation is an unsigned 64-bit value which is the block location on disk
+    // of the first freespace extent  
+    uint64_t freespaceLocation;
+
     // signature is an unsigned 32-bit value that stores the signature of
     // of the machine which formatted the volume
     uint32_t signature;
@@ -41,23 +49,12 @@ typedef struct volume_control_block {
     // in bytes
     uint16_t blockSize;
 
-    // rootLocation is an unsigned 8-bit value which is the block location on disk
-    // of the root directory
-    uint8_t rootLocation;
-
+    // *** FIX: POTENTIAL REMOVE? HOW ELSE CAN WE GET THIS ***
     // rootLength is an unsigned 8-bit value which is the length of the root directory
     // in blocks  
     uint8_t rootLength;
 
-    // freespaceLocation is an unsigned 8-bit value which is the block location on disk
-    // of the first freespace extent  
-    uint8_t freespaceLocation;
-
-    // freespaceLength is an unsigned 8-bit value which is the length of the freespace
-    // extents in blocks  
-    uint8_t freespaceLength;
-
-    // NOTE: there are 6 bytes of external padding. Could be used as a bitmap
+    // NOTE: there is 1 byte of external padding. Could be used as a bitmap
     // to indicate file system type? Unclear if we need to support multiple
     // file systems
 } volume_control_block;
@@ -74,8 +71,8 @@ volume_control_block *loadVCB();
 // root directory length ROOTLEN, FSLOC as block location of first freespace extent,
 // FSLEN as number of blocks for freespace map
 // Initializes BLOCKSIZEGLOBAL and VCB variable
-int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint32_t sig, uint16_t blockSize,
-            uint8_t rootLoc, uint8_t rootLen, uint8_t fsLoc, uint8_t fsLen);
+int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint8_t rootLoc, 
+            uint8_t fsLoc, uint32_t sig, uint16_t blockSize, uint8_t rootLen);
 
 // Checks if VCB is formatted using its signature
 bool isVCBOurs(const volume_control_block *vcb);

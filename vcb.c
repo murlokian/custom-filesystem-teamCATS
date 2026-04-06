@@ -41,9 +41,8 @@ volume_control_block* loadVCB() {
     return vcbBuffer;
 }
 
-int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint32_t sig, uint16_t blockSize,
-            uint8_t rootLoc, uint8_t rootLen, uint8_t fsLoc, uint8_t fsLen) {
-    
+int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint8_t rootLoc, 
+            uint8_t fsLoc, uint32_t sig, uint16_t blockSize, uint8_t rootLen) {
     // Null check  
     if(vcb == NULL) {
         return -1;
@@ -51,12 +50,11 @@ int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint32_t sig, uint16_
 
     // Set runtime vcb with parameters  
     vcb->blockCount = numBlocks;
+    vcb->rootLocation = rootLoc;
+    vcb->freespaceLocation = fsLoc;
     vcb->signature = sig;
     vcb->blockSize = blockSize;
-    vcb->rootLocation = rootLoc;
     vcb->rootLength = rootLen;
-    vcb->freespaceLocation = fsLoc;
-    vcb->freespaceLength = fsLen;
 
     // Set global vcb and block size  
     VCBGlobal = vcb;
