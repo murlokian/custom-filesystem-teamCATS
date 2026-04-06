@@ -36,7 +36,7 @@ volume_control_block* loadVCB() {
         return NULL;
     }
 
-    // Set global vcb and block size  
+    // Set global vcb  
     VCBGlobal = vcbBuffer;
 
     // Return runtime vcb  
@@ -58,7 +58,7 @@ int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint8_t rootLoc,
     vcb->blockSize = blockSize;
     vcb->rootLength = rootLen;
 
-    // Set global vcb and block size  
+    // Set global vcb  
     VCBGlobal = vcb;
 
     return 0;
