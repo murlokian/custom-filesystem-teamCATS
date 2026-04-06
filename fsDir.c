@@ -24,6 +24,13 @@
 
 directory_entry *createDirectory(int initialEntryCount, directory_entry *parent, uint64_t blockSize)
 {
+    if (initialEntryCount < 2)
+    {
+        // need at least "." and ".." entries
+        fprintf(stderr, "Error: initialEntryCount must be at least 2.\n");
+        return NULL;
+    }
+
     // calculate requested memory depending on requested entries
     int memoryNeeded = initialEntryCount * sizeof(directory_entry);
 

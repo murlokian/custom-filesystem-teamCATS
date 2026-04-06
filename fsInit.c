@@ -95,11 +95,9 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
     //     return -1;
     // }
 
-    // VCBGlobal = VCBptr;
-
     return 0;
 }
-		
+
 void exitFileSystem ()
 	{
 	printf ("System exiting\n");
