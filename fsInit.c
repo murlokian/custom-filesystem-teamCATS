@@ -22,7 +22,7 @@
 
 #include "fsLow.h"
 #include "mfs.h"
-#include "vcb.h"
+#include "fsVCB.h"
 #include "fsFreeSpace.h"
 
 // COMMENTED OUT SO WE CAN COMPILE. THIS SHOULD BE DONE LAST OR AT LEAST AFTER

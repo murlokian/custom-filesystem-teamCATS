@@ -17,7 +17,7 @@
 #include <time.h>
 #include <stdio.h>
 
-#include "directory.h"
+#include "fsDir.h"
 #include "mfs.h"
 #include "fsFreeSpace.h"
 #include "fsLow.h"
@@ -45,7 +45,7 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent,
     memset(newDir, 0, memoryNeeded);
 
     // get blocks on disk for this directory
-    int location = getBlocks(blocksNeeded, blockSize); // getBlocks to be written in fsFreeSpace.c
+    int location = getBlocks(blocksNeeded); // getBlocks to be written in fsFreeSpace.c
     if (location < 0)
     {
         free(newDir);

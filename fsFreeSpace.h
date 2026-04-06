@@ -31,4 +31,7 @@ typedef struct extent {  // 8 bytes
 
 int initFreeSpace(uint64_t blockSize, uint64_t blockCount);
 
+// Allocates NUMBLOCKS contiguous blocks if possible. Returns disk address to extent table  
+int getBlocks(int numBlocks);
+
 #endif

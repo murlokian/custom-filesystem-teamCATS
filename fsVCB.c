@@ -12,11 +12,11 @@
 *
 **************************************************************/
 
-#include "vcb.h"
 #include <stddef.h> // for returning NULL
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "fsVCB.h"
 #include "fsLow.h"
 
 volume_control_block* VCBGlobal = NULL;

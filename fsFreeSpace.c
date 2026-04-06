@@ -39,3 +39,7 @@ int initFreeSpace(uint64_t blockSize, uint64_t blockCount){
     
     // TODO: free the malloced space
 }
+
+int getBlocks(int numBlocks) {
+    return 0;
+}
