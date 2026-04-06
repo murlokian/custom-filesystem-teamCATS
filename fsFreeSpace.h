@@ -21,8 +21,6 @@
 
 #define NUM_FREESPACE_EXTS 10
 
-extern extent* freespaceExtsGlobal;
-
 // Initialize freespace map with BLOCKCOUNT blocks of size BLOCKSIZE.  
 // Returns start block of free space.  
 int initFreeSpace(uint64_t blockSize, uint64_t blockCount);
