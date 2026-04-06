@@ -1,14 +1,14 @@
 /**************************************************************
-* Class::  CSC-415-0# Fall 2025
+* Class::  CSC-415-03 Spring 2026
 * Name::
 * Student IDs::
-* GitHub-Name::
-* Group-Name::
+* GitHub-Name::  milo-pa
+* Group-Name::  CATS
 * Project:: Basic File System
 *
-* File:: directory.c
+* File:: fsDir.c
 *
-* Description::
+* Description::  This is the file for the directory related functions.  
 *
 **************************************************************/
 
@@ -104,21 +104,4 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent,
     }
 
     return newDir;
-}
-
-int initRootDirectory(uint64_t blockSize)
-{
-    // idk try 32 entries for now
-    directory_entry *root = createDirectory(32, NULL, blockSize);
-    if (root == NULL)
-    {
-        return -1;
-    }
-
-    // root directory "." entry
-    int rootLocation = root[0].exts[0].location;
-
-    // free memory ofc 
-    free(root);
-    return rootLocation;
 }
