@@ -1,8 +1,7 @@
-
 /**************************************************************
 * Class::  CSC-415-03 Spring 2026
-* Name::  Abha Deshpande, Allie Young, Milo Pesce Ares
-* Student IDs::  923314454, 923129607, 921296821
+* Name::  Allie Young, Milo Pesce Ares, Abha Deshpande
+* Student IDs::  923129607, 921296821, 923314454
 * GitHub-Name::  milo-pa
 * Group-Name::  CATS
 * Project:: Basic File System

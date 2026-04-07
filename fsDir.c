@@ -22,8 +22,8 @@
 #include "fsFreeSpace.h"
 #include "fsLow.h"
 
-directory_entry *createDirectory(int initialEntryCount, directory_entry *parent, uint64_t blockSize)
-{
+directory_entry *createDirectory(int initialEntryCount, directory_entry *parent, 
+                                uint64_t blockSize) {
     if (initialEntryCount < 2)
     {
         // need at least "." and ".." entries

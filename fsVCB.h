@@ -43,7 +43,7 @@ typedef struct volume_control_block {
     // in bytes
     uint16_t blockSize;
 
-    // NOTE: there is 1 byte of external padding. Could be used as a bitmap
+    // NOTE: there are 2 bytes of external padding. Could be used as a bitmap
     // to indicate file system type? Unclear if we need to support multiple
     // file systems
 } volume_control_block;
