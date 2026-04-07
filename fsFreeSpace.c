@@ -31,20 +31,20 @@ int initFreeSpace(uint64_t blockSize, uint64_t blockCount){
     VCBGlobal->freespaceLocation = 1;
 
     // Allocate memory on heap for freespace extents  
-    int bytesNeeded = sizeof(extent) * NUM_FREESPACE_EXTS;
+    int bytesNeeded = sizeof(extent) * NUM_FREESPACE_BLOCKS;
     extent* extents = malloc(bytesNeeded);
     if(extents == NULL) {
         perror("malloc failed");
         return -1;
     }
 
-    // Initialize freespace extents  
+    // Initialize freespace extents
     int blocksNeeded = (bytesNeeded + blockSize - 1) / blockSize;
     int firstFreeBlock = VCBGlobal->freespaceLocation + blocksNeeded;
 
     extents[0].location = firstFreeBlock;
     extents[0].length = blockCount - firstFreeBlock;
-    for(int i = 1; i < NUM_FREESPACE_EXTS; i++) {
+    for(int i = 1; i < NUM_FREESPACE_BLOCKS; i++) {
         extents[i].location = 0;
         extents[i].length = 0;
     }
@@ -66,7 +66,7 @@ int initFreeSpace(uint64_t blockSize, uint64_t blockCount){
 // *** FIX: this is currently first fit, maybe change later? ***
 int getBlocks(int numBlocks) {
     // Iterate through freespace extents  
-    for(int i = 0; i < NUM_FREESPACE_EXTS; i++) {
+    for(int i = 0; i < NUM_FREESPACE_BLOCKS; i++) {
         // Found large enough extent  
         if(freespaceExtsGlobal[i].length >= numBlocks) {
             int loc = freespaceExtsGlobal[i].location;
@@ -80,7 +80,7 @@ int getBlocks(int numBlocks) {
             freespaceExtsGlobal[i].length -= numBlocks;
 
             // Write updated extents to disk  
-            int bytesNeeded = sizeof(extent) * NUM_FREESPACE_EXTS;
+            int bytesNeeded = sizeof(extent) * NUM_FREESPACE_BLOCKS;
             int blockSize = VCBGlobal->blockSize;
             int blocksNeeded = (bytesNeeded + blockSize - 1) / blockSize;
             if(LBAwrite(freespaceExtsGlobal, blocksNeeded, VCBGlobal->freespaceLocation) 

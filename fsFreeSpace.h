@@ -19,7 +19,7 @@
 
 #include "fsDir.h"
 
-#define NUM_FREESPACE_EXTS 10
+#define NUM_FREESPACE_BLOCKS 10
 
 // Initialize freespace map with BLOCKCOUNT blocks of size BLOCKSIZE.  
 // Returns start block of free space.  
