@@ -1,8 +1,8 @@
 
 /**************************************************************
 * Class::  CSC-415-03 Spring 2026
-* Name::  Abha Deshpande, Allie Young
-* Student IDs::  923314454, 923129607
+* Name::  Abha Deshpande, Allie Young, Milo Pesce Ares
+* Student IDs::  923314454, 923129607, 921296821
 * GitHub-Name::  milo-pa
 * Group-Name::  CATS
 * Project:: Basic File System
@@ -32,8 +32,10 @@ int initFreeSpace(uint16_t blockSize, uint64_t blockCount){
     // *** FIX: is this fine hardcoded? will it always be 1? if so, put in define? ***
     VCBGlobal->freespaceLocation = 1;
 
-    // Allocate memory on heap for freespace extents  
-    int bytesNeeded = sizeof(extent) * NUM_FREESPACE_BLOCKS;
+    // Allocate memory on heap for freespace extents
+    int numExtents = (NUM_FREESPACE_BLOCKS * VCBGlobal->blockSize ) / sizeof(extent);
+    int bytesNeeded = numExtents * sizeof(extent);
+
     extent* extents = malloc(bytesNeeded);
     if(extents == NULL) {
         perror("malloc failed");
@@ -41,12 +43,14 @@ int initFreeSpace(uint16_t blockSize, uint64_t blockCount){
     }
 
     // Initialize freespace extents
-    int blocksNeeded = (bytesNeeded + blockSize - 1) / blockSize;
-    int firstFreeBlock = VCBGlobal->freespaceLocation + blocksNeeded;
+    int firstFreeBlock = VCBGlobal->freespaceLocation + NUM_FREESPACE_BLOCKS;
 
     extents[0].location = firstFreeBlock;
     extents[0].length = blockCount - firstFreeBlock;
-    for(int i = 1; i < NUM_FREESPACE_BLOCKS; i++) {
+
+    // TODO: Shouldn't the first extent be the whole disk minus the blocks 
+    // for the VCB and freespace map? and the rest can be left initialized to 0
+    for(int i = 1; i < numExtents; i++) {
         extents[i].location = 0;
         extents[i].length = 0;
     }
@@ -55,12 +59,17 @@ int initFreeSpace(uint16_t blockSize, uint64_t blockCount){
     freespaceExtsGlobal = extents;
 
     // Write extents to disk  
-    if(LBAwrite(extents, blocksNeeded, VCBGlobal->freespaceLocation) != blocksNeeded) {
-        perror("lbawrite failed");
+    if(LBAwrite(extents, 
+                NUM_FREESPACE_BLOCKS, 
+                VCBGlobal->freespaceLocation) 
+                != NUM_FREESPACE_BLOCKS) 
+            {
+        fprintf(stderr, "LBAwrite failed");
         free(extents);
         freespaceExtsGlobal = NULL;
         return -1;
     }
+
     //set freeSpaceInitialized to true 
     freeSpaceInitialized = true;
 
@@ -69,10 +78,13 @@ int initFreeSpace(uint16_t blockSize, uint64_t blockCount){
 
 // *** FIX: this is currently first fit, maybe change later? ***
 int getBlocks(int numBlocks) {
+
     //ensure initFreeSpace has been called before allocating blocks 
     if(!freeSpaceInitialized){
+        fprintf(stderr, "Error: Free space system not initialized.\n");
         return -1;
     }
+
     // Iterate through freespace extents  
     for(int i = 0; i < NUM_FREESPACE_BLOCKS; i++) {
         // Found large enough extent  
@@ -91,15 +103,17 @@ int getBlocks(int numBlocks) {
             int bytesNeeded = sizeof(extent) * NUM_FREESPACE_BLOCKS;
             int blockSize = VCBGlobal->blockSize;
             int blocksNeeded = (bytesNeeded + blockSize - 1) / blockSize;
+
             if(LBAwrite(freespaceExtsGlobal, blocksNeeded, VCBGlobal->freespaceLocation) 
                 != blocksNeeded) {
-                perror("lbawrite failed");
+                fprintf(stderr, "LBAwrite failed");
                 return -1;
             }
 
             return loc;
         }
     }
+
     // No space available  
     return -1;
 }
