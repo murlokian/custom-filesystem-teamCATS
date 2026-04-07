@@ -27,9 +27,15 @@
 extent* freespaceExtsGlobal = NULL;
 bool freeSpaceInitialized = false;
 
-int initFreeSpace(uint16_t blockSize, uint64_t blockCount){
-    // *** FIX: is this fine hardcoded? will it always be 1? if so, put in define? ***
-    VCBGlobal->freespaceLocation = 1;
+int initFreeSpace(uint16_t blockSize, uint64_t blockCount) {
+    
+	int blockAfterVCB = (sizeof(volume_control_block) + blockSize - 1) / blockSize;
+
+    #ifdef DEBUG_FREESPACE
+    printf("Address of freespaceLocation: %d\n", blockAfterVCB);
+    #endif
+
+    VCBGlobal->freespaceLocation = blockAfterVCB;
 
     // Allocate memory on heap for freespace extents
     int numExtents = (NUM_FREESPACE_BLOCKS * VCBGlobal->blockSize ) / sizeof(extent);
@@ -72,7 +78,6 @@ int initFreeSpace(uint16_t blockSize, uint64_t blockCount){
     return VCBGlobal->freespaceLocation;
 }
 
-// *** FIX: this is currently first fit, maybe change later? ***
 int getBlocks(int numBlocks) {
 
     //ensure initFreeSpace has been called before allocating blocks 
@@ -81,7 +86,8 @@ int getBlocks(int numBlocks) {
         return -1;
     }
 
-    // Iterate through freespace extents  
+    // Iterate through freespace extents
+    // NOTE: This uses the first fit algorithm
     for(int i = 0; i < NUM_FREESPACE_BLOCKS; i++) {
         // Found large enough extent  
         if(freespaceExtsGlobal[i].length >= numBlocks) {
