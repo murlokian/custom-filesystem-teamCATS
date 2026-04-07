@@ -26,7 +26,7 @@
 
 extent* freespaceExtsGlobal = NULL;
 
-int initFreeSpace(uint64_t blockSize, uint64_t blockCount){
+int initFreeSpace(uint16_t blockSize, uint64_t blockCount){
     // *** FIX: is this fine hardcoded? will it always be 1? if so, put in define? ***
     VCBGlobal->freespaceLocation = 1;
 
