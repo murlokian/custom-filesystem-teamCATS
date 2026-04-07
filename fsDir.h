@@ -1,7 +1,7 @@
 /**************************************************************
 * Class::  CSC-415-03 Spring 2026
-* Name::  Allie Young
-* Student IDs::  923129607
+* Name::  Allie Young, Patricia Ann Payumo
+* Student IDs::  923129607, 923555591
 * GitHub-Name::  milo-pa
 * Group-Name::  CATS
 * Project:: Basic File System
