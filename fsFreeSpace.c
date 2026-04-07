@@ -47,9 +47,6 @@ int initFreeSpace(uint16_t blockSize, uint64_t blockCount){
 
     extents[0].location = firstFreeBlock;
     extents[0].length = blockCount - firstFreeBlock;
-
-    // TODO: Shouldn't the first extent be the whole disk minus the blocks 
-    // for the VCB and freespace map? and the rest can be left initialized to 0
     for(int i = 1; i < numExtents; i++) {
         extents[i].location = 0;
         extents[i].length = 0;
