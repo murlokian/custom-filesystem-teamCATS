@@ -1,7 +1,7 @@
 /**************************************************************
 * Class::  CSC-415-03 Spring 2026
-* Name::  Allie Young, Milo Pesce Ares, Abha Deshpande
-* Student IDs::  923129607, 921296821, 923314454
+* Name::  Allie Young, Milo Pesce Ares
+* Student IDs::  923129607, 921296821
 * GitHub-Name::  milo-pa
 * Group-Name::  CATS
 * Project:: Basic File System
@@ -72,7 +72,6 @@ int initFreeSpace(uint16_t blockSize, uint64_t blockCount) {
         return -1;
     }
 
-    //set freeSpaceInitialized to true 
     freeSpaceInitialized = true;
 
     return VCBGlobal->freespaceLocation;
@@ -80,7 +79,7 @@ int initFreeSpace(uint16_t blockSize, uint64_t blockCount) {
 
 int getBlocks(int numBlocks) {
 
-    //ensure initFreeSpace has been called before allocating blocks 
+    // Ensure freespace system has been initialized  
     if(!freeSpaceInitialized){
         fprintf(stderr, "Error: Free space system not initialized.\n");
         return -1;
