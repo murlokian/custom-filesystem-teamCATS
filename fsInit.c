@@ -47,7 +47,7 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	// VCBptr = loadVCB();
 
 	// // Check if VCB is formatted using its signature
-	// if (isVCBOurs(VCBptr)) {
+	// if (VCBptr->signature == OUR_SIGNATURE) {
 	// 	printf("Volume already formatted. VCB signature matches.\n");
 	// 	return 0;
 	// }

@@ -63,7 +63,4 @@ volume_control_block *loadVCB();
 int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint8_t rootLoc, 
             uint8_t fsLoc, uint32_t sig, uint16_t blockSize, uint8_t rootLen);
 
-// Checks if VCB is formatted using its signature  
-bool isVCBOurs(const volume_control_block *vcb);
-
 #endif

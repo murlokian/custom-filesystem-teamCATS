@@ -63,11 +63,3 @@ int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint8_t rootLoc,
     return 0;
 }
 
-bool isVCBOurs(const volume_control_block *vcb) {
-    // Null check  
-    if(vcb == NULL) {
-        return false;
-    }
-
-    return vcb->signature == OUR_SIGNATURE;
-}
