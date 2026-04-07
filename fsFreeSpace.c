@@ -1,3 +1,4 @@
+
 /**************************************************************
 * Class::  CSC-415-03 Spring 2026
 * Name::  Abha Deshpande, Allie Young
@@ -25,6 +26,7 @@
 #include "fsVCB.h"
 
 extent* freespaceExtsGlobal = NULL;
+bool freeSpaceInitialized = false;
 
 int initFreeSpace(uint16_t blockSize, uint64_t blockCount){
     // *** FIX: is this fine hardcoded? will it always be 1? if so, put in define? ***
@@ -59,12 +61,18 @@ int initFreeSpace(uint16_t blockSize, uint64_t blockCount){
         freespaceExtsGlobal = NULL;
         return -1;
     }
+    //set freeSpaceInitialized to true 
+    freeSpaceInitialized = true;
 
     return VCBGlobal->freespaceLocation;
 }
 
 // *** FIX: this is currently first fit, maybe change later? ***
 int getBlocks(int numBlocks) {
+    //ensure initFreeSpace has been called before allocating blocks 
+    if(!freeSpaceInitialized){
+        return -1;
+    }
     // Iterate through freespace extents  
     for(int i = 0; i < NUM_FREESPACE_BLOCKS; i++) {
         // Found large enough extent  

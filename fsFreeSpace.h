@@ -16,10 +16,13 @@
 #define FSFREESPACE_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "fsDir.h"
 
 #define NUM_FREESPACE_BLOCKS 10
+
+bool freeSpaceInitialized;
 
 // Initialize freespace map with BLOCKCOUNT blocks of size BLOCKSIZE.  
 // Returns start block of free space.  
