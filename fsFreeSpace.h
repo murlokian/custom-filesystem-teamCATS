@@ -26,7 +26,7 @@ extern bool freeSpaceInitialized;
 
 // Initialize freespace map with BLOCKCOUNT blocks of size BLOCKSIZE.  
 // Returns start block of free space.  
-int initFreeSpace(uint16_t blockSize, uint64_t blockCount);
+int initFreeSpace(uint64_t blockCount);
 
 // *** FIX: what if there is enough but not contiguous. could possibly have a mergeFreespace
 // which is called if getBlocks fails (-1) then call getBlocks again 

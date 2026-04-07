@@ -27,9 +27,10 @@
 extent* freespaceExtsGlobal = NULL;
 bool freeSpaceInitialized = false;
 
-int initFreeSpace(uint16_t blockSize, uint64_t blockCount) {
+//UNCLEAR: changing uint16_t for blockSize to uint64_t??
+int initFreeSpace(uint64_t blockCount) {
     
-	int blockAfterVCB = (sizeof(volume_control_block) + blockSize - 1) / blockSize;
+	int blockAfterVCB = (sizeof(volume_control_block) + VCBGlobal->blockSize - 1) / VCBGlobal->blockSize;
 
     #ifdef DEBUG_FREESPACE
     printf("Address of freespaceLocation: %d\n", blockAfterVCB);
