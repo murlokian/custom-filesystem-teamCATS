@@ -22,7 +22,7 @@
 
 #define NUM_FREESPACE_BLOCKS 10
 
-bool freeSpaceInitialized;
+extern bool freeSpaceInitialized;
 
 // Initialize freespace map with BLOCKCOUNT blocks of size BLOCKSIZE.  
 // Returns start block of free space.  
