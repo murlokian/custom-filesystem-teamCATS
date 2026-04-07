@@ -43,11 +43,6 @@ typedef struct volume_control_block {
     // in bytes
     uint16_t blockSize;
 
-    // *** FIX: POTENTIAL REMOVE? HOW ELSE CAN WE GET THIS ***
-    // rootLength is an unsigned 8-bit value which is the length of the root directory
-    // in blocks  
-    uint8_t rootLength;
-
     // NOTE: there is 1 byte of external padding. Could be used as a bitmap
     // to indicate file system type? Unclear if we need to support multiple
     // file systems
@@ -63,8 +58,8 @@ volume_control_block *loadVCB();
 // Formats volume control block with NUMBLOCKS blocks, signature SIG,
 // block size BLOCKSIZE, ROOTLOC as block location of the root directory,
 // root directory length ROOTLEN, FSLOC as block location of first freespace extent,
-// FSLEN as number of blocks for freespace map  
-// Initializes globals VCBGLOBAL and BLOCKSIZEGLOBAL  
+// FSLEN as number of blocks for freespace map
+// Initializes globals VCBGLOBAL
 int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint8_t rootLoc, 
             uint8_t fsLoc, uint32_t sig, uint16_t blockSize, uint8_t rootLen);
 

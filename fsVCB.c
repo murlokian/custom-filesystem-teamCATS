@@ -56,7 +56,6 @@ int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint8_t rootLoc,
     vcb->freespaceLocation = fsLoc;
     vcb->signature = sig;
     vcb->blockSize = blockSize;
-    vcb->rootLength = rootLen;
 
     // Set global vcb  
     VCBGlobal = vcb;
