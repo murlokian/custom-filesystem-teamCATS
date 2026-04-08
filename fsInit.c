@@ -78,19 +78,14 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
     {
         fprintf(stderr, "Failed to initialize root directory.\n");
 		
-        free(VCBGlobal);
         return -1;
     }
 	VCBGlobal->rootLocation = rootLoc;
-	// puts(after settings rootLoc for VCBLocal\n");
 
 	// write VCB block 0 
-	// FIXME - these 2 lines used in loadVCB(), consolidate them
-	//		   better in another [global?] function?
-	//		   (or leave at hard-coded 1 bluh)
 	int memoryNeeded = sizeof(volume_control_block);
 	int blocksNeeded = (memoryNeeded + blockSize - 1) / blockSize;
-    if (LBAwrite(VCBGlobal, blocksNeeded, 0) != blocksNeeded)
+    if (LBAwrite(VCBGlobal, blocksNeeded, VCB_BLOCK_LOCATION) != blocksNeeded)
     {
         fprintf(stderr, "Failed to write VCB to disk.\n");
 
