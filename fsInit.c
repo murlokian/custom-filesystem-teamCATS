@@ -30,42 +30,45 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	{
 	printf ("Initializing File System with %ld blocks with a block size of %ld\n", numberOfBlocks, blockSize);
 
-	if (loadVCB(blockSize) != 0) {
+	volume_control_block *VCBLocal;
+
+	VCBLocal = loadVCB(blockSize);
+	if (VCBLocal == NULL) {
 		fprintf(stderr, "loadVCB failed\n");
 		return -1;
 	}
 
 	// // Check if VCB is formatted using its signature
-	// if (VCBGlobal->signature == OUR_SIGNATURE) {
+	// if (VCBLocal->signature == OUR_SIGNATURE) {
+
+	// 	// Set global vcb  
+	// 	VCBGlobal = VCBLocal;
+	// 	VCBLocal = NULL;
+    
 	// 	printf("Volume already formatted. VCB signature matches.\n");
 	// 	return 0;
 	// }
 
-	// printf("Volume not formatted. Initializing VCB. HELLO\n");
-
-	// fflush(stdout);
+	printf("Volume not formatted. Initializing VCB.\n");
+	//fflush(stdout);
 
 	// // init free space ()
 	// // TODO: Assign the returned valued to the initVCB().
 	// // function is currently missing parameter for that
 
-	// printf("hello");
-
-	// fflush(stdout);
-
-	// // initialize root directory w/ 2 entries: '.' and '..'
-	// // NULL to have parent directory point to self
-	// directory_entry *root = createDirectory(2, NULL, blockSize);
-	// if(root == NULL) {
-	// 	printf("null after createdir");
-    // 	fflush(stdout);
-	// }
+	// initialize root directory w/ 2 entries: '.' and '..'
+	// NULL to have parent directory point to self
+	directory_entry *root = createDirectory(2, NULL, blockSize);
+	if(root == NULL) {
+		printf("createDirectory failed: fsInit.c");
+    	fflush(stdout);
+	}
 
 	// printf("after createdir");
 
 	// fflush(stdout);
 
-    // int rootLoc = root[0].exts[0].location;
+    //int rootLoc = root[0].exts[0].location;
 	// if (rootLoc < 0)
     // {
     //     fprintf(stderr, "Failed to initialize root directory.\n");
@@ -119,6 +122,12 @@ void exitFileSystem ()
 	printf ("System exiting\n");
 
 	// Free the global VCB variable if it has been allocated
-	if (VCBGlobal != NULL)
+	if (VCBGlobal != NULL) {
+		
+		#ifdef DEBUG_FSINIT
+		puts("Freeing VCBGlobal");
+		#endif
+
 		free(VCBGlobal);
+	}
 	}
