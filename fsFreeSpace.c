@@ -28,16 +28,14 @@ extent* freespaceExtsGlobal = NULL;
 bool freeSpaceInitialized = false;
 
 //UNCLEAR: changing uint16_t for blockSize to uint64_t??
-int initFreeSpace(uint64_t blockCount) {
-    
-    int blockSize = VCBGlobal->blockSize;
+int initFreeSpace(uint64_t blockCount, uint64_t blockSize) {
 	int blockAfterVCB = (sizeof(volume_control_block) + blockSize - 1) / blockSize;
 
     #ifdef DEBUG_FREESPACE
     printf("Address of freespaceLocation: %d\n", blockAfterVCB);
     #endif
 
-    VCBGlobal->freespaceLocation = blockAfterVCB;
+    int freespaceLocation = blockAfterVCB;
 
     // Allocate memory on heap for freespace extents
     int numExtents = (NUM_FREESPACE_BLOCKS * blockSize ) / sizeof(extent);
@@ -50,7 +48,7 @@ int initFreeSpace(uint64_t blockCount) {
     }
 
     // Initialize freespace extents
-    int firstFreeBlock = VCBGlobal->freespaceLocation + NUM_FREESPACE_BLOCKS;
+    int firstFreeBlock = freespaceLocation + NUM_FREESPACE_BLOCKS;
 
     extents[0].location = firstFreeBlock;
     extents[0].length = blockCount - firstFreeBlock;
@@ -63,12 +61,9 @@ int initFreeSpace(uint64_t blockCount) {
     freespaceExtsGlobal = extents;
 
     // Write extents to disk  
-    if(LBAwrite(extents, 
-                NUM_FREESPACE_BLOCKS, 
-                VCBGlobal->freespaceLocation) 
-                != NUM_FREESPACE_BLOCKS) 
-            {
-        fprintf(stderr, "LBAwrite failed");
+    int LBAblocks = LBAwrite(extents, NUM_FREESPACE_BLOCKS, freespaceLocation); 
+    if(LBAblocks != NUM_FREESPACE_BLOCKS) {
+        fprintf(stderr, "LBAwrite failed in initFreeSpace\n");
         free(extents);
         freespaceExtsGlobal = NULL;
         return -1;
@@ -76,21 +71,20 @@ int initFreeSpace(uint64_t blockCount) {
 
     freeSpaceInitialized = true;
 
-    return VCBGlobal->freespaceLocation;
+    return freespaceLocation;
 }
 
-int getBlocks(int numBlocks) {
-
+// FIXME: change return to array of extents 
+int getBlocks(int numBlocks, int blockSize) {
     // Ensure freespace system has been initialized  
     if(!freeSpaceInitialized){
         fprintf(stderr, "Error: Free space system not initialized.\n");
         return -1;
     }
 
-    int blockSize = VCBGlobal->blockSize;
-
     // Iterate through freespace extents
     // NOTE: This uses the first fit algorithm
+    // NOTE: consider best fit instead
     int numExtents = (NUM_FREESPACE_BLOCKS * blockSize) / sizeof(extent);
     for(int i = 0; i < numExtents; i++) {
         // Found large enough extent  
@@ -111,7 +105,7 @@ int getBlocks(int numBlocks) {
 
             if(LBAwrite(freespaceExtsGlobal, blocksNeeded, VCBGlobal->freespaceLocation) 
                 != blocksNeeded) {
-                fprintf(stderr, "LBAwrite failed");
+                fprintf(stderr, "LBAwrite failed in getBlocks\n");
                 return -1;
             }
 

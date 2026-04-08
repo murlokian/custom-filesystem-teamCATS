@@ -40,24 +40,21 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	}
 
 	// Check if VCB is formatted using its signature
-	// if (VCBLocal->signature == OUR_SIGNATURE) {
-	// 	printf("Volume already formatted. VCB signature matches.\n");
+	if (VCBLocal->signature == OUR_SIGNATURE) {
+		printf("Volume already formatted. VCB signature matches.\n");
 		
-	// 	// set global VCB and 'discard' VCBLocal
-	// 	VCBGlobal = VCBLocal;
-	// 	VCBLocal = NULL;
+		// set global VCB and 'discard' VCBLocal
+		VCBGlobal = VCBLocal;
+		VCBLocal = NULL;	
 
-	// 	return 0;
-	// }
+		return 0;
+	}
 
 	printf("Volume not formatted. Initializing VCB.\n");
 
 
 	//FIXME: getBlocks in fsFreeSpace() segfaulting;
 	//       cannot create root without init'ing free space
-	// NOTE: initFreeSpace() requires VCBGlobal to be init'd
-	//       VCBGlobal cannot be init'd w/o free space and so on...
-	//       NEED RESTRUCTURING OF FREE SPACE (AND VCB?) INITS
 
 	// initialize root directory w/ 2 entries: '.' and '..'
 	// NULL to have parent directory point to self
@@ -66,6 +63,7 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	// 	printf("null after createdir");
     // 	fflush(stdout);
 	// }
+	// puts("after createDir\n");
 
     // int rootLoc = root[0].exts[0].location;
 	// if (rootLoc < 0)
@@ -75,22 +73,10 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
     //     free(VCBGlobal);
     //     return -1;
     // }
-
-	// initialize VCB with file system metadata
-	// FIXME: free space location hard-coded to 1 for now as both initVCB
-	// and initFileSystem rely on the other to already be initialized
-	// FIXME: rootLoc hard-coded to block 11, fix getBlocks() !
-	if (initVCB(VCBLocal, numberOfBlocks, 11,
-		 	1 , OUR_SIGNATURE, blockSize) != 0)
-    {
-        fprintf(stderr, "Failed to initialize VCB.\n");
-
-        free(VCBGlobal);
-        return -1;
-    }
+	// puts(after settings rootLoc for VCBLocal\n");
 
 	// initialize free space
-	int freeSpaceStart = initFreeSpace(numberOfBlocks);
+	int freeSpaceStart = initFreeSpace(numberOfBlocks, blockSize);
     if (freeSpaceStart < 0)
     {
         fprintf(stderr, "Failed to initialize free space.\n");
@@ -98,6 +84,19 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
         free(VCBGlobal);
         return -1;
     }
+	// puts("after initFreeSpace\n");
+
+	// initialize VCB with file system metadata
+	// FIXME: rootLoc hard-coded to block 11, fix after getBlocks() !
+	if (initVCB(VCBLocal, numberOfBlocks, 11,
+		 	freeSpaceStart, OUR_SIGNATURE, blockSize) != 0)
+    {
+        fprintf(stderr, "Failed to initialize VCB.\n");
+
+        free(VCBGlobal);
+        return -1;
+    }
+	// puts("after initVCB\n");
 
 	// write VCB block 0 
 	// FIXME - these 2 lines used in loadVCB(), consolidate them
@@ -112,6 +111,7 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
         free(VCBGlobal);
         return -1;
     }
+	// puts(after LBAwrite\n");
 
     return 0;
 }
