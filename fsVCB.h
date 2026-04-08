@@ -53,7 +53,7 @@ typedef struct volume_control_block {
 extern volume_control_block *VCBGlobal;
 
 // Read block 0 from disk, set and allocate memory for global VCBGLOBAL 
-int loadVCB(uint64_t blockSize);
+volume_control_block *loadVCB(uint64_t blockSize);
 
 // Formats volume control block with NUMBLOCKS blocks, signature SIG,
 // block size BLOCKSIZE, ROOTLOC as block location of the root directory,

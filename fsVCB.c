@@ -21,34 +21,32 @@
 
 volume_control_block* VCBGlobal = NULL;
 
-int loadVCB(uint64_t blockSize) {
+volume_control_block *loadVCB(uint64_t blockSize) {
     
     // allocate memory for VCB pointer, rounding up to the nearest block size
    	int memoryNeeded = sizeof(volume_control_block);
 	int blocksNeeded = (memoryNeeded + blockSize - 1) / blockSize;
 	memoryNeeded = blocksNeeded * blockSize;
 
-    volume_control_block* vcbBuffer = malloc(memoryNeeded);
+    // TODO: volume_control_block size is 32 bytes yet we malloc a block...
+    // fix later.............?  
+    volume_control_block* VCBBuffer = malloc(memoryNeeded);
     
-    if(vcbBuffer == NULL) {
+    if(VCBBuffer == NULL) {
         perror("malloc failed: fsVCB.c\n");
-        return -1;
+        return NULL;
     }
 
     // Read block 0 from disk  
-    if(LBAread(vcbBuffer, 1, 0) <= 0) {
+    if(LBAread(VCBBuffer, 1, 0) <= 0) {
         fprintf(stderr, "LBAread failed: fsVCB.c\n");
         
-        free(vcbBuffer);
-        return -1;
+        free(VCBBuffer);
+        return NULL;
     }
 
-    // Set global vcb  
-    VCBGlobal = vcbBuffer;
-    
-
-    // Return 0 on successful load 
-    return 0;
+    // Return localVCB to check signature before saving to VCBGlobal 
+    return VCBBuffer;
 }
 
 int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint8_t rootLoc, 
