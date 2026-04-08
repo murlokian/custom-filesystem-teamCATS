@@ -57,7 +57,7 @@ volume_control_block *loadVCB(uint64_t blockSize);
 
 // Formats volume control block with NUMBLOCKS blocks, signature SIG,
 // block size BLOCKSIZE, ROOTLOC as block location of the root directory,
-// root directory length ROOTLEN, FSLOC as block location of first freespace extent,
+// FSLOC as block location of first freespace extent, and
 // FSLEN as number of blocks for freespace map
 // Initializes globals VCBGLOBAL
 int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint8_t rootLoc, 
