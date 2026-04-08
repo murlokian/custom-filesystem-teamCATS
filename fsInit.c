@@ -81,6 +81,7 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
         return -1;
     }
 	VCBGlobal->rootLocation = rootLoc;
+	free(root);
 
 	// write VCB block 0 
 	int memoryNeeded = sizeof(volume_control_block);
