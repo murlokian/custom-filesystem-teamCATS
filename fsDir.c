@@ -21,15 +21,17 @@
 #include "mfs.h"
 #include "fsFreeSpace.h"
 #include "fsLow.h"
+#include "fsVCB.h"
 
-directory_entry *createDirectory(int initialEntryCount, directory_entry *parent, 
-                                uint64_t blockSize) {
+directory_entry *createDirectory(int initialEntryCount, directory_entry *parent) {
     if (initialEntryCount < 2)
     {
         // need at least "." and ".." entries
         fprintf(stderr, "Error: InitialEntryCount must be at least 2.\n");
         return NULL;
     }
+
+    int blockSize = VCBGlobal->blockSize;
 
     // calculate requested memory depending on requested entries
     int memoryNeeded = initialEntryCount * sizeof(directory_entry);

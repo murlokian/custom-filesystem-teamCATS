@@ -21,6 +21,8 @@
 // NOTE: signature is all of our initials -- AD, AY, MP, RM, TP :)
 #define OUR_SIGNATURE 2329677687
 
+#define VCB_BLOCK_LOCATION 0
+
 typedef struct volume_control_block {
 
     // blockCount member is an unsigned 64-bit value which is the amount of blocks
@@ -54,13 +56,5 @@ extern volume_control_block *VCBGlobal;
 
 // Read block 0 from disk, set and allocate memory for global VCBGLOBAL 
 volume_control_block *loadVCB(uint64_t blockSize);
-
-// Formats volume control block with NUMBLOCKS blocks, signature SIG,
-// block size BLOCKSIZE, ROOTLOC as block location of the root directory,
-// FSLOC as block location of first freespace extent, and
-// FSLEN as number of blocks for freespace map
-// Initializes globals VCBGLOBAL
-int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint8_t rootLoc, 
-            uint8_t fsLoc, uint32_t sig, uint16_t blockSize);
 
 #endif

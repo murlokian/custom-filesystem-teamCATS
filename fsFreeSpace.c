@@ -27,9 +27,11 @@
 extent* freespaceExtsGlobal = NULL;
 bool freeSpaceInitialized = false;
 
-//UNCLEAR: changing uint16_t for blockSize to uint64_t??
-int initFreeSpace(uint64_t blockCount, uint64_t blockSize) {
-	int blockAfterVCB = (sizeof(volume_control_block) + blockSize - 1) / blockSize;
+int initFreeSpace(uint64_t blockCount) {
+
+    int blockSize = VCBGlobal->blockSize;
+	int blockAfterVCB = 
+        VCB_BLOCK_LOCATION +(sizeof(volume_control_block) + blockSize - 1) / blockSize;
 
     #ifdef DEBUG_FREESPACE
     printf("Address of freespaceLocation: %d\n", blockAfterVCB);
@@ -75,12 +77,14 @@ int initFreeSpace(uint64_t blockCount, uint64_t blockSize) {
 }
 
 // FIXME: change return to array of extents 
-int getBlocks(int numBlocks, int blockSize) {
+int getBlocks(int numBlocks) {
     // Ensure freespace system has been initialized  
     if(!freeSpaceInitialized){
         fprintf(stderr, "Error: Free space system not initialized.\n");
         return -1;
     }
+
+    int blockSize = VCBGlobal->blockSize;
 
     // Iterate through freespace extents
     // NOTE: This uses the first fit algorithm

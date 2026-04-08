@@ -66,7 +66,6 @@ typedef struct directory_entry {
 } directory_entry;
 
 // create directory and allocate disk space
-directory_entry *createDirectory(int initialEntryCount, directory_entry *parent, 
-                                uint64_t blockSize);
+directory_entry *createDirectory(int initialEntryCount, directory_entry *parent);
 
 #endif
