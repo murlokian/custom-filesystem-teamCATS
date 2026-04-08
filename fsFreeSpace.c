@@ -30,8 +30,11 @@ bool freeSpaceInitialized = false;
 int initFreeSpace(uint64_t blockCount) {
 
     int blockSize = VCBGlobal->blockSize;
-	int blockAfterVCB = 
-        VCB_BLOCK_LOCATION +(sizeof(volume_control_block) + blockSize - 1) / blockSize;
+
+    // Dynamically calculate the location of free space based on the size of 
+    // the VCB and block size
+    int vcbNumBlocks = (sizeof(volume_control_block) + blockSize - 1) / blockSize;
+	int blockAfterVCB = VCB_BLOCK_LOCATION + vcbNumBlocks;
 
     #ifdef DEBUG_FREESPACE
     printf("Address of freespaceLocation: %d\n", blockAfterVCB);
