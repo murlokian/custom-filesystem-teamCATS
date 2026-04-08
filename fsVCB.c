@@ -21,26 +21,38 @@
 
 volume_control_block* VCBGlobal = NULL;
 
-volume_control_block* loadVCB() {
-    // Allocate memory on heap for vcb  
-    volume_control_block* vcbBuffer = malloc(sizeof(volume_control_block));
+int loadVCB(uint64_t blockSize) {
+    puts("entered loadVCB()\n");
+    fflush(stdout);
+
+    // allocate memory for VCB pointer, rounding up to the nearest block size
+   	int memoryNeeded = sizeof(volume_control_block);
+	int blocksNeeded = (memoryNeeded + blockSize - 1) / blockSize;
+	memoryNeeded = blocksNeeded * blockSize;
+
+    volume_control_block* vcbBuffer = malloc(memoryNeeded);
+
+    //printf("vcbBuffer location:%d\n", vcbBuffer);
+    
     if(vcbBuffer == NULL) {
-        perror("malloc failed");
-        return NULL;
+        perror("malloc failed: fsVCB.c\n");
+        return -1;
     }
 
     // Read block 0 from disk  
     if(LBAread(vcbBuffer, 1, 0) <= 0) {
-        perror("lbaread failed");
+        fprintf(stderr, "LBAread failed: fsVCB.c\n");
+        
         free(vcbBuffer);
-        return NULL;
+        return -1;
     }
 
     // Set global vcb  
     VCBGlobal = vcbBuffer;
+    
 
-    // Return runtime vcb  
-    return vcbBuffer;
+    // Return 0 on successful load 
+    return 0;
 }
 
 int initVCB(volume_control_block *vcb, uint64_t numBlocks, uint8_t rootLoc, 

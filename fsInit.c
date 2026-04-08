@@ -24,76 +24,110 @@
 #include "mfs.h"
 #include "fsVCB.h"
 #include "fsFreeSpace.h"
+#include "fsDir.h"
 
-// COMMENTED OUT SO WE CAN COMPILE. THIS SHOULD BE DONE LAST OR AT LEAST AFTER
-// ALL SIGNATURE/DESIGN CHANGES ETC ARE FLUSHED OUT  
 int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	{
-	// printf ("Initializing File System with %ld blocks with a block size of %ld\n", numberOfBlocks, blockSize);
+	printf ("Initializing File System with %ld blocks with a block size of %ld\n", numberOfBlocks, blockSize);
 
-	// // allocate memory for VCB pointer, rounding up to the nearest block size
-	// int memoryNeeded = sizeof(volume_control_block);
-	// int blocksNeeded = (memoryNeeded + blockSize - 1) / blockSize;
-	// memoryNeeded = blocksNeeded * blockSize;
+	
+	// memoryNeeded expected: 512
+	// sizeof(volume_control_block) expected: 32
+	// printf("VCB SIZE: %ld\n",sizeof(volume_control_block));
+	// fflush(stdout);
 
-	// volume_control_block *VCBptr = malloc(memoryNeeded);
+	//printf("VCBGlobal location:%d\n", VCBGlobal);
+	//fflush(stdout);
 
-	// if (VCBptr == NULL) {
-	// 	perror("malloc failure");
+	if (loadVCB(blockSize) != 0) {
+		fprintf(stderr, "loadVCB failed\n");
+		return -1;
+	}
+
+	// // read block 0 from disk into VCBGlobal
+	// // reads vcbBuffer to BOTH VCBGlobal and VCBGlobal
+	// VCBGlobal = loadVCB();
+	// if (VCBGlobal == NULL) {
+	// 	fprintf(stderr, "loadVCB failed");
 	// 	return -1;
 	// }
 
-	// // read block 0 from disk into VCBptr
-	// VCBptr = loadVCB();
 
 	// // Check if VCB is formatted using its signature
-	// if (VCBptr->signature == OUR_SIGNATURE) {
+	// if (VCBGlobal->signature == OUR_SIGNATURE) {
 	// 	printf("Volume already formatted. VCB signature matches.\n");
 	// 	return 0;
 	// }
 
-	// printf("Volume not formatted. Initializing VCB.\n");
+	// printf("Volume not formatted. Initializing VCB. HELLO\n");
 
-	// // init root dir ()
-	// // TODO: Trish
+	// fflush(stdout);
 
 	// // init free space ()
 	// // TODO: Assign the returned valued to the initVCB().
 	// // function is currently missing parameter for that
 
+	// printf("hello");
+
+	// fflush(stdout);
+
+	// // initialize root directory w/ 2 entries: '.' and '..'
+	// // NULL to have parent directory point to self
+	// directory_entry *root = createDirectory(2, NULL, blockSize);
+	// if(root == NULL) {
+	// 	printf("null after createdir");
+    // 	fflush(stdout);
+	// }
+
+	// printf("after createdir");
+
+	// fflush(stdout);
+
+    // int rootLoc = root[0].exts[0].location;
+	// if (rootLoc < 0)
+    // {
+    //     fprintf(stderr, "Failed to initialize root directory.\n");
+		
+    //     free(VCBGlobal);
+    //     return -1;
+    // }
+
+	// // initialize VCB with file system metadata
+	// // NOTE: free space location hard-coded to 1 for now as both initVCB
+	// // and initFileSystem rely on the other to already be initialized
+	// if (initVCB(VCBGlobal, numberOfBlocks, rootLoc,
+	// 	 	1 , OUR_SIGNATURE, blockSize) != 0)
+    // {
+    //     fprintf(stderr, "Failed to initialize VCB.\n");
+
+    //     free(VCBGlobal);
+    //     return -1;
+    // }
+
+	// printf("after initvcb");
+
 	// // initialize free space
-	// int freeSpaceStart = initFreeSpace(blockSize, numberOfBlocks);
+	// int freeSpaceStart = initFreeSpace(numberOfBlocks);
     // if (freeSpaceStart < 0)
     // {
-    //     printf("Failed to initialize free space.\n");
-    //     free(VCBptr);
+    //     fprintf(stderr, "Failed to initialize free space.\n");
+
+    //     free(VCBGlobal);
     //     return -1;
     // }
 
-	// // initialize root directory
-	// int rootLoc = initRootDirectory(blockSize);
-    // if (rootLoc < 0)
-    // {
-    //     printf("Failed to initialize root directory.\n");
-    //     free(VCBptr);
-    //     return -1;
-    // }
-
-	// // initialize VCB with file sys metadata
-	// if (initVCB(VCBptr, OUR_SIGNATURE, numberOfBlocks, rootLoc, blockSize) != 0)
-    // {
-    //     printf("Failed to initialize VCB.\n");
-    //     free(VCBptr);
-    //     return -1;
-    // }
+	// printf("after initfs");
 
 	// // write VCB block 0 
-    // if (LBAwrite(VCBptr, blocksNeeded, 0) != blocksNeeded)
+    // if (LBAwrite(VCBGlobal, blocksNeeded, 0) != blocksNeeded)
     // {
-    //     printf("Failed to write VCB to disk.\n");
-    //     free(VCBptr);
+    //     fprintf(stderr, "Failed to write VCB to disk.\n");
+
+    //     free(VCBGlobal);
     //     return -1;
     // }
+
+	// printf("after write");
 
     return 0;
 }
