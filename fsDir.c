@@ -27,7 +27,7 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent,
     if (initialEntryCount < 2)
     {
         // need at least "." and ".." entries
-        fprintf(stderr, "Error: initialEntryCount must be at least 2.\n");
+        fprintf(stderr, "Error: InitialEntryCount must be at least 2.\n");
         return NULL;
     }
 
@@ -45,6 +45,8 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent,
     directory_entry *newDir = malloc(memoryNeeded);
     if (newDir == NULL)
     {
+        perror("createDir() malloc");
+        fflush(stderr);
         return NULL;
     }
 
@@ -56,6 +58,7 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent,
     if (location < 0)
     {
         free(newDir);
+        fprintf(stderr, "getBlocks failed: fsDir.c\n");
         return NULL;
     }
 
@@ -99,6 +102,7 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent,
     // write entire directory to disk
     if (LBAwrite(newDir, blocksNeeded, location) != blocksNeeded)
     {
+        fprintf(stderr, "LBAwrite failed: fsDir.c\n");
         free(newDir);
         return NULL;
     }

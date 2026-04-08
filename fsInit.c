@@ -30,28 +30,10 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	{
 	printf ("Initializing File System with %ld blocks with a block size of %ld\n", numberOfBlocks, blockSize);
 
-	
-	// memoryNeeded expected: 512
-	// sizeof(volume_control_block) expected: 32
-	// printf("VCB SIZE: %ld\n",sizeof(volume_control_block));
-	// fflush(stdout);
-
-	//printf("VCBGlobal location:%d\n", VCBGlobal);
-	//fflush(stdout);
-
 	if (loadVCB(blockSize) != 0) {
 		fprintf(stderr, "loadVCB failed\n");
 		return -1;
 	}
-
-	// // read block 0 from disk into VCBGlobal
-	// // reads vcbBuffer to BOTH VCBGlobal and VCBGlobal
-	// VCBGlobal = loadVCB();
-	// if (VCBGlobal == NULL) {
-	// 	fprintf(stderr, "loadVCB failed");
-	// 	return -1;
-	// }
-
 
 	// // Check if VCB is formatted using its signature
 	// if (VCBGlobal->signature == OUR_SIGNATURE) {
