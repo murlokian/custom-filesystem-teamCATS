@@ -11,7 +11,8 @@
 * Description:: Debugging macros for file system assignment.
 *
 * This file contains debugging macros for use throughout the file 
-* system implementation
+* system implementation. If the macro is not defined, the debug 
+* statements will compile away entirely.
 *
 **************************************************************/
 
@@ -19,14 +20,22 @@
 #define DEBUG_H
 
 #ifdef DEBUG_ENABLED
+
+  // Debug print function similar to fprintf() writing to stderr but includes 
+  // file and line number information
   #define DEBUG(fmt, ...) \
     fprintf(stderr, "[DEBUG] %s:%d: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+
+  // Debug print function similar to perrror() but includes file and line number information
   #define DEBUG_ERR(fmt, ...) \
     fprintf(stderr, "[DEBUG] %s:%d: " fmt ": %s\n", __FILE__, __LINE__, ##__VA_ARGS__, strerror(errno))
+
 #else
+
   // These compile away entirely
   #define DEBUG(...) ((void)0)
   #define DEBUG_ERR(...) ((void)0) 
+
 #endif
 
 #endif
