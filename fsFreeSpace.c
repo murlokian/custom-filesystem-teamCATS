@@ -9,9 +9,9 @@
 * File:: fsFreeSpace.c
 *
 * Description::  This is the freespace system.  We are using a three-level extent 
-* table system to track free space.  Extents will be organized into primary, 
-* secondary, and tertiary levels which are created as needed as the disk becomes 
-* fragmented and the number of free extents increases.  
+* table system to track free space.  Extents will be organized into primary and
+* secondary levels which are created as needed as the disk becomes fragmented
+* and the number of free extents increases.  
 *
 **************************************************************/
 
@@ -23,6 +23,7 @@
 #include "fsLow.h"
 #include "fsDir.h"
 #include "fsVCB.h"
+#include "debug.h"
 
 extent* freespaceExtsGlobal = NULL;
 bool freeSpaceInitialized = false;
@@ -36,9 +37,7 @@ int initFreeSpace(uint64_t blockCount) {
 	int vcbNumBlocks = (sizeof(volume_control_block) + blockSize - 1) / blockSize;
 	int blockAfterVCB = VCB_BLOCK_LOCATION + vcbNumBlocks;
 
-	#ifdef DEBUG_FREESPACE
-	printf("Address of freespaceLocation: %d\n", blockAfterVCB);
-	#endif
+	DEBUG("Address of freespaceLocation: %d\n", blockAfterVCB);
 
 	int freespaceLocation = blockAfterVCB;
 
@@ -46,10 +45,11 @@ int initFreeSpace(uint64_t blockCount) {
 	int numExtents = (NUM_FREESPACE_BLOCKS * blockSize ) / sizeof(extent);
 	int bytesNeeded = numExtents * sizeof(extent);
 
-    // *** FIx: Load until sentinel to save memory ***  
+    // *** Fix: Load until sentinel to save memory ***
     extent* extents = malloc(bytesNeeded);
-    if(extents == NULL) {
-        perror("malloc failed");
+    if(extents == NULL) 
+	{
+		DEBUG("malloc failed in initFreeSpace");
         return -1;
     }
 
@@ -63,14 +63,15 @@ int initFreeSpace(uint64_t blockCount) {
 		extents[i].length = 0;
 	}
 
-	// Keep runtime extents copy  
+	// Keep runtime extents copy
 	freespaceExtsGlobal = extents;
 
 	// Write extents to disk  
 	int LBAblocks = LBAwrite(extents, NUM_FREESPACE_BLOCKS, freespaceLocation); 
-	if(LBAblocks != NUM_FREESPACE_BLOCKS) {
-		fprintf(stderr, "LBAwrite failed in initFreeSpace\n");
-		free(extents);
+	if(LBAblocks != NUM_FREESPACE_BLOCKS) 
+	{
+		DEBUG("LBAwrite failed in initFreeSpace");
+		free(freespaceExtsGlobal);
 		freespaceExtsGlobal = NULL;
 		return -1;
 	}
@@ -82,18 +83,20 @@ int initFreeSpace(uint64_t blockCount) {
 
 extent* getBlocks(int numBlocks, int minContiguous) {
     // Ensure freespace system has been initialized  
-    if(!freeSpaceInitialized){
-        fprintf(stderr, "Error: Free space system not initialized.\n");
+    if(!freeSpaceInitialized)
+	{
+        DEBUG("Error: Free space system not initialized.");
         return NULL;
     }
 
     int blockSize = VCBGlobal->blockSize;
     int blocksLeft = numBlocks;
 
-    // Allocate memory for extents  
+    // Allocate memory for extents
     extent* exts = malloc(numBlocks * sizeof(extent));
-    if(exts == NULL) {
-        perror("malloc failed in getBlocks");
+    if(exts == NULL) 
+	{
+        DEBUG("malloc failed in getBlocks");
         return NULL;
     }
     int numExts = 0;
@@ -144,8 +147,9 @@ extent* getBlocks(int numBlocks, int minContiguous) {
         int bytesNeeded = sizeof(extent) * numFsExtents;
         int blocksNeeded = (bytesNeeded + blockSize - 1) / blockSize;
         if(LBAwrite(freespaceExtsGlobal, blocksNeeded, VCBGlobal->freespaceLocation) 
-            != blocksNeeded) {
-            fprintf(stderr, "LBAwrite failed in getBlocks\n");
+            != blocksNeeded) 
+		{
+			DEBUG("LBAwrite failed in getBlocks");
             free(exts);
             exts = NULL;
             return NULL;
