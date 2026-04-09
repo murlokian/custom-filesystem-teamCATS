@@ -19,6 +19,10 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+
 #ifdef DEBUG_ENABLED
 
   // Debug print function similar to fprintf() writing to stderr but includes 

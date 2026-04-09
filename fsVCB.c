@@ -23,10 +23,11 @@
 volume_control_block* VCBGlobal = NULL;
 
 // Reads VCB from VCB_BLOCK_LOCATION on disk
+// Returns pointer to VCB struct with allocated memory rounded to blockSize
 volume_control_block *loadVCB(uint64_t blockSize) {
     
     // Allocate memory for VCB pointer, rounding up to the nearest block size
-    // so it can be passed to LBAread and LBAwrite
+    // NOTE: rounded so that it can be passed to LBAread and LBAwrite
    	int memoryNeeded = sizeof(volume_control_block);
 	int blocksNeeded = (memoryNeeded + blockSize - 1) / blockSize;
 	memoryNeeded = blocksNeeded * blockSize;
