@@ -52,7 +52,7 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 		return 0;
 	}
 
-	DEBUG("Volume not formatted. VCB signature does not match. Initializing file system");
+	DEBUG("Volume not formatted, VCB signature does not match. Initializing file system");
 
 	// Partially fill in the global VCB so it can be accessed by initFreeSpace and
 	// createDirectory, which will later be assigned to other members in VBCGLobal

@@ -37,9 +37,9 @@
 
 #else
 
-  // These compile away entirely
-  #define DEBUG(...) ((void)0)
-  #define DEBUG_ERR(...) ((void)0) 
+	// These compile away entirely
+	#define DEBUG(...) ((void)0)
+	#define DEBUG_ERR(...) ((void)0) 
 
 #endif
 
