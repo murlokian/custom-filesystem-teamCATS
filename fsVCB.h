@@ -28,25 +28,25 @@
 // of the file system
 typedef struct volume_control_block {
 
-    // blockCount member is an unsigned 64-bit value which is the amount of blocks
-    // in the volume
-    uint64_t blockCount;
+	// blockCount member is an unsigned 64-bit value which is the amount of blocks
+	// in the volume
+	uint64_t blockCount;
 
-    // rootLocation is an unsigned 64-bit value which is the block location on disk
-    // of the root directory
-    uint64_t rootLocation;
+	// rootLocation is an unsigned 64-bit value which is the block location on disk
+	// of the root directory
+	uint64_t rootLocation;
 
-    // freespaceLocation is an unsigned 64-bit value which is the block location on disk
-    // of the first freespace extent  
-    uint64_t freespaceLocation;
+	// freespaceLocation is an unsigned 64-bit value which is the block location on disk
+	// of the first freespace extent  
+	uint64_t freespaceLocation;
 
-    // signature is an unsigned 32-bit value that stores the signature of
-    // of the machine which formatted the volume
-    uint32_t signature;
+	// signature is an unsigned 32-bit value that stores the signature of
+	// of the machine which formatted the volume
+	uint32_t signature;
 
-    // blockSize member is an unsigned 32-bit value which is the size of each block 
-    // in bytes
-    uint32_t blockSize;
+	// blockSize member is an unsigned 32-bit value which is the size of each block 
+	// in bytes
+	uint32_t blockSize;
 
 } volume_control_block;
 

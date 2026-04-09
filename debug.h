@@ -25,14 +25,15 @@
 
 #ifdef DEBUG_ENABLED
 
-  // Debug print function similar to fprintf() writing to stderr but includes 
-  // file and line number information
-  #define DEBUG(fmt, ...) \
-    fprintf(stderr, "[DEBUG] %s:%d: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+	// Debug print function similar to fprintf() writing to stderr but includes 
+	// file and line number information
+	#define DEBUG(fmt, ...) \
+		fprintf(stderr, "[DEBUG] %s:%d: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
 
-  // Debug print function similar to perrror() but includes file and line number information
-  #define DEBUG_ERR(fmt, ...) \
-    fprintf(stderr, "[DEBUG] %s:%d: " fmt ": %s\n", __FILE__, __LINE__, ##__VA_ARGS__, strerror(errno))
+	// Debug print function similar to perrror() but includes file and line number information
+	#define DEBUG_ERR(fmt, ...) \
+		fprintf(stderr, "[DEBUG] %s:%d: " fmt ": %s\n", __FILE__, __LINE__, ##__VA_ARGS__, 
+		strerror(errno))
 
 #else
 

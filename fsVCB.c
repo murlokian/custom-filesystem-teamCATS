@@ -25,28 +25,28 @@ volume_control_block* VCBGlobal = NULL;
 // Reads VCB from VCB_BLOCK_LOCATION on disk
 // Returns pointer to VCB struct with allocated memory rounded to blockSize
 volume_control_block *loadVCB(uint64_t blockSize) {
-    
-    // Allocate memory for VCB pointer, rounding up to the nearest block size
-    // NOTE: rounded so that it can be passed to LBAread and LBAwrite
+	
+	// Allocate memory for VCB pointer, rounding up to the nearest block size
+	// NOTE: rounded so that it can be passed to LBAread and LBAwrite
    	int memoryNeeded = sizeof(volume_control_block);
 	int blocksNeeded = (memoryNeeded + blockSize - 1) / blockSize;
 	memoryNeeded = blocksNeeded * blockSize;
 
-    volume_control_block* VCBBuffer = malloc(memoryNeeded);
-    
-    if(VCBBuffer == NULL) 
-    {
-        DEBUG_ERR("malloc failed: fsVCB.c\n");
-        return NULL;
-    }
+	volume_control_block* VCBBuffer = malloc(memoryNeeded);
+	
+	if(VCBBuffer == NULL) 
+	{
+		DEBUG_ERR("malloc failed: fsVCB.c\n");
+		return NULL;
+	}
 
-    // Read VCB_BLOCK_LOCATION from disk  
-    if(LBAread(VCBBuffer, 1, VCB_BLOCK_LOCATION) <= 0) 
-    {
-        DEBUG("LBAread failed: fsVCB.c\n");
-        free(VCBBuffer);
-        VCBBuffer = NULL;
-    }
+	// Read VCB_BLOCK_LOCATION from disk  
+	if(LBAread(VCBBuffer, 1, VCB_BLOCK_LOCATION) <= 0) 
+	{
+		DEBUG("LBAread failed: fsVCB.c\n");
+		free(VCBBuffer);
+		VCBBuffer = NULL;
+	}
 
-    return VCBBuffer;
+	return VCBBuffer;
 }

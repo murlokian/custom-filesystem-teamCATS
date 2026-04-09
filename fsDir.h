@@ -27,41 +27,41 @@
 
 typedef struct extent {  // 16 bytes
 	
-    // location is an unsigned 64-bit value which is the location of a starting
-    // block of contiguous free space. 0 signifies invalid/unused extent  
-    uint64_t location;
+	// location is an unsigned 64-bit value which is the location of a starting
+	// block of contiguous free space. 0 signifies invalid/unused extent  
+	uint64_t location;
   
-    // length is an unsigned 64-bit value which contains the total amount of blocks
-    // that this extent spans
-    uint64_t length;
+	// length is an unsigned 64-bit value which contains the total amount of blocks
+	// that this extent spans
+	uint64_t length;
 
 } extent;
 
 typedef struct directory_entry {
 
-    // size member is an unsigned 64-bit value which is the size of the entry
-    // measured in bytes
-    uint64_t size;
+	// size member is an unsigned 64-bit value which is the size of the entry
+	// measured in bytes
+	uint64_t size;
 
-    // creationDate, lastEditDate, and lastAccessDate are all time_t (8 byte)
-    // that represents the number of seconds since some common epoch (tbd)
-    time_t creationDate;
-    time_t lastEditDate;
-    time_t lastAccessDate;
+	// creationDate, lastEditDate, and lastAccessDate are all time_t (8 byte)
+	// that represents the number of seconds since some common epoch (tbd)
+	time_t creationDate;
+	time_t lastEditDate;
+	time_t lastAccessDate;
 
-    // exts is an array of extents for indexing each entry's data in memory  
-    extent exts[NUM_DIR_EXTENTS];
+	// exts is an array of extents for indexing each entry's data in memory  
+	extent exts[NUM_DIR_EXTENTS];
 
-    // entryType member is a boolean that represents whether an entry is
-    // a directory or a file. 
-    // 0 for file, 1 for directory
-    bool entryType;
+	// entryType member is a boolean that represents whether an entry is
+	// a directory or a file. 
+	// 0 for file, 1 for directory
+	bool entryType;
 
-    // name member is a char array that contains the name of the entry
-    // Names are unique within the scope of a directory
-    // Max size of name is defined by a macro
-    // if value is "\0" then the entry is unused
-    char name[MAX_ENTRY_NAME_SIZE];
+	// name member is a char array that contains the name of the entry
+	// Names are unique within the scope of a directory
+	// Max size of name is defined by a macro
+	// if value is "\0" then the entry is unused
+	char name[MAX_ENTRY_NAME_SIZE];
 
 } directory_entry;
 
