@@ -18,33 +18,34 @@
 
 #include "fsVCB.h"
 #include "fsLow.h"
+#include "debug.h"
 
 volume_control_block* VCBGlobal = NULL;
 
+// Reads VCB from VCB_BLOCK_LOCATION on disk
 volume_control_block *loadVCB(uint64_t blockSize) {
     
-    // allocate memory for VCB pointer, rounding up to the nearest block size
+    // Allocate memory for VCB pointer, rounding up to the nearest block size
+    // so it can be passed to LBAread and LBAwrite
    	int memoryNeeded = sizeof(volume_control_block);
 	int blocksNeeded = (memoryNeeded + blockSize - 1) / blockSize;
 	memoryNeeded = blocksNeeded * blockSize;
 
-    // TODO: volume_control_block size is 32 bytes yet we malloc a whole block...
-    // fix later.............?  
     volume_control_block* VCBBuffer = malloc(memoryNeeded);
     
-    if(VCBBuffer == NULL) {
-        perror("malloc failed: fsVCB.c\n");
+    if(VCBBuffer == NULL) 
+    {
+        DEBUG_ERR("malloc failed: fsVCB.c\n");
         return NULL;
     }
 
-    // Read block 0 from disk  
-    if(LBAread(VCBBuffer, 1, VCB_BLOCK_LOCATION) <= 0) {
-        fprintf(stderr, "LBAread failed: fsVCB.c\n");
-        
+    // Read VCB_BLOCK_LOCATION from disk  
+    if(LBAread(VCBBuffer, 1, VCB_BLOCK_LOCATION) <= 0) 
+    {
+        DEBUG("LBAread failed: fsVCB.c\n");
         free(VCBBuffer);
-        return NULL;
+        VCBBuffer = NULL;
     }
 
-    // Return localVCB to check signature before saving to VCBGlobal 
     return VCBBuffer;
 }

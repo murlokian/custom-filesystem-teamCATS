@@ -1,9 +1,9 @@
 /**************************************************************
  * Class::  CSC-415-03 Fall 2026
- * Name::  Allie Young, Milo Pesce Ares
- * Student IDs::  923129607, 921926821
- * GitHub-Name::  milo-pa
- * Group-Name::  CATS
+ * Name:: Allie Young, Milo Pesce Ares
+ * Student IDs:: 923129607, 921926821
+ * GitHub-Name:: milo-pa
+ * Group-Name:: CATS
  * Project:: Basic File System
  *
  * File:: fsVCB.h
@@ -23,6 +23,9 @@
 
 #define VCB_BLOCK_LOCATION 0
 
+// Volume Control Block struct used for managing the file system.  
+// It is loaded when the file system is initialized and stores the metadata
+// of the file system
 typedef struct volume_control_block {
 
     // blockCount member is an unsigned 64-bit value which is the amount of blocks
