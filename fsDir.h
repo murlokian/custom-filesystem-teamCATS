@@ -8,8 +8,8 @@
 *
 * File:: fsDir.h
 *
-* Description:: This is a header file for the extent and directory entry structs
-* and related functions.  
+* Description:: This is a header file for the extent and directory 
+* entry structs and related functions.  
 *
 **************************************************************/
 
@@ -23,9 +23,14 @@
 // file name length that is similar to other major operating systems but fills in 
 // all padding
 #define MAX_ENTRY_NAME_SIZE 255
-#define NUM_DIR_EXTENTS       5
 
-typedef struct extent {  // 16 bytes
+// NUM_DIR_EXTENTS is the number of extents that a directory entry can have.
+// 5 should be sufficient for most files/directories, but secondary extent tables 
+// can be added if needed.
+#define NUM_DIR_EXTENTS 5
+
+// An extent represents a contiguous run of blocks on disk
+typedef struct extent {
 	
 	// location is an unsigned 64-bit value which is the location of a starting
 	// block of contiguous free space. 0 signifies invalid/unused extent  
@@ -65,7 +70,8 @@ typedef struct directory_entry {
 
 } directory_entry;
 
-// create directory and allocate disk space
+// Populates and writes a directory to disk. Minimum 2 initial entries for "." and ".." required
+// Returns pointer to directory_entry struct with allocated memory rounded up to blockSize
 directory_entry *createDirectory(int initialEntryCount, directory_entry *parent);
 
 #endif

@@ -55,7 +55,7 @@ typedef struct volume_control_block {
 extern volume_control_block *VCBGlobal;
 
 // Reads VCB from VCB_BLOCK_LOCATION on disk
-// Returns pointer to VCB struct with allocated memory rounded to blockSize
+// Returns pointer to VCB struct with allocated memory rounded up to blockSize
 volume_control_block *loadVCB(uint64_t blockSize);
 
 #endif

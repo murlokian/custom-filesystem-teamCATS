@@ -22,56 +22,55 @@
 #include "fsFreeSpace.h"
 #include "fsLow.h"
 #include "fsVCB.h"
+#include "debug.h"
 
 directory_entry *createDirectory(int initialEntryCount, directory_entry *parent) {
+
+	// Check that initial entry count is at least 2 for "." and ".." entries
 	if (initialEntryCount < 2)
 	{
-		// need at least "." and ".." entries
-		fprintf(stderr, "Error: InitialEntryCount must be at least 2.\n");
+		DEBUG("initialEntryCount must be at least 2.");
 		return NULL;
 	}
 
+	// Get block size from VCB for memory allocation and disk I/O calculations
 	int blockSize = VCBGlobal->blockSize;
 
-	// calculate requested memory depending on requested entries
+	// Calculate memory for DE pointer, rounding up to the nearest block size
+	// so that it can be passed to LBAread and LBAwrite
 	int memoryNeeded = initialEntryCount * sizeof(directory_entry);
-
-	// disK I/O block units
 	int blocksNeeded = (memoryNeeded + (blockSize - 1)) / blockSize;
-
-	printf("Creating directory with %d entries, which requires %d bytes and %d blocks.\n",
-		   initialEntryCount, memoryNeeded, blocksNeeded);
-
 	memoryNeeded = blocksNeeded * blockSize;
 
-	// recalc how much entries fit in allocated space
+	// Calculate the number of directory entries that can now fit in the allocated memory
+	// since you may be able to fit more due to rounding up to the nearest block size
 	int entryCount = memoryNeeded / sizeof(directory_entry);
 
-	// allocate RAM 
-	directory_entry *newDir = malloc(memoryNeeded);
+	DEBUG("Creating directory with %d entries, which requires %d bytes and %d blocks.",
+		  initialEntryCount, memoryNeeded, blocksNeeded);
+
+	directory_entry *newDir = calloc(1, memoryNeeded);
 	if (newDir == NULL)
 	{
-		perror("createDir() malloc");
-		fflush(stderr);
+		DEBUG_ERR("malloc failed: fsDir.c");
 		return NULL;
 	}
 
-	// unused entries begin in an empty state
-	memset(newDir, 0, memoryNeeded);
-
-	// get blocks on disk for this directory
+	// Get blocks on disk for this directory
 	int location = getBlocks(blocksNeeded); // getBlocks to be written in fsFreeSpace.c
 	if (location < 0)
 	{
 		free(newDir);
-		fprintf(stderr, "getBlocks failed: fsDir.c\n");
+		newDir = NULL;
+		DEBUG("getBlocks failed: fsDir.c");
 		return NULL;
 	}
 
-	// timestamp for directory metadata
+	// Get timestamp for directory metadata once
 	time_t curDate = time(NULL);
 
-	// "." entry points
+	// Populate "." entry which points to the directory itself. 
+	// This is required for all directories including root.
 	strcpy(newDir[0].name, ".");
 	newDir[0].entryType = true;
 	newDir[0].size = entryCount * sizeof(directory_entry);
@@ -81,14 +80,15 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent)
 	newDir[0].exts[0].location = location;
 	newDir[0].exts[0].length = blocksNeeded * blockSize;
 
-	// if parent NULL this is root directory
+	// if parent parameter is NULL, set parent to the new directory
 	// ".." should point back to the root itself
 	if (parent == NULL)
 	{
 		parent = newDir;
 	}
 
-	// ".." entry points to parent directoty
+	// Populate ".." entry which points to the parent directory.
+	// This is required for all directories including root
 	strcpy(newDir[1].name, "..");
 	newDir[1].entryType = true;
 	newDir[1].size = parent[0].size;
@@ -98,18 +98,18 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent)
 	newDir[1].exts[0].location = parent[0].exts[0].location;
 	newDir[1].exts[0].length = parent[0].exts[0].length;
 
-	// all remaining unused entries 
-	// name[0] = '\0' for free directory slot
+	// Mark all unused entries as not used by setting name to "\0"
 	for (int i = 2; i < entryCount; i++)
 	{
 		newDir[i].name[0] = '\0';
 	}
 
-	// write entire directory to disk
+	// Write entire directory to disk
 	if (LBAwrite(newDir, blocksNeeded, location) != blocksNeeded)
 	{
-		fprintf(stderr, "LBAwrite failed: fsDir.c\n");
+		DEBUG("LBAwrite failed: fsDir.c");
 		free(newDir);
+		newDir = NULL;
 		return NULL;
 	}
 
