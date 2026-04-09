@@ -19,11 +19,11 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-
 #ifdef DEBUG_ENABLED
+
+	#include <stdio.h>
+	#include <string.h>
+	#include <errno.h>
 
 	// Debug print function similar to fprintf() writing to stderr but includes 
 	// file and line number information
@@ -32,7 +32,7 @@
 
 	// Debug print function similar to perrror() but includes file and line number information
 	#define DEBUG_ERR(fmt, ...) \
-		fprintf(stderr, "[DEBUG] %s:%d: " fmt ": %s\n", __FILE__, __LINE__, ##__VA_ARGS__, 
+		fprintf(stderr, "[DEBUG] %s:%d: " fmt ": %s\n", __FILE__, __LINE__, ##__VA_ARGS__, \
 		strerror(errno))
 
 #else
