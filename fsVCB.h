@@ -41,13 +41,10 @@ typedef struct volume_control_block {
     // of the machine which formatted the volume
     uint32_t signature;
 
-    // blockSize member is an unsigned 16-bit value which is the size of each block 
+    // blockSize member is an unsigned 32-bit value which is the size of each block 
     // in bytes
-    uint16_t blockSize;
+    uint32_t blockSize;
 
-    // NOTE: there are 2 bytes of external padding. Could be used as a bitmap
-    // to indicate file system type? Unclear if we need to support multiple
-    // file systems
 } volume_control_block;
 
 // VCB will be global so we can access it across many functions and files
