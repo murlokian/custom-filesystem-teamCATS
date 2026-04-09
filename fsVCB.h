@@ -50,11 +50,12 @@ typedef struct volume_control_block {
 
 } volume_control_block;
 
-// VCB will be global so we can access it across many functions and files
+// Global instance of VCB so it can be accessed across many functions and files
 // and because there is only one VCB per volume.
 extern volume_control_block *VCBGlobal;
 
-// Read block 0 from disk, set and allocate memory for global VCBGLOBAL 
+// Reads VCB from VCB_BLOCK_LOCATION on disk
+// Returns pointer to VCB struct with allocated memory rounded to blockSize
 volume_control_block *loadVCB(uint64_t blockSize);
 
 #endif
