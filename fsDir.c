@@ -38,6 +38,10 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent)
 
     // disK I/O block units
     int blocksNeeded = (memoryNeeded + (blockSize - 1)) / blockSize;
+
+    printf("Creating directory with %d entries, which requires %d bytes and %d blocks.\n",
+           initialEntryCount, memoryNeeded, blocksNeeded);
+
     memoryNeeded = blocksNeeded * blockSize;
 
     // recalc how much entries fit in allocated space

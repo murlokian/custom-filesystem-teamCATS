@@ -25,71 +25,74 @@
 #include "fsVCB.h"
 #include "fsFreeSpace.h"
 #include "fsDir.h"
+#include "debug.h"
 
 int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	{
 	printf ("Initializing File System with %ld blocks with a block size of %ld\n", numberOfBlocks, blockSize);
 
+	// Load the VCB into memory so we can check the signature and initialize 
+	// the free space and root directory
+	// VCB is loaded into a global variable so it can be accessed by other 
+	// functions that need to read/write the VCB
 	VCBGlobal = loadVCB(blockSize);
-	if (VCBGlobal == NULL) {
-		fprintf(stderr, "loadVCB failed\n");
-
+	if (VCBGlobal == NULL) 
+	{
+		DEBUG("loadVCB failed");
 		return -1;
 	}
 
-	// Check if VCB is formatted using its signature
-	if (VCBGlobal->signature == OUR_SIGNATURE) {
-		printf("Volume already formatted. VCB signature matches.\n");
+	DEBUG("VCB loaded successfully");
 
-		// If already formatted, exit early
+	// Check if VCB is formatted using its signature. 
+	// If it matches, exit early with success. If not, initialize file system.
+	if (VCBGlobal->signature == OUR_SIGNATURE) 
+	{
+		DEBUG("Volume already formatted. VCB signature matches.");
 		return 0;
 	}
 
-	printf("Volume not formatted. Initializing VCB.\n");
+	DEBUG("Volume not formatted. VCB signature does not match. Initializing file system.");
 
-	// Partially fill in the VCB so it can be accessed by initFreeSpace and createDirectory,
-	// which will later be assigned to members in VBCGLobal
+	// Partially fill in the global VCB so it can be accessed by initFreeSpace and
+	// createDirectory, which will later be assigned to other members in VBCGLobal
 	VCBGlobal->blockCount = numberOfBlocks;
 	VCBGlobal->blockSize = blockSize;
 	VCBGlobal->signature = OUR_SIGNATURE;
 
-	// initialize free space
+	// Initialize free space and assign to VCBGlobal
 	int freeSpaceStart = initFreeSpace(numberOfBlocks);
-    if (freeSpaceStart < 0)
-    {
-        fprintf(stderr, "Failed to initialize free space.\n");
-
+    if (freeSpaceStart < 0) 
+	{
+		DEBUG("initFreeSpace failed");
         return -1;
     }
 	VCBGlobal->freespaceLocation = freeSpaceStart;
-	// puts("after initFreeSpace\n");
 
-	// initialize root directory w/ 2 entries: '.' and '..'
-		// pass NULL to have parent directory point to self
+	// initialize root directory and assign its location to VCBGlobal
+		// NOTE: pass NULL to have parent directory point to self
 	directory_entry *root = createDirectory(2, NULL);
-	if(root == NULL) {
-		fprintf(stderr, "createDirectory failed\n");
-
+	if(root == NULL) 
+	{
+		DEBUG("createDirectory failed");
 		return -1;
 	}
 
     int rootLoc = root[0].exts[0].location;
-	if (rootLoc < 0)
-    {
-        fprintf(stderr, "Failed to initialize root directory.\n");
-		
+	if (rootLoc < 0) 
+	{
+		DEBUG("createDirectory failed to allocate blocks for root directory");
         return -1;
     }
 	VCBGlobal->rootLocation = rootLoc;
 	free(root);
 
-	// write VCB block 0 
+	// Write completely populated VCB to block VCB_BLOCK_LOCATION on disk (block 0)
 	int memoryNeeded = sizeof(volume_control_block);
 	int blocksNeeded = (memoryNeeded + blockSize - 1) / blockSize;
     if (LBAwrite(VCBGlobal, blocksNeeded, VCB_BLOCK_LOCATION) != blocksNeeded)
     {
-        fprintf(stderr, "Failed to write VCB to disk.\n");
-
+		DEBUG("LBAwrite failed for VCB");
         return -1;
     }
 

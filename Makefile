@@ -39,9 +39,9 @@ HW=
 FOPTION=
 RUNOPTIONS=SampleVolume 10000000 512
 CC=gcc
-CFLAGS= -g -I.
+CFLAGS= -g -I. $(if $(DEBUG),-DDEBUG_ENABLED)
 LIBS =pthread
-DEPS = 
+DEPS = debug.h
 # Add any additional objects to this list
 ADDOBJ= b_io.o fsDir.o fsFreeSpace.o fsInit.o fsVCB.o
 ARCH = $(shell uname -m)
