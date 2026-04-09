@@ -21,8 +21,12 @@
 #ifdef DEBUG_ENABLED
   #define DEBUG(fmt, ...) \
     fprintf(stderr, "[DEBUG] %s:%d: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+  #define DEBUG_ERR(fmt, ...) \
+    fprintf(stderr, "[DEBUG] %s:%d: " fmt ": %s\n", __FILE__, __LINE__, ##__VA_ARGS__, strerror(errno))
 #else
-  #define DEBUG(...) ((void)0)  // compiles away entirely
+  // These compile away entirely
+  #define DEBUG(...) ((void)0)
+  #define DEBUG_ERR(...) ((void)0) 
 #endif
 
 #endif
