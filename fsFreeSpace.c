@@ -46,11 +46,12 @@ int initFreeSpace(uint64_t blockCount) {
 	int numExtents = (NUM_FREESPACE_BLOCKS * blockSize ) / sizeof(extent);
 	int bytesNeeded = numExtents * sizeof(extent);
 
-	extent* extents = malloc(bytesNeeded);
-	if(extents == NULL) {
-		perror("malloc failed");
-		return -1;
-	}
+    // *** FIx: Load until sentinel to save memory ***  
+    extent* extents = malloc(bytesNeeded);
+    if(extents == NULL) {
+        perror("malloc failed");
+        return -1;
+    }
 
 	// Initialize freespace extents
 	int firstFreeBlock = freespaceLocation + NUM_FREESPACE_BLOCKS;
@@ -79,47 +80,85 @@ int initFreeSpace(uint64_t blockCount) {
 	return freespaceLocation;
 }
 
-// FIXME: change return to array of extents 
-int getBlocks(int numBlocks) {
-	// Ensure freespace system has been initialized  
-	if(!freeSpaceInitialized){
-		fprintf(stderr, "Error: Free space system not initialized.\n");
-		return -1;
-	}
+extent* getBlocks(int numBlocks, int minContiguous) {
+    // Ensure freespace system has been initialized  
+    if(!freeSpaceInitialized){
+        fprintf(stderr, "Error: Free space system not initialized.\n");
+        return NULL;
+    }
 
-	int blockSize = VCBGlobal->blockSize;
+    int blockSize = VCBGlobal->blockSize;
+    int blocksLeft = numBlocks;
 
-	// Iterate through freespace extents
-	// NOTE: This uses the first fit algorithm
-	// NOTE: consider best fit instead
-	int numExtents = (NUM_FREESPACE_BLOCKS * blockSize) / sizeof(extent);
-	for(int i = 0; i < numExtents; i++) {
-		// Found large enough extent  
-		if(freespaceExtsGlobal[i].length >= numBlocks) {
-			int loc = freespaceExtsGlobal[i].location;
+    // Allocate memory for extents  
+    extent* exts = malloc(numBlocks * sizeof(extent));
+    if(exts == NULL) {
+        perror("malloc failed in getBlocks");
+        return NULL;
+    }
+    int numExts = 0;
 
-			// Shrink freespace extent  
-			if(freespaceExtsGlobal[i].length == numBlocks) {
-				freespaceExtsGlobal[i].location = 0;
-			} else {
-				freespaceExtsGlobal[i].location += numBlocks;
-			}
-			freespaceExtsGlobal[i].length -= numBlocks;
+    // Iterate through freespace extents  
+    // NOTE: This uses the first fit algorithm
+    // NOTE: consider best fit instead
+    int numFsExtents = (NUM_FREESPACE_BLOCKS * blockSize) / sizeof(extent);
+    for(int i = 0; i < numFsExtents; i++) {
+        // Check for end of valid freespace extents  
+        if(freespaceExtsGlobal[i].location == 0) {
+            break;
+        }
 
-			// Write updated extents to disk
-			int bytesNeeded = sizeof(extent) * numExtents;
-			int blocksNeeded = (bytesNeeded + blockSize - 1) / blockSize;
+        // Skip unused/invalid extents  
+        if(freespaceExtsGlobal[i].length == 0) {
+            continue;
+        }
 
-			if(LBAwrite(freespaceExtsGlobal, blocksNeeded, VCBGlobal->freespaceLocation) 
-				!= blocksNeeded) {
-				fprintf(stderr, "LBAwrite failed in getBlocks\n");
-				return -1;
-			}
+        // Covered all requested blocks  
+        if(blocksLeft <= 0) {
+            break;
+        }
+        
+        // Find large enough extent, disregarding minimum contiguous requirement if
+        // at last extent  
+        int searchThreshold = (blocksLeft < minContiguous) ? blocksLeft : minContiguous;
+        if(freespaceExtsGlobal[i].length >= searchThreshold) {
+            // Set depending on if at last extent  
+            int toTake = (blocksLeft < freespaceExtsGlobal[i].length) ? 
+                blocksLeft : freespaceExtsGlobal[i].length;
 
-			return loc;
-		}
-	}
+            // Add to returned array  
+            exts[numExts].location = freespaceExtsGlobal[i].location;
+            exts[numExts].length = toTake;
+            numExts++;
 
-	// No space available  
-	return -1;
+            // Shrink freespace extent  
+            freespaceExtsGlobal[i].location += toTake;
+            freespaceExtsGlobal[i].length -= toTake;  
+
+            blocksLeft -= toTake;
+        }
+    }
+
+    if(blocksLeft <= 0) {
+        // Write updated extents to disk
+        int bytesNeeded = sizeof(extent) * numFsExtents;
+        int blocksNeeded = (bytesNeeded + blockSize - 1) / blockSize;
+        if(LBAwrite(freespaceExtsGlobal, blocksNeeded, VCBGlobal->freespaceLocation) 
+            != blocksNeeded) {
+            fprintf(stderr, "LBAwrite failed in getBlocks\n");
+            free(exts);
+            exts = NULL;
+            return NULL;
+        }
+
+        // Set sentinel at end of array  
+        exts[numExts].location = 0;
+        exts[numExts].length = 0;
+        return exts;
+    } else {
+        // No space available  
+        free(exts);
+        exts = NULL;
+        return NULL;
+    }
 }

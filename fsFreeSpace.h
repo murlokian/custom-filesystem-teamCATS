@@ -28,11 +28,8 @@ extern bool freeSpaceInitialized;
 // Returns start block of free space.
 int initFreeSpace(uint64_t blockCount);
 
-// *** FIX: what if there is enough but not contiguous. could possibly have a mergeFreespace
-// which is called if getBlocks fails (-1) then call getBlocks again 
-// prof feedback: return array of extents instead, 2nd arg for minimum contiguous chunk.
-// dir entries preferably contiguous ***
-// Allocates NUMBLOCKS contiguous blocks if possible. Returns disk address to extent  
-int getBlocks(int numBlocks);
+// Allocates NUMBLOCKS blocks in chunks which are at least MINCONTIGUOUS blocks
+// (save for last extent). Returns an array of extents  
+extent* getBlocks(int numBlocks, int minContiguous);
 
 #endif

@@ -1,7 +1,7 @@
 /**************************************************************
 * Class::  CSC-415-03 Spring 2026
-* Name:: Patricia Ann Payumo
-* Student IDs:: 923555591
+* Name:: Patricia Ann Payumo, Allie Young
+* Student IDs:: 923555591, 923129607
 * GitHub-Name::  milo-pa
 * Group-Name::  CATS
 * Project:: Basic File System
@@ -56,9 +56,11 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent)
 		return NULL;
 	}
 
-	// Get blocks on disk for this directory
-	int location = getBlocks(blocksNeeded); // getBlocks to be written in fsFreeSpace.c
-	if (location < 0)
+	// Get contiguous blocks on disk  
+	// NOTE: directory entries are preferably contiguous since they are small, 
+	// do not change size, and we are the file system  
+	extent* exts = getBlocks(blocksNeeded, blocksNeeded);
+	if (exts == NULL)
 	{
 		free(newDir);
 		newDir = NULL;
@@ -77,8 +79,9 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent)
 	newDir[0].creationDate = curDate;
 	newDir[0].lastEditDate = curDate;
 	newDir[0].lastAccessDate = curDate;
-	newDir[0].exts[0].location = location;
-	newDir[0].exts[0].length = blocksNeeded * blockSize;
+	for(int i = 0; i < NUM_DIR_EXTENTS && exts[i].length != 0; i++) {
+		newDir[0].exts[i] = exts[i];
+	}
 
 	// if parent parameter is NULL, set parent to the new directory
 	// ".." should point back to the root itself
@@ -95,8 +98,9 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent)
 	newDir[1].creationDate = parent[0].creationDate;
 	newDir[1].lastEditDate = parent[0].lastEditDate;
 	newDir[1].lastAccessDate = parent[0].lastAccessDate;
-	newDir[1].exts[0].location = parent[0].exts[0].location;
-	newDir[1].exts[0].length = parent[0].exts[0].length;
+	for(int i = 0; i < NUM_DIR_EXTENTS && parent[0].exts[i].length != 0; i++) {
+		newDir[1].exts[i] = parent[0].exts[i];
+	}
 
 	// Mark all unused entries as not used by setting name to "\0"
 	for (int i = 2; i < entryCount; i++)
@@ -105,13 +109,17 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent)
 	}
 
 	// Write entire directory to disk
-	if (LBAwrite(newDir, blocksNeeded, location) != blocksNeeded)
+	if (LBAwrite(newDir, blocksNeeded, exts[0].location) != blocksNeeded)
 	{
 		DEBUG("LBAwrite failed: fsDir.c");
 		free(newDir);
 		newDir = NULL;
 		return NULL;
 	}
+
+	// Free used resources  
+	free(exts);
+	exts = NULL;
 
 	return newDir;
 }
