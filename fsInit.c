@@ -86,6 +86,7 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
     }
 	VCBGlobal->rootLocation = rootLoc;
 	free(root);
+	root = NULL;
 
 	// Write completely populated VCB to block VCB_BLOCK_LOCATION on disk (block 0)
 	int memoryNeeded = sizeof(volume_control_block);
@@ -104,6 +105,8 @@ void exitFileSystem ()
 	printf ("System exiting\n");
 
 	// Free the global VCB variable if it has been allocated
-	if (VCBGlobal != NULL)
+	if (VCBGlobal != NULL) {
 		free(VCBGlobal);
+		VCBGlobal = NULL;
+	}
 	}
