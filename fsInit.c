@@ -49,7 +49,11 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	if (VCBGlobal->signature == OUR_SIGNATURE) 
 	{
 		DEBUG("Volume already formatted. VCB signature matches");
-		loadFreeSpace();
+		if (loadFreeSpace() != 0) 
+		{
+			DEBUG("loadFreeSpace failed");
+			return -1;
+		}
 		return 0;
 	}
 
