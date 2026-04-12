@@ -50,10 +50,18 @@ int fs_mkdir(const char *pathname, mode_t mode){
     //check if the directory was actually created
     //if(newDir == NULL) return -1;
 
-    //loop through s.parent for name[0] = "/0"
-
-    //put the new dir info in that slot 
+    //for(int i= 0; i < s.parent[0].size / sizeof(directory_entry); i++){
+    //loop through s.parent for name[0] = "\0"
+        //if(s.parent[i].name[0] == '\0'){
+        //put the new dir info in that slot
+        //parent[i] = newDir[0]
+        //strcpy(parent[i].name, s.name); //set the struct, then set the name
+        //break}
+    
+    //
+    //}
     //write updated parent back to disk
+    //LBAwrite(s.parent, s.parent[0].size / 512, s.parent[0].exts[0].location);
     
 
 
