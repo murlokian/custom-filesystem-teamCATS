@@ -30,6 +30,9 @@ extern bool freeSpaceInitialized;
 // Returns start block of free space.
 int initFreeSpace(uint64_t blockCount);
 
+// Loads free space extents from disk into memory
+void loadFreeSpace();
+
 // Allocates NUMBLOCKS blocks in chunks which are at least MINCONTIGUOUS blocks
 // (save for last extent). Returns an array of extents  
 extent* getBlocks(int numBlocks, int minContiguous);

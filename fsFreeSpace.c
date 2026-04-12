@@ -37,7 +37,7 @@ int initFreeSpace(uint64_t blockCount) {
 	int vcbNumBlocks = (sizeof(volume_control_block) + blockSize - 1) / blockSize;
 	int blockAfterVCB = VCB_BLOCK_LOCATION + vcbNumBlocks;
 
-	DEBUG("Address of freespaceLocation: %d\n", blockAfterVCB);
+	DEBUG("Address of freespaceLocation: %d", blockAfterVCB);
 
 	int freespaceLocation = blockAfterVCB;
 
@@ -47,7 +47,7 @@ int initFreeSpace(uint64_t blockCount) {
 
     // *** Fix: Load until sentinel to save memory ***
     extent* extents = malloc(bytesNeeded);
-    if(extents == NULL) 
+    if(extents == NULL)
 	{
 		DEBUG("malloc failed in initFreeSpace");
         return -1;
@@ -83,11 +83,35 @@ int initFreeSpace(uint64_t blockCount) {
 	return freespaceLocation;
 }
 
+void loadFreeSpace() {
+    
+    int blockSize = VCBGlobal->blockSize;
+
+    // Allocate memory on heap for freespace extents
+	int numExtents = (NUM_FREESPACE_BLOCKS * blockSize ) / sizeof(extent);
+	int bytesNeeded = numExtents * sizeof(extent);
+
+    extent* extents = malloc(bytesNeeded);
+
+    int LBAblocks = LBAread(extents, NUM_FREESPACE_BLOCKS, VCBGlobal->freespaceLocation);
+    if (LBAblocks != NUM_FREESPACE_BLOCKS)
+    {
+        DEBUG("LBAread failed in loadFreeSpace");
+        return;
+    }
+
+    freespaceExtsGlobal = extents;
+
+    DEBUG("Free space loaded successfully");
+    DEBUG("Free Space extent one: location %lu, length %lu", 
+        freespaceExtsGlobal[0].location, freespaceExtsGlobal[0].length);
+}
+
 extent* getBlocks(int numBlocks, int minContiguous) {
     // Ensure freespace system has been initialized  
     if(!freeSpaceInitialized)
 	{
-        DEBUG("Error: Free space system not initialized.");
+        DEBUG("Error: Free space system not initialized");
         return NULL;
     }
 
@@ -146,10 +170,8 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 
     if(blocksLeft <= 0) {
         // Write updated extents to disk
-        int bytesNeeded = sizeof(extent) * numFsExtents;
-        int blocksNeeded = (bytesNeeded + blockSize - 1) / blockSize;
-        if(LBAwrite(freespaceExtsGlobal, blocksNeeded, VCBGlobal->freespaceLocation) 
-            != blocksNeeded) 
+        if(LBAwrite(freespaceExtsGlobal, NUM_FREESPACE_BLOCKS, VCBGlobal->freespaceLocation) 
+            != NUM_FREESPACE_BLOCKS) 
 		{
 			DEBUG("LBAwrite failed in getBlocks");
             free(exts);
