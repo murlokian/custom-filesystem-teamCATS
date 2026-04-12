@@ -20,6 +20,8 @@
 
 #include "fsDir.h"
 
+// Number of pre-allocated blocks for free space extents. 10 should be more
+// than enough for our purposes, but this can be increased if needed.
 #define NUM_FREESPACE_BLOCKS 10
 
 extern bool freeSpaceInitialized;

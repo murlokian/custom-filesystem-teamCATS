@@ -70,6 +70,7 @@ typedef struct directory_entry {
 } directory_entry;
 
 // Populates and writes a directory to disk. Minimum 2 initial entries for "." and ".." required
+// Pass NULL for parent if this is the root directory.
 // Returns pointer to directory_entry struct with allocated memory rounded up to blockSize
 directory_entry *createDirectory(int initialEntryCount, directory_entry *parent);
 

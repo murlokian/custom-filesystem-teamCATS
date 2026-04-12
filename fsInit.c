@@ -111,7 +111,8 @@ void exitFileSystem ()
 	printf ("System exiting\n");
 
 	// Free the global VCB variable if it has been allocated
-	if (VCBGlobal != NULL) {
+	if (VCBGlobal != NULL) 
+	{
 		free(VCBGlobal);
 		VCBGlobal = NULL;
 	}
