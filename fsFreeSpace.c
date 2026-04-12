@@ -58,6 +58,8 @@ int initFreeSpace(uint64_t blockCount) {
 
 	extents[0].location = firstFreeBlock;
 	extents[0].length = blockCount - firstFreeBlock;
+
+    // Couldn't this be optimized with calloc? or memset?
 	for(int i = 1; i < numExtents; i++) {
 		extents[i].location = 0;
 		extents[i].length = 0;
