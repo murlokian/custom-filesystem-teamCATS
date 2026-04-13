@@ -133,7 +133,7 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 	int blocksLeft = numBlocks;
 
 	// Allocate memory for extents
-	extent* exts = malloc(numBlocks * sizeof(extent));
+	extent* exts = malloc(numBlocks / minContiguous * sizeof(extent));
 	if(exts == NULL) 
 	{
 		DEBUG("malloc failed in getBlocks");
