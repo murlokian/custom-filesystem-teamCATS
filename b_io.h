@@ -16,10 +16,6 @@
 #define _B_IO_H
 #include <fcntl.h>
 
-#define O_RDONLY 0  // 0000
-#define O_WRONLY 1  // 0001
-#define O_RDWR 2    // 0010
-
 typedef int b_io_fd;
 
 b_io_fd b_open (char * filename, int flags);
