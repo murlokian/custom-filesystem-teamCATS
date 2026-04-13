@@ -28,7 +28,7 @@ extern bool freeSpaceInitialized;
 
 // Initialize freespace map with BLOCKCOUNT blocks of size BLOCKSIZE.  
 // Returns start block of free space.
-int initFreeSpace(uint64_t blockCount);
+int initFreeSpace(uint32_t blockCount);
 
 // Loads free space extents from disk into memory
 int loadFreeSpace();

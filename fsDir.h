@@ -36,11 +36,11 @@
 typedef struct extent {  
     // location is an unsigned 64-bit value which is the location of a starting
     // block of contiguous free space  
-    uint64_t location;
+    uint32_t location;
   
     // length is an unsigned 64-bit value which contains the total amount of blocks
     // that this extent spans
-    uint64_t length;
+    uint32_t length;
 } extent;
 
 typedef struct directory_entry {

@@ -28,7 +28,7 @@
 extent* freespaceExtsGlobal = NULL;
 bool freeSpaceInitialized = false;
 
-int initFreeSpace(uint64_t blockCount) {
+int initFreeSpace(uint32_t blockCount) {
 
 	int blockSize = VCBGlobal->blockSize;
 
@@ -115,7 +115,7 @@ int loadFreeSpace() {
 	freespaceExtsGlobal = extents;
 
 	DEBUG("Free space loaded successfully");
-	DEBUG("Free Space extent one: location %lu, length %lu", 
+	DEBUG("Free Space extent one: location %d, length %d", 
 		freespaceExtsGlobal[0].location, freespaceExtsGlobal[0].length);
 
 	return 0;

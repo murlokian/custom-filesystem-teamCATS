@@ -28,17 +28,17 @@
 // of the file system
 typedef struct volume_control_block {
 
-	// blockCount member is an unsigned 64-bit value which is the amount of blocks
+	// blockCount member is an unsigned 32-bit value which is the amount of blocks
 	// in the volume
-	uint64_t blockCount;
+	uint32_t blockCount;
 
-	// rootLocation is an unsigned 64-bit value which is the block location on disk
+	// rootLocation is an unsigned 32-bit value which is the block location on disk
 	// of the root directory
-	uint64_t rootLocation;
+	uint32_t rootLocation;
 
-	// freespaceLocation is an unsigned 64-bit value which is the block location on disk
+	// freespaceLocation is an unsigned 32-bit value which is the block location on disk
 	// of the first freespace extent  
-	uint64_t freespaceLocation;
+	uint32_t freespaceLocation;
 
 	// signature is an unsigned 32-bit value that stores the signature of
 	// of the machine which formatted the volume
@@ -56,6 +56,6 @@ extern volume_control_block *VCBGlobal;
 
 // Reads VCB from VCB_BLOCK_LOCATION on disk
 // Returns pointer to VCB struct with allocated memory rounded up to blockSize
-volume_control_block *loadVCB(uint64_t blockSize);
+volume_control_block *loadVCB(uint32_t blockSize);
 
 #endif
