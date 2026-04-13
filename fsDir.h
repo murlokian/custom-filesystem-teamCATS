@@ -74,4 +74,7 @@ typedef struct directory_entry {
 // Returns pointer to directory_entry struct with allocated memory rounded up to blockSize
 directory_entry *createDirectory(int initialEntryCount, directory_entry *parent);
 
+// Finds directory entry on disk using relative pathname PATH (C string)  
+directory_entry* getDirEntry(char* path);
+
 #endif
