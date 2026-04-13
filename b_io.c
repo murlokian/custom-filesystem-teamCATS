@@ -67,7 +67,7 @@ b_io_fd b_getFCB ()
 	
 // Interface to open a buffered file
 // Modification of interface for this assignment, flags match the Linux flags for open
-// O_RDONLY, O_WRONLY, or O_RDWR
+// O_CREAT, O_TRUNC, O_APPEND, O_RDONLY, O_WRONLY, or O_RDWR
 b_io_fd b_open (char * filename, int flags)
 	{
 	b_io_fd returnFd;
