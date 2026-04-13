@@ -83,8 +83,8 @@ b_io_fd b_open (char * filename, int flags)
 
 	if (returnFd == -1)
 	{
-	DEBUG("Error: No free file control blocks");
-	return -1;
+		DEBUG("Error: No free file control blocks");
+		return -1;
 	}
 	
 	return (returnFd);						// all set

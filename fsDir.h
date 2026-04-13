@@ -29,6 +29,8 @@
 // can be added if needed.
 #define NUM_DIR_EXTENTS 5
 
+#define DEFAULT_NUM_DIR_ENTRIES 50
+
 // 0 for length signifies unused/invalid extent, 0 for location is a sentinel value
 // signifying the end of the extent array  
 typedef struct extent {  
