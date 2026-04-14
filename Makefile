@@ -43,7 +43,7 @@ CFLAGS= -g -I. $(if $(DEBUG),-DDEBUG_ENABLED)
 LIBS =pthread
 DEPS = debug.h
 # Add any additional objects to this list
-ADDOBJ= b_io.o fsDir.o fsFreeSpace.o fsInit.o fsVCB.o
+ADDOBJ= b_io.o fsDir.o fsFreeSpace.o fsInit.o fsVCB.o fsDirSearch.o
 ARCH = $(shell uname -m)
 
 ifeq ($(ARCH), aarch64)
