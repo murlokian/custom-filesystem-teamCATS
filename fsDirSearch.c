@@ -19,10 +19,10 @@ int parsePath(const char * path, parsePathInfo * ppi) {
     return -1;
 }
 
-int findDirEntry(const directory_entry * dir, const char * name) {
+dir_index findDirEntry(const directory_entry * dir, const char * name) {
     return -1;
 }
 
-int findUnusedDirEntry(const directory_entry * dir) {
+dir_index findUnusedDirEntry(const directory_entry * dir) {
     return -1;
 }

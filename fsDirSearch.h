@@ -18,11 +18,13 @@
 
 #include "fsDir.h"
 
+typedef int dir_index;
+
 // Struct to hold information about the result of parsing a path. This is used to return
 // multiple values from the parsePath function.
 typedef struct parsePathInfo {
 	directory_entry *parentDir;
-	int entryIndex;
+	dir_index entryIndex;
 	char * lastElementName;
 } parsePathInfo;
 
@@ -33,10 +35,10 @@ int parsePath(const char * path, parsePathInfo * ppi);
 
 // Finds the index of the directory entry with the given name in the given directory.
 // Returns the index of the entry if found, -1 if not found.
-int findDirEntry(const directory_entry * dir, const char * name);
+dir_index findDirEntry(const directory_entry * dir, const char * name);
 
 // Finds the index of the first unused directory entry in the given directory.
 // Returns the index of the first unused entry if found, -1 if no unused entries.
-int findUnusedDirEntry(const directory_entry * dir);
+dir_index findUnusedDirEntry(const directory_entry * dir);
 
 #endif
