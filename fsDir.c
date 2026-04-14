@@ -46,7 +46,7 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent)
 	// since you may be able to fit more due to rounding up to the nearest block size
 	int entryCount = memoryNeeded / sizeof(directory_entry);
 
-	DEBUG("Creating directory with %d entries, which requires %d bytes and %d blocks.",
+	DEBUG("Creating directory with %d entries, %d bytes, and %d blocks",
 		  entryCount, memoryNeeded, blocksNeeded);
 
 	directory_entry *newDir = calloc(1, memoryNeeded);
@@ -129,7 +129,7 @@ int writeDirectory(directory_entry *dir) {
 	int blockSize = VCBGlobal->blockSize;
 	int blocksNeeded = (dir[0].size + (blockSize - 1)) / blockSize;
 
-	DEBUG("Writing directory with size %lu bytes, which requires %d blocks.",
+	DEBUG("Writing directory with size %lu bytes and %d blocks",
 		  dir[0].size, blocksNeeded);
 
 	if (LBAwrite(dir, blocksNeeded, dir->exts[0].location) != blocksNeeded)

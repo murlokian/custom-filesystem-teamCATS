@@ -113,6 +113,7 @@ int loadFreeSpace() {
 
 	// Keep runtime extents copy for freespace system
 	freespaceExtsGlobal = extents;
+	freeSpaceInitialized = true;
 
 	DEBUG("Free space loaded successfully");
 	DEBUG("Free Space extent one: location %d, length %d", 
