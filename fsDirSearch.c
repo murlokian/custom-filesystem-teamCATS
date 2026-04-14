@@ -15,7 +15,7 @@
 
 #include "fsDirSearch.h"
 
-int parsePath(const char * path, const parsePathInfo * ppi) {
+int parsePath(const char * path, parsePathInfo * ppi) {
     return -1;
 }
 

@@ -34,7 +34,7 @@ int initFreeSpace(uint32_t blockCount);
 int loadFreeSpace();
 
 // Allocates NUMBLOCKS blocks in chunks which are at least MINCONTIGUOUS blocks
-// (save for last extent). Returns an array of extents  
+// (save for last extent). Returns an array of extents
 extent* getBlocks(int numBlocks, int minContiguous);
 
 #endif

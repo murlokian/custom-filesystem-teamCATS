@@ -82,7 +82,7 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	// Initialize root directory and assign its location in VCBGlobal, which
 	// ensures root can easily be accessed/loaded into memory from this location 
 	// NOTE: passing NULL to have parent directory point to self
-	directory_entry *root = createDirectory(2, NULL);
+	directory_entry *root = createDirectory(DEFAULT_NUM_DIR_ENTRIES, NULL);
 	if(root == NULL)
 	{
 		DEBUG("createDirectory failed");

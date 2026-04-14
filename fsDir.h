@@ -77,11 +77,12 @@ typedef struct directory_entry {
 // Returns pointer to directory_entry struct with allocated memory rounded up to blockSize
 directory_entry *createDirectory(int initialEntryCount, directory_entry *parent);
 
-// Writes the given directory to disk. 
+// Writes the given directory to disk
 // Returns 0 on success, -1 on failure
-int writeDirectory(const directory_entry *dir);
+int writeDirectory(directory_entry *dir);
 
-// idk. why would it take in a de and return a de??
+// Takes in a directory entry and loads all the directory entries in that
+// directory and returns a pointer to the directory entries in memory
 directory_entry * loadDir(const directory_entry * dir);
 
 #endif
