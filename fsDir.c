@@ -109,6 +109,7 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent)
 	}
 
 	// Write entire directory to disk
+	// This should call writeDirectory()
 	if (LBAwrite(newDir, blocksNeeded, exts[0].location) != blocksNeeded)
 	{
 		DEBUG("LBAwrite failed: fsDir.c");
