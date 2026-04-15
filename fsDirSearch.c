@@ -19,6 +19,7 @@
 #include "debug.h"
 
 int parsePath(const char * path, parsePathInfo * ppi) {
+    DEBUG("Not implemented yet");
     return -1;
 }
 
@@ -46,7 +47,13 @@ dir_index findDirEntry(directory_entry * dir, const char * name) {
     if (strcmp(name, "\0") == 0) 
     {
         DEBUG("Could not find unused entry in '%s', expanding directory", dir[0].name);
-        growFile(dir, sizeof(directory_entry) * numEntries);
+        
+        if (growFile(dir, sizeof(directory_entry) * numEntries) != 0)
+        {
+            DEBUG("growFile failed");
+            return -1;
+        }
+
         return numEntries;
     }
 

@@ -142,9 +142,11 @@ int writeDirectory(directory_entry *dir) {
 }
 
 directory_entry * loadDir(const directory_entry * dir) {
+	DEBUG("Not implemented yet");
 	return NULL;
 }
 
 int growFile(directory_entry * file, int additionalBlocks) {
+	DEBUG("Not implemented yet");
 	return -1;
 }
