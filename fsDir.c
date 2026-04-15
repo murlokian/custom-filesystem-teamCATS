@@ -132,6 +132,7 @@ int writeDirectory(directory_entry *dir) {
 	DEBUG("Writing directory with size %lu bytes and %d blocks",
 		  dir[0].size, blocksNeeded);
 
+	// Assume that directory is contiguously stored on disk
 	if (LBAwrite(dir, blocksNeeded, dir->exts[0].location) != blocksNeeded)
 	{
 		DEBUG("LBAwrite failed: fsDir.c");
