@@ -22,44 +22,41 @@ int parsePath(const char * path, parsePathInfo * ppi) {
     return -1;
 }
 
-dir_index findDirEntry(const directory_entry * dir, const char * name) {
+dir_index findDirEntry(directory_entry * dir, const char * name) {
 
     if (dir == NULL || name == NULL) {
         return -1;
     }
 
-    if (name[0] == '\0') {
-        return -1;
-    }
-
-    // Ignore the first two entries in the directory as they are reserved for "." and ".."
-    dir_index index = 2;
-    directory_entry currentDir = dir[index];
-
     int numEntries = dir[0].size / sizeof(directory_entry);
 
-    while (strcmp(currentDir.name, "\0") != 0) {
-
-        index++;
-
-        if (index >= numEntries) 
+    // Search through all directory entries for the given name. If found, return 
+    // the index of the entry.
+    for (int i = 0; i < numEntries; ++i) {
+        if (strcmp(dir[i].name, name) == 0) 
         {
-            break;
+            DEBUG("Found '%s' in '%s' at index %d", name, dir[0].name, i);
+            return i;
         }
-
-        if (strcmp(currentDir.name, name) == 0) 
-        {
-            DEBUG("findDirEntry() found '%s' in '%s' at index %d", name, dir[0].name, index);
-            return index;
-        }
-
-        currentDir = dir[index];
     }
 
-    DEBUG("findDirEntry() could not find '%s' in '%s'", name, dir[0].name);
+    // If we reach the end of the directory entries without finding an unused
+    // directory entry, expand the directory and return the index of the first 
+    // entry in the newly allocated space.
+    if (strcmp(name, "\0") == 0) 
+    {
+        DEBUG("Could not find unused entry in '%s', expanding directory", dir[0].name);
+        growFile(dir, sizeof(directory_entry) * numEntries);
+        return numEntries;
+    }
+
+    DEBUG("Could not find '%s' in '%s'", name, dir[0].name);
     return -1;
 }
 
-dir_index findUnusedDirEntry(const directory_entry * dir) {
-    return -1;
+dir_index findUnusedDirEntry(directory_entry * dir) {
+
+    // findUnusedDirEntry is a wrapper for findDirEntry that searches for the 
+    // first entry with name "\0", which signifies an unused entry.
+    return findDirEntry(dir, "\0");
 }

@@ -35,10 +35,11 @@ int parsePath(const char * path, parsePathInfo * ppi);
 
 // Finds the index of the directory entry with the given name in the given directory.
 // Returns the index of the entry if found, -1 if not found.
-dir_index findDirEntry(const directory_entry * dir, const char * name);
+dir_index findDirEntry(directory_entry * dir, const char * name);
 
 // Finds the index of the first unused directory entry in the given directory.
-// Returns the index of the first unused entry if found, -1 if no unused entries.
-dir_index findUnusedDirEntry(const directory_entry * dir);
+// If no unused entry is found, it will expand directory as needed and return the 
+// index of the first entry in the newly allocated space.
+dir_index findUnusedDirEntry(directory_entry * dir);
 
 #endif
