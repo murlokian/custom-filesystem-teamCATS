@@ -25,7 +25,7 @@
 #include "fsVCB.h"
 #include "debug.h"
 
-extent* freespaceExtsGlobal = NULL;
+extent* freespaceExts = NULL;
 bool freeSpaceInitialized = false;
 
 int initFreeSpace(uint32_t blockCount) {
@@ -65,15 +65,15 @@ int initFreeSpace(uint32_t blockCount) {
 	}
 
 	// Keep runtime extents copy
-	freespaceExtsGlobal = extents;
+	freespaceExts = extents;
 
 	// Write extents to disk  
 	int LBAblocks = LBAwrite(extents, NUM_FREESPACE_BLOCKS, freespaceLocation); 
 	if(LBAblocks != NUM_FREESPACE_BLOCKS) 
 	{
 		DEBUG("LBAwrite failed in initFreeSpace");
-		free(freespaceExtsGlobal);
-		freespaceExtsGlobal = NULL;
+		free(freespaceExts);
+		freespaceExts = NULL;
 		return -1;
 	}
 
@@ -111,12 +111,12 @@ int loadFreeSpace() {
 	}
 
 	// Keep runtime extents copy for freespace system
-	freespaceExtsGlobal = extents;
+	freespaceExts = extents;
 	freeSpaceInitialized = true;
 
 	DEBUG("Free space loaded successfully");
 	DEBUG("Free Space extent one: location %d, length %d", 
-		freespaceExtsGlobal[0].location, freespaceExtsGlobal[0].length);
+		freespaceExts[0].location, freespaceExts[0].length);
 
 	return 0;
 }
@@ -147,12 +147,12 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 	int numFsExtents = (NUM_FREESPACE_BLOCKS * blockSize) / sizeof(extent);
 	for(int i = 0; i < numFsExtents; i++) {
 		// Check for end of valid freespace extents  
-		if(freespaceExtsGlobal[i].location == 0) {
+		if(freespaceExts[i].location == 0) {
 			break;
 		}
 
 		// Skip unused/invalid extents  
-		if(freespaceExtsGlobal[i].length == 0) {
+		if(freespaceExts[i].length == 0) {
 			continue;
 		}
 
@@ -164,19 +164,19 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 		// Find large enough extent, disregarding minimum contiguous requirement if
 		// at last extent  
 		int searchThreshold = (blocksLeft < minContiguous) ? blocksLeft : minContiguous;
-		if(freespaceExtsGlobal[i].length >= searchThreshold) {
+		if(freespaceExts[i].length >= searchThreshold) {
 			// Set depending on if at last extent  
-			int toTake = (blocksLeft < freespaceExtsGlobal[i].length) ? 
-				blocksLeft : freespaceExtsGlobal[i].length;
+			int toTake = (blocksLeft < freespaceExts[i].length) ? 
+				blocksLeft : freespaceExts[i].length;
 
 			// Add to returned array  
-			exts[numExts].location = freespaceExtsGlobal[i].location;
+			exts[numExts].location = freespaceExts[i].location;
 			exts[numExts].length = toTake;
 			numExts++;
 
 			// Shrink freespace extent  
-			freespaceExtsGlobal[i].location += toTake;
-			freespaceExtsGlobal[i].length -= toTake;  
+			freespaceExts[i].location += toTake;
+			freespaceExts[i].length -= toTake;  
 
 			blocksLeft -= toTake;
 		}
@@ -184,7 +184,7 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 
 	if(blocksLeft <= 0) {
 		// Write updated extents to disk
-		if(LBAwrite(freespaceExtsGlobal, NUM_FREESPACE_BLOCKS, VCBGlobal->freespaceLocation) 
+		if(LBAwrite(freespaceExts, NUM_FREESPACE_BLOCKS, VCBGlobal->freespaceLocation) 
 			!= NUM_FREESPACE_BLOCKS) 
 		{
 			DEBUG("LBAwrite failed in getBlocks");
