@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "fsFreeSpace.h"
 #include "fsLow.h"
@@ -54,15 +55,9 @@ int initFreeSpace(uint32_t blockCount) {
 
 	// Initialize freespace extents
 	int firstFreeBlock = freespaceLocation + NUM_FREESPACE_BLOCKS;
-
 	extents[0].location = firstFreeBlock;
 	extents[0].length = blockCount - firstFreeBlock;
-
-	// Couldn't this be optimized with calloc? or memset?
-	for(int i = 1; i < numExtents; i++) {
-		extents[i].location = 0;
-		extents[i].length = 0;
-	}
+	memset(extents + 1, 0, bytesNeeded - sizeof(extent));
 
 	// Keep runtime extents copy
 	freespaceExts = extents;
@@ -133,7 +128,7 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 	int blocksLeft = numBlocks;
 
 	// Allocate memory for extents
-	extent* exts = malloc(numBlocks / minContiguous * sizeof(extent));
+	extent* exts = calloc(numBlocks / minContiguous, sizeof(extent));
 	if(exts == NULL) 
 	{
 		DEBUG("malloc failed in getBlocks");
