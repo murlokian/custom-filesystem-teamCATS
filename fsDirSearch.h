@@ -23,7 +23,7 @@ typedef int dir_index;
 // Struct to hold information about the result of parsing a path. This is used to return
 // multiple values from the parsePath function.
 typedef struct parsePathInfo {
-	directory_entry *parentDir;
+	directory_entry * parentDir;
 	dir_index entryIndex;
 	char * lastElementName;
 } parsePathInfo;
