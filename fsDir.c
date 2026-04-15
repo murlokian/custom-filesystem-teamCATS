@@ -144,3 +144,7 @@ int writeDirectory(directory_entry *dir) {
 directory_entry * loadDir(const directory_entry * dir) {
 	return NULL;
 }
+
+int growFile(directory_entry * file, int additionalBlocks) {
+	return -1;
+}

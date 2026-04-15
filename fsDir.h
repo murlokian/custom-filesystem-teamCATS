@@ -85,4 +85,10 @@ int writeDirectory(directory_entry *dir);
 // directory and returns a pointer to the directory entries in memory
 directory_entry * loadDir(const directory_entry * dir);
 
+// Expands the given file by the given number of blocks and updates the directory 
+// entry accordingly. Will create secondary extent tables as needed if the number 
+// of extents exceeds NUM_DIR_EXTENTS.
+// Returns 0 on success, -1 on failure
+int growFile(directory_entry * file, int additionalBlocks);
+
 #endif
