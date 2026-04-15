@@ -37,8 +37,8 @@ int loadFreeSpace();
 // (save for last extent). Returns an array of extents
 extent* getBlocks(int numBlocks, int minContiguous);
 
-// Frees NUMBLOCKS blocks whose locations are described in extent table EXTS  
+// Frees blocks whose locations are described in extent table EXTS  
 // Also returns the freed extents to the freespace system  
-int freeBlocks(int numBlocks, extent* exts);
+int freeBlocks(extent* exts);
 
 #endif
