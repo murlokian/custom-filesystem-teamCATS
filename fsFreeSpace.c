@@ -213,3 +213,8 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 		return NULL;
 	}
 }
+
+int freeBlocks(int numBlocks, extent* exts) {
+	printf("freeBlocks() not yet implemented");
+	return 0;
+}
