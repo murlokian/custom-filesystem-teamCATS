@@ -45,7 +45,6 @@ int initFreeSpace(uint32_t blockCount) {
 	int numExtents = (NUM_FREESPACE_BLOCKS * blockSize ) / sizeof(extent);
 	int bytesNeeded = numExtents * sizeof(extent);
 
-	// *** Fix: Load until sentinel to save memory ***
 	extent* extents = malloc(bytesNeeded);
 	if(extents == NULL)
 	{
@@ -192,6 +191,15 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 			free(exts);
 			exts = NULL;
 			return NULL;
+		}
+
+		// Allocate additional space for sentinel extent if needed  
+		if(numExts == numBlocks / minContiguous) {
+			exts = realloc(exts, (numExts + 1) * sizeof(extent));
+			if(exts == NULL) {
+				DEBUG("realloc failed in getBlocks");
+				return NULL;
+			}
 		}
 
 		// Set sentinel at end of array  
