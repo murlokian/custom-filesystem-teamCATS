@@ -25,10 +25,10 @@
 #include "fsVCB.h"
 #include "debug.h"
 
-extent* freespaceExtsGlobal = NULL;
+extent* freespaceExts = NULL;
 bool freeSpaceInitialized = false;
 
-int initFreeSpace(uint64_t blockCount) {
+int initFreeSpace(uint32_t blockCount) {
 
 	int blockSize = VCBGlobal->blockSize;
 
@@ -45,7 +45,6 @@ int initFreeSpace(uint64_t blockCount) {
 	int numExtents = (NUM_FREESPACE_BLOCKS * blockSize ) / sizeof(extent);
 	int bytesNeeded = numExtents * sizeof(extent);
 
-	// *** Fix: Load until sentinel to save memory ***
 	extent* extents = malloc(bytesNeeded);
 	if(extents == NULL)
 	{
@@ -66,15 +65,15 @@ int initFreeSpace(uint64_t blockCount) {
 	}
 
 	// Keep runtime extents copy
-	freespaceExtsGlobal = extents;
+	freespaceExts = extents;
 
 	// Write extents to disk  
 	int LBAblocks = LBAwrite(extents, NUM_FREESPACE_BLOCKS, freespaceLocation); 
 	if(LBAblocks != NUM_FREESPACE_BLOCKS) 
 	{
 		DEBUG("LBAwrite failed in initFreeSpace");
-		free(freespaceExtsGlobal);
-		freespaceExtsGlobal = NULL;
+		free(freespaceExts);
+		freespaceExts = NULL;
 		return -1;
 	}
 
@@ -112,11 +111,12 @@ int loadFreeSpace() {
 	}
 
 	// Keep runtime extents copy for freespace system
-	freespaceExtsGlobal = extents;
+	freespaceExts = extents;
+	freeSpaceInitialized = true;
 
 	DEBUG("Free space loaded successfully");
-	DEBUG("Free Space extent one: location %lu, length %lu", 
-		freespaceExtsGlobal[0].location, freespaceExtsGlobal[0].length);
+	DEBUG("Free Space extent one: location %d, length %d", 
+		freespaceExts[0].location, freespaceExts[0].length);
 
 	return 0;
 }
@@ -133,7 +133,7 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 	int blocksLeft = numBlocks;
 
 	// Allocate memory for extents
-	extent* exts = malloc(numBlocks * sizeof(extent));
+	extent* exts = malloc(numBlocks / minContiguous * sizeof(extent));
 	if(exts == NULL) 
 	{
 		DEBUG("malloc failed in getBlocks");
@@ -147,12 +147,12 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 	int numFsExtents = (NUM_FREESPACE_BLOCKS * blockSize) / sizeof(extent);
 	for(int i = 0; i < numFsExtents; i++) {
 		// Check for end of valid freespace extents  
-		if(freespaceExtsGlobal[i].location == 0) {
+		if(freespaceExts[i].location == 0) {
 			break;
 		}
 
 		// Skip unused/invalid extents  
-		if(freespaceExtsGlobal[i].length == 0) {
+		if(freespaceExts[i].length == 0) {
 			continue;
 		}
 
@@ -164,19 +164,19 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 		// Find large enough extent, disregarding minimum contiguous requirement if
 		// at last extent  
 		int searchThreshold = (blocksLeft < minContiguous) ? blocksLeft : minContiguous;
-		if(freespaceExtsGlobal[i].length >= searchThreshold) {
+		if(freespaceExts[i].length >= searchThreshold) {
 			// Set depending on if at last extent  
-			int toTake = (blocksLeft < freespaceExtsGlobal[i].length) ? 
-				blocksLeft : freespaceExtsGlobal[i].length;
+			int toTake = (blocksLeft < freespaceExts[i].length) ? 
+				blocksLeft : freespaceExts[i].length;
 
 			// Add to returned array  
-			exts[numExts].location = freespaceExtsGlobal[i].location;
+			exts[numExts].location = freespaceExts[i].location;
 			exts[numExts].length = toTake;
 			numExts++;
 
 			// Shrink freespace extent  
-			freespaceExtsGlobal[i].location += toTake;
-			freespaceExtsGlobal[i].length -= toTake;  
+			freespaceExts[i].location += toTake;
+			freespaceExts[i].length -= toTake;  
 
 			blocksLeft -= toTake;
 		}
@@ -184,13 +184,22 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 
 	if(blocksLeft <= 0) {
 		// Write updated extents to disk
-		if(LBAwrite(freespaceExtsGlobal, NUM_FREESPACE_BLOCKS, VCBGlobal->freespaceLocation) 
+		if(LBAwrite(freespaceExts, NUM_FREESPACE_BLOCKS, VCBGlobal->freespaceLocation) 
 			!= NUM_FREESPACE_BLOCKS) 
 		{
 			DEBUG("LBAwrite failed in getBlocks");
 			free(exts);
 			exts = NULL;
 			return NULL;
+		}
+
+		// Allocate additional space for sentinel extent if needed  
+		if(numExts == numBlocks / minContiguous) {
+			exts = realloc(exts, (numExts + 1) * sizeof(extent));
+			if(exts == NULL) {
+				DEBUG("realloc failed in getBlocks");
+				return NULL;
+			}
 		}
 
 		// Set sentinel at end of array  
@@ -203,4 +212,9 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 		exts = NULL;
 		return NULL;
 	}
+}
+
+int freeBlocks(extent* exts) {
+	printf("freeBlocks() not yet implemented");
+	return 0;
 }

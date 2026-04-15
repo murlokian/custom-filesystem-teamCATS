@@ -46,8 +46,8 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent)
 	// since you may be able to fit more due to rounding up to the nearest block size
 	int entryCount = memoryNeeded / sizeof(directory_entry);
 
-	DEBUG("Creating directory with %d entries, which requires %d bytes and %d blocks.",
-		  initialEntryCount, memoryNeeded, blocksNeeded);
+	DEBUG("Creating directory with %d entries, %d bytes, and %d blocks",
+		  entryCount, memoryNeeded, blocksNeeded);
 
 	directory_entry *newDir = calloc(1, memoryNeeded);
 	if (newDir == NULL)
@@ -109,11 +109,11 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent)
 	}
 
 	// Write entire directory to disk
-	if (LBAwrite(newDir, blocksNeeded, exts[0].location) != blocksNeeded)
+	if (writeDirectory(newDir) != 0)
 	{
-		DEBUG("LBAwrite failed: fsDir.c");
 		free(newDir);
 		newDir = NULL;
+		DEBUG("writeDirectory failed");
 		return NULL;
 	}
 
@@ -122,4 +122,32 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent)
 	exts = NULL;
 
 	return newDir;
+}
+
+int writeDirectory(directory_entry *dir) {
+
+	int blockSize = VCBGlobal->blockSize;
+	int blocksNeeded = (dir[0].size + (blockSize - 1)) / blockSize;
+
+	DEBUG("Writing directory with size %lu bytes and %d blocks",
+		  dir[0].size, blocksNeeded);
+
+	// Assume that directory is contiguously stored on disk
+	if (LBAwrite(dir, blocksNeeded, dir->exts[0].location) != blocksNeeded)
+	{
+		DEBUG("LBAwrite failed: fsDir.c");
+		return -1;
+	}
+
+	return 0;
+}
+
+directory_entry * loadDir(const directory_entry * dir) {
+	DEBUG("Not implemented yet");
+	return NULL;
+}
+
+int growFile(directory_entry * file, int additionalBlocks) {
+	DEBUG("Not implemented yet");
+	return -1;
 }

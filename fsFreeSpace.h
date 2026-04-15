@@ -28,13 +28,17 @@ extern bool freeSpaceInitialized;
 
 // Initialize freespace map with BLOCKCOUNT blocks of size BLOCKSIZE.  
 // Returns start block of free space.
-int initFreeSpace(uint64_t blockCount);
+int initFreeSpace(uint32_t blockCount);
 
 // Loads free space extents from disk into memory
 int loadFreeSpace();
 
 // Allocates NUMBLOCKS blocks in chunks which are at least MINCONTIGUOUS blocks
-// (save for last extent). Returns an array of extents  
+// (save for last extent). Returns an array of extents
 extent* getBlocks(int numBlocks, int minContiguous);
+
+// Frees blocks whose locations are described in extent table EXTS  
+// Also returns the freed extents to the freespace system  
+int freeBlocks(extent* exts);
 
 #endif

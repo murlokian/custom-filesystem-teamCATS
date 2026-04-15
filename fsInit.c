@@ -27,12 +27,15 @@
 #include "fsDir.h"
 #include "debug.h"
 
+// FOR TESTING
+#include "fsDirSearch.h"
+
 int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	{
 	printf ("Initializing File System with %ld blocks with a block size of %ld\n", numberOfBlocks, blockSize);
 
-	// Load the VCB into memory so we can check the signature and initialize 
-	// the free space and root directory
+	// Load the VCB into memory so we can check the signature 
+	// and if it doesn't match, we initialize the free space and root directory
 	// VCB is loaded into a global variable so it can be accessed by other 
 	// functions that need to read/write the VCB
 	VCBGlobal = loadVCB(blockSize);
@@ -45,7 +48,8 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	DEBUG("VCB loaded successfully");
 
 	// Check if VCB is formatted using its signature. 
-	// If it matches, exit early with success. If not, initialize file system.
+	// If it matches, exit early with success as volume is already formatted to our system.
+	// If not, initialize file system.
 	if (VCBGlobal->signature == OUR_SIGNATURE) 
 	{
 		DEBUG("Volume already formatted. VCB signature matches");
@@ -54,14 +58,28 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 			DEBUG("loadFreeSpace failed");
 			return -1;
 		}
+
+		// ====== TESTING CODE ======
+
+		// directory_entry * testDir = createDirectory(10, NULL);
+		// strcpy(testDir[2].name, "bingo");
+		// findDirEntry(testDir, "bingo");
+		// findUnusedDirEntry(testDir);
+		// findDirEntry(testDir, "not_in_dir");
+		// free(testDir);
+		// testDir = NULL;
+
+		// ==== END TESTING CODE ======
+
 		return 0;
 	}
 
 	DEBUG("Volume not formatted, VCB signature does not match");
 	DEBUG("Initializing file system...");
 
-	// Partially fill in the global VCB so it can be accessed by initFreeSpace and
-	// createDirectory, which will later be assigned to other members in VBCGLobal
+	// Fill in the necessary information in the global VCB to be accessed by initFreeSpace 
+	// and createDirectory, which will later be assigned to other members in VBCGLobal
+
 	VCBGlobal->blockCount = numberOfBlocks;
 	VCBGlobal->blockSize = blockSize;
 	VCBGlobal->signature = OUR_SIGNATURE;
@@ -77,9 +95,10 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 
 	DEBUG("Free space initialized successfully");
 
-	// initialize root directory and assign its location to VCBGlobal
-		// NOTE: pass NULL to have parent directory point to self
-	directory_entry *root = createDirectory(2, NULL);
+	// Initialize root directory and assign its location in VCBGlobal, which
+	// ensures root can easily be accessed/loaded into memory from this location 
+	// NOTE: passing NULL to have parent directory point to self
+	directory_entry *root = createDirectory(DEFAULT_NUM_DIR_ENTRIES, NULL);
 	if(root == NULL)
 	{
 		DEBUG("createDirectory failed");
@@ -98,7 +117,7 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 
 	DEBUG("Root directory created successfully");
 
-	// Write completely populated VCB to block VCB_BLOCK_LOCATION on disk (block 0)
+	// Once completely populated, write VCB to block VCB_BLOCK_LOCATION on disk (block 0)
 	int memoryNeeded = sizeof(volume_control_block);
 	int blocksNeeded = (memoryNeeded + blockSize - 1) / blockSize;
     if (LBAwrite(VCBGlobal, blocksNeeded, VCB_BLOCK_LOCATION) != blocksNeeded)

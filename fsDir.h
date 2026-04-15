@@ -9,7 +9,7 @@
 * File:: fsDir.h
 *
 * Description:: This is a header file for the extent and directory 
-* entry structs and related functions.  
+* entry structs and individual directory funcs
 *
 **************************************************************/
 
@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <time.h>
 
 // MAX_ENTRY_NAME_SIZE shall be defined as 255 in order to provide a reasonable
 // file name length that is similar to other major operating systems but fills in 
@@ -29,16 +30,18 @@
 // can be added if needed.
 #define NUM_DIR_EXTENTS 5
 
+#define DEFAULT_NUM_DIR_ENTRIES 50
+
 // 0 for length signifies unused/invalid extent, 0 for location is a sentinel value
 // signifying the end of the extent array  
 typedef struct extent {  
     // location is an unsigned 64-bit value which is the location of a starting
     // block of contiguous free space  
-    uint64_t location;
+    uint32_t location;
   
     // length is an unsigned 64-bit value which contains the total amount of blocks
     // that this extent spans
-    uint64_t length;
+    uint32_t length;
 } extent;
 
 typedef struct directory_entry {
@@ -73,5 +76,19 @@ typedef struct directory_entry {
 // Pass NULL for parent if this is the root directory.
 // Returns pointer to directory_entry struct with allocated memory rounded up to blockSize
 directory_entry *createDirectory(int initialEntryCount, directory_entry *parent);
+
+// Writes the given directory to disk
+// Returns 0 on success, -1 on failure
+int writeDirectory(directory_entry *dir);
+
+// Takes in a directory entry and loads all the directory entries in that
+// directory and returns a pointer to the directory entries in memory
+directory_entry * loadDir(const directory_entry * dir);
+
+// Expands the given file by the given number of blocks and updates the directory 
+// entry accordingly. Will create secondary extent tables as needed if the number 
+// of extents exceeds NUM_DIR_EXTENTS.
+// Returns 0 on success, -1 on failure
+int growFile(directory_entry * file, int additionalBlocks);
 
 #endif

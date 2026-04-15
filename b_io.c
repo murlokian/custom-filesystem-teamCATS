@@ -19,15 +19,20 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
 #include "b_io.h"
+#include "fsDir.h"
+#include "debug.h"
 
 #define MAXFCBS 20
 
 typedef struct b_fcb
 	{
 	/** TODO add al the information you need in the file control block **/
+	directory_entry * de;	//holds the low level systems file info
+
 	char * buf;		//holds the open file buffer
-	int index;		//holds the current position in the buffer
+	int fileIndex;	//holds the current byte position in the file
 	int buflen;		//holds how many valid bytes are in the buffer
 	} b_fcb;
 	
@@ -62,7 +67,7 @@ b_io_fd b_getFCB ()
 	
 // Interface to open a buffered file
 // Modification of interface for this assignment, flags match the Linux flags for open
-// O_RDONLY, O_WRONLY, or O_RDWR
+// O_CREAT, O_TRUNC, O_APPEND, O_RDONLY, O_WRONLY, or O_RDWR
 b_io_fd b_open (char * filename, int flags)
 	{
 	b_io_fd returnFd;
@@ -75,6 +80,12 @@ b_io_fd b_open (char * filename, int flags)
 	
 	returnFd = b_getFCB();				// get our own file descriptor
 										// check for error - all used FCB's
+
+	if (returnFd == -1)
+	{
+		DEBUG("Error: No free file control blocks");
+		return -1;
+	}
 	
 	return (returnFd);						// all set
 	}
@@ -150,5 +161,30 @@ int b_read (b_io_fd fd, char * buffer, int count)
 // Interface to Close the file	
 int b_close (b_io_fd fd)
 	{
+
+	// Ensure that the system has been initialized before accessing the file control blocks
+    if (startup == 0)
+        {
+        DEBUG("Error: System not initialized");
+        return -1;
+        }
+
+    // check that fd is between 0 and (MAXFCBS-1)
+    if ((fd < 0) || (fd >= MAXFCBS))
+        {
+        DEBUG("Error: Invalid file descriptor");
+        return (-1);
+        }
+
+    // Check that the provided file descriptor is actually in use
+    if (fcbArray[fd].de == NULL)
+        {
+        DEBUG("Error: File not open for this descriptor");
+        return -1;
+        }
+
+	fcbArray[fd].de = NULL;	//Mark this FCB as free again
+
+	return 0;
 
 	}
