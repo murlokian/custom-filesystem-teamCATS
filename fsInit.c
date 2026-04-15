@@ -61,13 +61,13 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 
 		// ====== TESTING CODE ======
 
-		directory_entry * testDir = createDirectory(10, NULL);
-		strcpy(testDir[2].name, "bingo");
-		findDirEntry(testDir, "bingo");
-		findUnusedDirEntry(testDir);
-		findDirEntry(testDir, "not_in_dir");
-		free(testDir);
-		testDir = NULL;
+		// directory_entry * testDir = createDirectory(10, NULL);
+		// strcpy(testDir[2].name, "bingo");
+		// findDirEntry(testDir, "bingo");
+		// findUnusedDirEntry(testDir);
+		// findDirEntry(testDir, "not_in_dir");
+		// free(testDir);
+		// testDir = NULL;
 
 		// ==== END TESTING CODE ======
 
