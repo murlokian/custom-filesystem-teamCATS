@@ -30,6 +30,7 @@
 #define FT_REGFILE	DT_REG
 #define FT_DIRECTORY DT_DIR
 #define FT_LINK	DT_LNK
+#define MAX_PATH_SIZE 4096 //to store the path name
 
 #ifndef uint64_t
 typedef u_int64_t uint64_t;
@@ -56,10 +57,10 @@ typedef struct
 	{
 	/*****TO DO:  Fill in this structure with what your open/read directory needs  *****/
 
-	unsigned short  d_reclen;			/* length of this record */
+	unsigned short  d_reclen;		/* length of this record */
 	unsigned short	dirEntryPosition;	/* which directory entry position, like file pos */
-	directory_entry * directory;		/* Pointer to the loaded directory you want to iterate */
-	struct fs_diriteminfo * di;			/* Pointer to the structure you return from read */
+	directory_entry* directory;			/* Pointer to the loaded directory you want to iterate */
+	struct fs_diriteminfo * di;		/* Pointer to the structure you return from read */
 
 	} fdDir;
 

@@ -26,6 +26,10 @@
 #include "fsFreeSpace.h"
 #include "debug.h"
 
+//globals for getcwd() and setcwd()
+char path[MAX_PATH_SIZE];
+directory_entry *curDir;
+
 int fs_mkdir(const char *pathname, mode_t mode){
 	//NOTE: made considering there is a parsedPath struct in mfs.h as such:
 	//char name[];
@@ -63,7 +67,8 @@ int fs_mkdir(const char *pathname, mode_t mode){
 		//put the new dir info in that slot
 		empty = true;
 		parent[i] = newDir[0];
-		strcpy(parent[i].name, s.lastElementName); //set the struct, then set the name
+        //set the struct and then set the name
+		strcpy(parent[i].name, s.lastElementName); 
 		break;
 		}
 		//if empty, what about the directory createDirectory created?
@@ -79,8 +84,7 @@ int fs_mkdir(const char *pathname, mode_t mode){
 		s.parentDir[0].exts[0].location);
 
 	return 0; //mkdir returns 0 on success and -1 on failure
-	
-	
+
 
 
 }
@@ -140,11 +144,21 @@ int fs_closedir(fdDir *dirp) {
 
 
 char * fs_getcwd(char *pathname, size_t size){
-
+    if(path[0] == '\0'){
+        DEBUG("fs_getcwd() failed, initialize path first");
+        return NULL;
+    }
+    strncpy(pathname, path, size);
+    return pathname;
 }
 
 int fs_setcwd(char *pathname){
-
+    if(fs_isDir(pathname) == 0){
+        DEBUG("fs_setcwd() failed, Directory does not exist error: mfs.c");
+        return -1;    
+    }
+    strncpy(path, pathname, MAX_PATH_SIZE);
+    return 0;
 }
 
 // return 1 if pathname exists and refers to a file otherwise 0
