@@ -73,6 +73,9 @@ int fs_mkdir(const char *pathname, mode_t mode){
 		}
 		//if empty, what about the directory createDirectory created?
 		if(empty == false){
+            free(newDir);
+            newDir = NULL;
+            return -1;
 
 		}
 		
@@ -82,11 +85,10 @@ int fs_mkdir(const char *pathname, mode_t mode){
 	//write updated parent back to disk
 	LBAwrite(s.parentDir, s.parentDir[0].size / blockSize, 
 		s.parentDir[0].exts[0].location);
-
-	return 0; //mkdir returns 0 on success and -1 on failure
-
-
-
+    
+    free(newDir);
+	newDir = NULL;
+	return 0;
 }
 
 fdDir *fs_opendir(const char *pathname) {
