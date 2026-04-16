@@ -95,18 +95,21 @@ fdDir *fs_opendir(const char *pathname) {
 
 	parsePathInfo ppi;
 
+	// Find info via given path  
 	if (parsePath(pathname, &ppi))
 	{
 		DEBUG("parsePath failed");
 		return NULL;
 	}
 
+	// Ensure target is directory  
 	if (ppi.parentDir[ppi.entryIndex].entryType != 1)
 	{
 		DEBUG("Target entry is not a directory");
 		return NULL;
 	}
 
+	// Allocate memory for directory control block  
 	fdDir *dirp = malloc(sizeof(fdDir));
 	if (dirp == NULL)
 	{
@@ -114,10 +117,12 @@ fdDir *fs_opendir(const char *pathname) {
 		return NULL;
 	}
 
+	// Set fields in directory control block  
 	dirp->d_reclen = sizeof(struct fs_diriteminfo);
 	dirp->dirEntryPosition = 0;
 	dirp->directory = loadDir(&ppi.parentDir[ppi.entryIndex]);
 
+	// Allocate memory for struct to be returned to caller  
 	struct fs_diriteminfo *di = malloc(sizeof(struct fs_diriteminfo));
 	if (di == NULL)
 	{
@@ -127,12 +132,14 @@ fdDir *fs_opendir(const char *pathname) {
 		return NULL;
 	}
 
+	// Set fields in struct to be returned to caller  
 	di->d_reclen = sizeof(struct fs_diriteminfo);
 	di->fileType = dirp->directory[dirp->dirEntryPosition].entryType;
 	strncpy(di->d_name, dirp->directory[dirp->dirEntryPosition].name, MAX_ENTRY_NAME_SIZE);
 
 	dirp->di = di;
 
+	DEBUG("opened directory: %s", dirp->di->d_name);
 	return dirp;
 }
 
