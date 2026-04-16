@@ -121,30 +121,38 @@ fdDir *fs_opendir(const char *pathname) {
 	dirp->d_reclen = sizeof(struct fs_diriteminfo);
 	dirp->dirEntryPosition = 0;
 	dirp->directory = loadDir(&ppi.parentDir[ppi.entryIndex]);
-
-	// Allocate memory for struct to be returned to caller  
-	struct fs_diriteminfo *di = malloc(sizeof(struct fs_diriteminfo));
-	if (di == NULL)
-	{
-		DEBUG("malloc failed");
-		free(dirp);
-		dirp = NULL;
-		return NULL;
-	}
-
-	// Set fields in struct to be returned to caller  
-	di->d_reclen = sizeof(struct fs_diriteminfo);
-	di->fileType = dirp->directory[dirp->dirEntryPosition].entryType;
-	strncpy(di->d_name, dirp->directory[dirp->dirEntryPosition].name, MAX_ENTRY_NAME_SIZE);
-
-	dirp->di = di;
+	dirp->di = NULL;
 
 	DEBUG("opened directory: %s", dirp->di->d_name);
 	return dirp;
 }
 
 struct fs_diriteminfo *fs_readdir(fdDir *dirp) {
-	return NULL;
+	// Iterate to next entry if not at first / '.' directory  
+	if(dirp->di != NULL) 
+	{
+		dirp->dirEntryPosition++;
+	} 
+	// Case at '.'  
+	else 
+	{
+		// Allocate memory for struct to be returned to caller  
+		struct fs_diriteminfo *di = malloc(sizeof(struct fs_diriteminfo));
+		if(di == NULL) {
+			DEBUG("malloc failed");
+			free(dirp);
+			dirp = NULL;
+			return NULL;
+		}
+		dirp->di->d_reclen = sizeof(struct fs_diriteminfo);
+	}
+
+	// Set fields in struct to be returned to caller  
+	directory_entry currDe = dirp->directory[dirp->dirEntryPosition];
+	dirp->di->fileType = currDe.entryType;
+	strncpy(dirp->di->d_name, currDe.name, MAX_ENTRY_NAME_SIZE);
+
+	return dirp->di;
 }
 
 int fs_closedir(fdDir *dirp) {
