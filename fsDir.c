@@ -1,7 +1,7 @@
 /**************************************************************
 * Class::  CSC-415-03 Spring 2026
-* Name:: Patricia Ann Payumo, Allie Young
-* Student IDs:: 923555591, 923129607
+* Name:: Patricia Ann Payumo, Allie Young, Rosa Melton
+* Student IDs:: 923555591, 923129607, 921337778
 * GitHub-Name::  milo-pa
 * Group-Name::  CATS
 * Project:: Basic File System
@@ -141,13 +141,45 @@ int writeDirectory(directory_entry *dir) {
 
 	return 0;
 }
-
+// needs to also account for when to load secondary table(s)
+// can't load all at once ?
 directory_entry * loadDir(const directory_entry * dir) {
 	DEBUG("Not implemented yet");
 	return NULL;
 }
 
+// Expands the given file by the given number of blocks and updates the directory 
+// entry accordingly. Will create secondary extent tables as needed if the number 
+// of extents exceeds NUM_DIR_EXTENTS.
+// Returns 0 on success, -1 on failure
 int growFile(directory_entry * file, int additionalBlocks) {
 	DEBUG("Not implemented yet");
+
+	if (file == NULL) {
+		DEBUG("growFile: file does not exist");
+		return -1;
+	}
+	if (additionalBlocks < 1) {
+		DEBUG("growFile: cannot add less than one block");
+		return -1;
+	}
+
+	// get the requested blocks from free space first 
+	// FIXME: handle minContiguousBlocks based on previous exts?
+	//extent *newExts = getBlocks(additionalBlocks, 1);
+
+	int firstFree = -1; // look for the first free/unused ext slot 
+	int hasSecondary = -1; // look for the sentinel value -2 in length (ELABORATE)
+
+	// iterate over exts array first to find above
+	// if we have unused slots, fill those with as many of new exts that we can
+	// if overflow, create secondary ext (NEEDS A CHECK)
+	// call AddSecondaryExtTable(additionalBlocks) 
+	//	  --> calls getBlocks(additionalBlocks, 1)
+
+	// THREE CASES TO HANDLE
+	// 1) enough free slots to use w/o creating another table
+	// 2) can fill to max slots in primary, create secondary
+	// 3) add straight to secondary (secondary handles creation of tertiary?)
 	return -1;
 }
