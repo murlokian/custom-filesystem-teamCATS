@@ -113,7 +113,7 @@ fdDir *fs_opendir(const char *pathname) {
 	fdDir *dirp = malloc(sizeof(fdDir));
 	if (dirp == NULL)
 	{
-		DEBUG("malloc failed");
+		DEBUG("malloc failed in fs_opendir()");
 		return NULL;
 	}
 
@@ -139,7 +139,7 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirp) {
 		// Allocate memory for struct to be returned to caller  
 		struct fs_diriteminfo *di = malloc(sizeof(struct fs_diriteminfo));
 		if(di == NULL) {
-			DEBUG("malloc failed");
+			DEBUG("malloc failed in fs_readdir()");
 			free(dirp);
 			dirp = NULL;
 			return NULL;
@@ -156,7 +156,18 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirp) {
 }
 
 int fs_closedir(fdDir *dirp) {
-	return -1;
+	// Null check  
+	if(dirp->di == NULL || dirp == NULL) {
+		return -1;
+	}
+
+	// Free used resources  
+	free(dirp->di);
+	dirp->di = NULL;
+	free(dirp);
+	dirp = NULL;
+
+	return 0;
 }
 
 
