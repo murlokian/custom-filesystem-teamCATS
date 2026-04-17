@@ -36,58 +36,48 @@ int fs_mkdir(const char *pathname, mode_t mode){
 	//directory_entry *parent;
 	//int index; //can change if plans change
 
-	parsePathInfo s; //this is where parsepath returns a struct to mkdir
-	int blockSize = VCBGlobal -> blockSize; //get the blockSize
+	parsePathInfo ppi; //this is where parsepath returns a struct to mkdir
 
 	//called considering parsePath(char *pathname, parsedPath *s) as prototype
-	int result = parsePath(pathname, &s);
+	int result = parsePath(pathname, &ppi);
 	if(result == -1){
 		DEBUG("Parse Path failed: mfs.c");
 		return -1;
 
 	}
 
-	//get back name, parent and index
-	directory_entry *parent = s.parentDir;
-
+	//Check if the directory already exists 
+	if(ppi.entryIndex != -1){
+		DEBUG("Directory entry already exists. Mkdir failed: mfs.h");
+		return -1;
+	}
 
 	//Check if parent exists and isDir
-	if(s.parentDir == NULL) return -1;
+	if(ppi.parentDir == NULL) {
+		return -1;
+	}
 
 	//call createDir(10, s.parent) -- this allocates disk space 
 	//bierman added 50 in class, why 50?
-	directory_entry *newDir = createDirectory(10, s.parentDir);
+	directory_entry *newDir = createDirectory(10, ppi.parentDir);
 
 	//check if the directory was actually created
 	if(newDir == NULL) return -1;
 
-	//flag to check if any empty slots were found 
-	bool empty = false;
-
-	for(int i= 0; i < s.parentDir[0].size / sizeof(directory_entry); i++){
-	//loop through s.parent for name[0] = "\0"
-		if(s.parentDir[i].name[0] == '\0'){
-		//put the new dir info in that slot
-		empty = true;
-		parent[i] = newDir[0];
-        //set the struct and then set the name
-		strcpy(parent[i].name, s.lastElementName); 
-		break;
-		}
+	int index = findUnusedDirEntry(ppi.parentDir);
 		//if empty, what about the directory createDirectory created?
-		if(empty == false){
+		if(index == -1){
             free(newDir);
             newDir = NULL;
             return -1;
 
 		}
 		
-	
-	//
-	}
+	//fill the slot 
+	ppi.parentDir[index] = newDir[0];
+	strcpy(ppi.parentDir[index].name, ppi.lastElementName);
 	//write updated parent back to disk
-	LBAwrite(s.parentDir, s.parentDir[0].size / blockSize, 
-		s.parentDir[0].exts[0].location);
+	writeDirectory(ppi.parentDir);
     
     free(newDir);
 	newDir = NULL;
