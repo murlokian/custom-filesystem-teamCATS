@@ -347,3 +347,26 @@ int fs_rmdir(const char *pathname)
 	free(dir);
 	return 0;
 }
+
+//fs stat
+//gets all the metadata about a file or a directory
+//typically used when the command ls -l is used
+//takes a path, looks for that directory entry, copies metadata into the buf struct
+int fs_stat(const char *path, struct fs_stat *buf){
+	//check if the path exists
+	parsePathInfo ppi;
+
+	int res = parsePath(path, &ppi);
+	if(res == -1){
+		DEBUG("Parse Path failed: mfs.c");
+		return -1;
+
+	}
+
+	//check if the directory exists 
+	if(ppi.entryIndex == -1){
+		DEBUG("Directory not found error: mfs.h");
+		return -1;
+	}
+
+}
