@@ -39,7 +39,13 @@
 #else
 
 	// These compile away entirely
+
+	// Debug print function similar to fprintf() writing to stderr but includes 
+	// function and file line number information
 	#define DEBUG(...) ((void)0)
+
+	// Debug print function similar to perrror() but includes function and file 
+	// line number information
 	#define DEBUG_ERR(...) ((void)0) 
 
 #endif
