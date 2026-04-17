@@ -59,7 +59,7 @@ int fs_mkdir(const char *pathname, mode_t mode){
 
 	//call createDir(10, s.parent) -- this allocates disk space 
 	//bierman added 50 in class, why 50?
-	directory_entry *newDir = createDirectory(10, ppi.parentDir);
+	directory_entry *newDir = createDirectory(DEFAULT_NUM_DIR_ENTRIES, ppi.parentDir);
 
 	//check if the directory was actually created
 	if(newDir == NULL) return -1;
