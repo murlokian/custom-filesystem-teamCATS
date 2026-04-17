@@ -160,13 +160,15 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirp) {
 
 int fs_closedir(fdDir *dirp) {
 	// Null check  
-	if(dirp->di == NULL || dirp == NULL) {
+	if(dirp == NULL) {
 		return -1;
 	}
 
 	// Free used resources  
-	free(dirp->di);
-	dirp->di = NULL;
+	if(dirp->di != NULL) {
+		free(dirp->di);
+		dirp->di = NULL;
+	}
 	free(dirp);
 	dirp = NULL;
 
