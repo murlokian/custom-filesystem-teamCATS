@@ -41,8 +41,11 @@ int fs_mkdir(const char *pathname, mode_t mode){
 
 	//called considering parsePath(char *pathname, parsedPath *s) as prototype
 	int result = parsePath(pathname, &s);
-	if(result == -1) return -1;
+	if(result == -1){
+		DEBUG("Parse Path failed: mfs.c");
+		return -1;
 
+	}
 
 	//get back name, parent and index
 	directory_entry *parent = s.parentDir;
@@ -181,11 +184,24 @@ char * fs_getcwd(char *pathname, size_t size){
 }
 
 int fs_setcwd(char *pathname){
+	parsePathInfo s;
     if(fs_isDir(pathname) == 0){
         DEBUG("fs_setcwd() failed, Directory does not exist error: mfs.c");
         return -1;    
     }
+	//I'm copying the pathname into the path buffer provided by the parameter, 
+	//and then using the defined size to only copy a certain number
     strncpy(path, pathname, MAX_PATH_SIZE);
+	//then i'm using parse path to get the directory entry
+	int res = parsePath(pathname, &s);
+	//if parse path fails
+	if(res == -1){
+		DEBUG("Failed to set directory: mfs.c");
+		return -1;
+	}
+	//thne load the directory 
+	curDir = loadDir(&s.parentDir[s.entryIndex]);
+	
     return 0;
 }
 
