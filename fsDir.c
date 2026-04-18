@@ -24,6 +24,12 @@
 #include "fsVCB.h"
 #include "debug.h"
 
+// sentinel node to indicate secondary extent table location = -2 
+#define SECONDARY_EXT_SENTINEL ((uint32_t) 0xFFFFFFFE)
+
+// sentinel node to indicate tertiary extent table location = -3
+#define TERTIARY_EXT_SENTINEL ((uint32_t) 0xFFFFFFFD)
+
 directory_entry *createDirectory(int initialEntryCount, directory_entry *parent) {
 
 	// Check that initial entry count is at least 2 for "." and ".." entries
@@ -156,20 +162,37 @@ int growFile(directory_entry * file, int additionalBlocks) {
 	DEBUG("Not implemented yet");
 
 	if (file == NULL) {
-		DEBUG("growFile: file does not exist");
+		DEBUG("file does not exist");
 		return -1;
 	}
 	if (additionalBlocks < 1) {
-		DEBUG("growFile: cannot add less than one block");
+		DEBUG("cannot add less than one block");
 		return -1;
 	}
 
-	// get the requested blocks from free space first 
+	// get the required blocks from free space first tp then populate
+	// existing slots or a new table
 	// FIXME: handle minContiguousBlocks based on previous exts?
-	//extent *newExts = getBlocks(additionalBlocks, 1);
+	extent *newExts = getBlocks(additionalBlocks, 1);
+	if (newExts == NULL) {
+		DEBUG("getBlocks() failed");
+		return -1;
+	}
+	
+	// iterate over the current extent array to find the following:
+	int firstFree = -1; // look for the first free/unused ext slot
 
-	int firstFree = -1; // look for the first free/unused ext slot 
-	int hasSecondary = -1; // look for the sentinel value -2 in length (ELABORATE)
+	// look for the sentinel value -2 in length (ELABORATE)
+	// if entry does have secondary, store that table location separately
+	int hasSecondary = 0;
+	uint32_t secondaryTableLoc;
+
+	for (int i = 0; i < NUM_DIR_EXTENTS; i++) {
+		if (file->exts[i].length == SECONDARY_EXT_SENTINEL) {
+			hasSecondary = 1;
+			secondaryTableLoc = file->exts[i].location; 
+		}
+	}
 
 	// iterate over exts array first to find above
 	// if we have unused slots, fill those with as many of new exts that we can
