@@ -1,7 +1,7 @@
 /**************************************************************
 * Class::  CSC-415-03 Spring 2026
-* Name:: Patricia Ann Payumo, Allie Young, Rosa Melton
-* Student IDs:: 923555591, 923129607, 921337778
+* Name:: Patricia Ann Payumo, Allie Young, Rosa Melton, Milo Pesce Ares
+* Student IDs:: 923555591, 923129607, 921337778, 921296821
 * GitHub-Name::  milo-pa
 * Group-Name::  CATS
 * Project:: Basic File System
@@ -25,10 +25,10 @@
 #include "fsVCB.h"
 #include "debug.h"
 
-// sentinel node to indicate secondary extent table location = -2 
+// sentinel node to indicate location to secondary extent table = -2 
 #define SECONDARY_EXT_SENTINEL ((uint32_t) 0xFFFFFFFE)
 
-// sentinel node to indicate tertiary extent table location = -3
+// sentinel node to indicate location to tertiary extent table  = -3
 #define TERTIARY_EXT_SENTINEL ((uint32_t) 0xFFFFFFFD)
 
 directory_entry *createDirectory(int initialEntryCount, directory_entry *parent) {
@@ -148,27 +148,25 @@ int writeDirectory(directory_entry *dir) {
 
 	return 0;
 }
-// needs to also account for when to load secondary table(s)
-// can't load all at once ?
+
 directory_entry * loadDir(const directory_entry * dir) {
 	DEBUG("Not implemented yet");
 
-	directory_entry * dirs = malloc(dir->size / sizeof(directory_entry));
+	// directory_entry * dirs = malloc(dir->size / sizeof(directory_entry));
 
-	if (dirs == NULL)
-	{
-		DEBUG_ERR("malloc");
-		return NULL;
-	}
-
-	// extent currExt = getNextExtent(NULL, 1);
-	// int extIndex;
-
-	// while (currExt = getNextExtent(NULL, 1) != NULL) {
-
+	// if (dirs == NULL) {
+	// 	DEBUG_ERR("malloc");
+	// 	return NULL;
 	// }
 
-	return dirs;
+	return NULL;
+}
+
+// TODO - implement and move to helper file
+extent * getNextExtent(directory_entry * dir, int ** extentIndex) {
+	DEBUG("Not implemented yet");
+
+    return NULL;
 }
 
 // Expands the given file by the given number of blocks and updates the directory 

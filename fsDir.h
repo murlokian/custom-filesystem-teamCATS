@@ -1,7 +1,7 @@
-/**************************************************************
+/*************************************************************
 * Class::  CSC-415-03 Spring 2026
-* Name::  Allie Young, Patricia Ann Payumo
-* Student IDs::  923129607, 923555591
+* Name::  Allie Young, Patricia Ann Payumo, Rosa Melton, Milo Pesce Ares
+* Student IDs::  923129607, 923555591, 921337778, 921296821
 * GitHub-Name::  milo-pa
 * Group-Name::  CATS
 * Project:: Basic File System
@@ -85,11 +85,12 @@ int writeDirectory(directory_entry *dir);
 // directory and returns a pointer to the directory entries in memory
 directory_entry * loadDir(const directory_entry * dir);
 
-// somewhat similar logic to strtok_r, helper for multiple calls of b_read, b_write, loadDir...
-// function manually updates extentIndex as the 'current position' for the next call (our saveptr)
-// iterate from beginning of DE's extent array up to extentIndex
+// Somewhat similar logic to strtok_r, helper for multiple calls of b_read(), b_write()
+// function updates extentIndex as the 'current position' for the next call (acting as our saveptr)
+// iterate from beginning of DE's extent array up to extentIndex and returns updated position
+// Updated position to be used when calling LBAread() or LBAwrite()
 // TODO - move to helper file
-extent getNextExtent(const directory_entry *dir, int* extentIndex);
+extent * getNextExtent(directory_entry * dir, int ** extentIndex);
 
 // Expands the given file by the given number of blocks and updates the directory 
 // entry accordingly. Will create secondary extent tables as needed if the number 

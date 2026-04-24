@@ -1,9 +1,9 @@
 /**************************************************************
-* Class::  CSC-415-0# Fall 2025
-* Name::
-* Student IDs::
-* GitHub-Name::
-* Group-Name::
+* Class::  CSC-415-03 Spring 2026
+* Name:: Rosa Melton
+* Student IDs:: 921337778
+* GitHub-Name:: milo-pa
+* Group-Name:: CATS
 * Project:: Basic File System
 *
 * File:: b_io.c
@@ -21,7 +21,9 @@
 #include <fcntl.h>
 
 #include "b_io.h"
+#include "fsLow.h"
 #include "fsDir.h"
+#include "fsVCB.h" // used to get blockSize (can fix/change; current shortcut...)
 #include "debug.h"
 
 #define MAXFCBS 20
@@ -29,6 +31,7 @@
 typedef struct b_fcb
 	{
 	/** TODO add al the information you need in the file control block **/
+	// TWO MORE VARIABLES TO ADD BASED ON BIERMAN'S ASGN5 APPROACH
 	directory_entry * de;	//holds the low level systems file info
 
 	char * buf;		//holds the open file buffer
@@ -154,6 +157,23 @@ int b_read (b_io_fd fd, char * buffer, int count)
 		{
 		return (-1); 					//invalid file descriptor
 		}
+
+		// helper getNextExtent() called to handle iterating through a directory entry's extents 
+		// this is so this caller doesn't have to worry about current block/position in 
+		// entry as b_read() is called 
+		// getNextExtent handles if we need to traverse secondary/tertiary tables for this file
+		int * extIndex; // equivalent of saveptr in strtok_r()
+		extent * currExt = getNextExtent(fcbArray[fd].de, &extIndex);
+		
+
+		int currPos = currExt->length * VCBGlobal->blockSize;	
+
+		while ((currExt = getNextExtent(fcbArray[fd].de, &extIndex)) != NULL) {
+			LBAread(buffer + currPos, currExt->length, currExt->location);
+
+			currPos = currExt->length * VCBGlobal->blockSize;
+		}
+
 		
 	return (0);	//Change this
 	}
