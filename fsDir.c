@@ -151,7 +151,23 @@ int writeDirectory(directory_entry *dir) {
 // can't load all at once ?
 directory_entry * loadDir(const directory_entry * dir) {
 	DEBUG("Not implemented yet");
-	return NULL;
+
+	directory_entry * dirs = malloc(dir->size / sizeof(directory_entry));
+
+	if (dirs == NULL)
+	{
+		DEBUG_ERR("malloc");
+		return NULL;
+	}
+
+	extent currExt = getNextExtent(NULL, 1);
+	int extIndex;
+
+	// while (currExt = getNextExtent(NULL, 1) != NULL) {
+
+	// }
+
+	return dirs;
 }
 
 // Expands the given file by the given number of blocks and updates the directory 
