@@ -8,7 +8,8 @@
 *
 * File:: fsDir.c
 *
-* Description::  This is the file for the directory related functions.  
+* Description::  Implements fsDir.h functions for core directory
+* 	operations
 *
 **************************************************************/
 
