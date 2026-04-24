@@ -75,7 +75,7 @@ typedef struct directory_entry {
 // Populates and writes a directory to disk. Minimum 2 initial entries for "." and ".." required
 // Pass NULL for parent if this is the root directory.
 // Returns pointer to directory_entry struct with allocated memory rounded up to blockSize
-directory_entry *createDirectory(int initialEntryCount, directory_entry *parent);
+directory_entry * createDirectory(int initialEntryCount, directory_entry *parent);
 
 // Writes the given directory to disk
 // Returns 0 on success, -1 on failure
@@ -84,6 +84,12 @@ int writeDirectory(directory_entry *dir);
 // Takes in a directory entry and loads all the directory entries in that
 // directory and returns a pointer to the directory entries in memory
 directory_entry * loadDir(const directory_entry * dir);
+
+// somewhat similar logic to strtok_r, helper for multiple calls of b_read, b_write, loadDir...
+// function manually updates extentIndex as the 'current position' for the next call (our saveptr)
+// iterate from beginning of DE's extent array up to extentIndex
+// TODO - move to helper file
+extent getNextExtent(const directory_entry *dir, int* extentIndex);
 
 // Expands the given file by the given number of blocks and updates the directory 
 // entry accordingly. Will create secondary extent tables as needed if the number 

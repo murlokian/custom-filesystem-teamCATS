@@ -158,6 +158,7 @@ directory_entry * loadDir(const directory_entry * dir) {
 // entry accordingly. Will create secondary extent tables as needed if the number 
 // of extents exceeds NUM_DIR_EXTENTS.
 // Returns 0 on success, -1 on failure
+// ***TODO*** MAKE HELPER FUNCTIONS IN SEP FILE (fsExtentHelpers)
 int growFile(directory_entry * file, int additionalBlocks) {
 	DEBUG("Not implemented yet");
 
@@ -170,9 +171,8 @@ int growFile(directory_entry * file, int additionalBlocks) {
 		return -1;
 	}
 
-	// get the required blocks from free space first tp then populate
-	// existing slots or a new table
-	// FIXME: handle minContiguousBlocks based on previous exts?
+	// get the required blocks from free space first, then populate existing slots or new table
+	// if you want 2 extents... why not just alloc + append one extent of N blocks ?
 	extent *newExts = getBlocks(additionalBlocks, 1);
 	if (newExts == NULL) {
 		DEBUG("getBlocks() failed");
@@ -180,19 +180,26 @@ int growFile(directory_entry * file, int additionalBlocks) {
 	}
 	
 	// iterate over the current extent array to find the following:
-	int firstFree = -1; // look for the first free/unused ext slot
 
-	// look for the sentinel value -2 in length (ELABORATE)
-	// if entry does have secondary, store that table location separately
+	int firstFree = -1; // look for the first free/unused ext slot used in case 1 or 2
+
+	// look for the sentinel value -2 in length so we know to call either case 2 or 3
 	int hasSecondary = 0;
 	uint32_t secondaryTableLoc;
 
 	for (int i = 0; i < NUM_DIR_EXTENTS; i++) {
+		if (file->exts[i].location == 0 && file->exts[i].length == 0) {
+			firstFree = i;
+		}
 		if (file->exts[i].length == SECONDARY_EXT_SENTINEL) {
 			hasSecondary = 1;
 			secondaryTableLoc = file->exts[i].location; 
 		}
 	}
+
+	// 
+	int openSlots = NUM_DIR_EXTENTS - firstFree; 
+
 
 	// iterate over exts array first to find above
 	// if we have unused slots, fill those with as many of new exts that we can
@@ -200,9 +207,22 @@ int growFile(directory_entry * file, int additionalBlocks) {
 	// call AddSecondaryExtTable(additionalBlocks) 
 	//	  --> calls getBlocks(additionalBlocks, 1)
 
+	
+
 	// THREE CASES TO HANDLE
 	// 1) enough free slots to use w/o creating another table
 	// 2) can fill to max slots in primary, create secondary
 	// 3) add straight to secondary (secondary handles creation of tertiary?)
+	
+	// HAVE HELPER FUNCTIONS FOR HANDLING EACH 
+	// ex) check for when contiguous extents can be merged THEN create tables 
+	// ***ADAPTIVE DEFAULT** for number of blocks to add based on the average num
+	// of blocks in the last N files in current directory 
+	
+	// consider adding a trim() for excess unused blocks that would be allocated above
+	// this would be a "partial free" ; does freeBlocks() NEED an array of extents?
+	// consider changing freeBlocks to take in starting extent and num blocks to loop over 
+	// number extents to cover these blocks 
+
 	return -1;
 }
