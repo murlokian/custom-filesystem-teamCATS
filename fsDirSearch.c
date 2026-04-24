@@ -8,14 +8,14 @@
 *
 * File:: fsDirSearch.c
 *
-* Description:: This is the source file for helper functions
-* related to searching for directory entries and parsing paths.
+* Description:: Implements fsDir.h helper functions related to 
+* searching for directory entries and parsing paths.
 *
 **************************************************************/
 
 #include <string.h>
 
-#include "fsDirSearch.h"
+#include "fsDir.h"
 #include "debug.h"
 
 int parsePath(const char * path, parsePathInfo * ppi) {

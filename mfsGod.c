@@ -17,7 +17,7 @@
 #include <string.h>
 
 #include "mfs.h"
-#include "fsDirSearch.h"
+#include "fsDir.h"
 #include "debug.h"
 #include "fsFreeSpace.h"
 

@@ -18,7 +18,7 @@
 
 #include "mfs.h"
 #include "debug.h"
-#include "fsDirSearch.h"
+#include "fsDir.h"
 
 fdDir *fs_opendir(const char *pathname)
 {

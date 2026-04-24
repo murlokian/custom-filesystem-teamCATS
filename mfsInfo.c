@@ -14,7 +14,7 @@
  **************************************************************/
 
 #include "mfs.h"
-#include "fsDirSearch.h"
+#include "fsDir.h"
 #include "debug.h"
 
 // return 1 if pathname exists and refers to a file otherwise 0

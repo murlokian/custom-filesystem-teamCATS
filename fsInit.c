@@ -27,9 +27,6 @@
 #include "fsDir.h"
 #include "debug.h"
 
-// FOR TESTING
-#include "fsDirSearch.h"
-
 int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	{
 	printf ("Initializing File System with %ld blocks with a block size of %ld\n", numberOfBlocks, blockSize);
@@ -58,18 +55,6 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 			DEBUG("loadFreeSpace failed");
 			return -1;
 		}
-
-		// ====== TESTING CODE ======
-
-		// directory_entry * testDir = createDirectory(10, NULL);
-		// strcpy(testDir[2].name, "bingo");
-		// findDirEntry(testDir, "bingo");
-		// findUnusedDirEntry(testDir);
-		// findDirEntry(testDir, "not_in_dir");
-		// free(testDir);
-		// testDir = NULL;
-
-		// ==== END TESTING CODE ======
 
 		return 0;
 	}

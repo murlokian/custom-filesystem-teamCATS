@@ -160,8 +160,8 @@ directory_entry * loadDir(const directory_entry * dir) {
 		return NULL;
 	}
 
-	extent currExt = getNextExtent(NULL, 1);
-	int extIndex;
+	// extent currExt = getNextExtent(NULL, 1);
+	// int extIndex;
 
 	// while (currExt = getNextExtent(NULL, 1) != NULL) {
 

@@ -97,4 +97,29 @@ extent getNextExtent(const directory_entry *dir, int* extentIndex);
 // Returns 0 on success, -1 on failure
 int growFile(directory_entry * file, int additionalBlocks);
 
+typedef int dir_index;
+
+// Struct to hold information about the result of parsing a path. This is used to return
+// multiple values from the parsePath function.
+typedef struct parsePathInfo
+{
+	directory_entry *parentDir;
+	dir_index entryIndex;
+	char *lastElementName;
+} parsePathInfo;
+
+// Parses the given path and passes back information about the path in the
+// parsePathInfo struct.
+// Returns 0 on success, -1 on failure
+int parsePath(const char *path, parsePathInfo *ppi);
+
+// Finds the index of the directory entry with the given name in the given directory.
+// Returns the index of the entry if found, -1 if not found.
+dir_index findDirEntry(directory_entry *dir, const char *name);
+
+// Finds the index of the first unused directory entry in the given directory.
+// If no unused entry is found, it will expand directory as needed and return the
+// index of the first entry in the newly allocated space.
+dir_index findUnusedDirEntry(directory_entry *dir);
+
 #endif
