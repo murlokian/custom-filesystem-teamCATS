@@ -149,17 +149,33 @@ int writeDirectory(directory_entry *dir) {
 	return 0;
 }
 
-directory_entry * loadDir(const directory_entry * dir) {
-	DEBUG("Not implemented yet");
+directory_entry * loadDir(directory_entry * dir) {
+	// Allocate memory for entry array  
+	int numBlocks = (dir->size + VCBGlobal->blockSize - 1) / VCBGlobal->blockSize;
+	directory_entry* deez = malloc(numBlocks * VCBGlobal->blockSize);
+	if(deez == NULL) {
+		DEBUG("malloc failed");
+		return NULL;
+	}
 
-	// directory_entry * dirs = malloc(dir->size / sizeof(directory_entry));
+	// Iterate through extents  
+	int offset = 0;
+	int extIndex = 0;
+	extent* ext;
+	while(true) {
+		ext = getNextExtent(dir, &extIndex);
 
-	// if (dirs == NULL) {
-	// 	DEBUG_ERR("malloc");
-	// 	return NULL;
-	// }
+		// No more extents  
+		if(ext == NULL) {
+			break;
+		}
 
-	return NULL;
+		// Load into in memory array  
+		LBAread(deez + offset, ext->length, ext->location);
+		offset += ext->length * VCBGlobal->blockSize;
+	}
+
+	return deez;
 }
 
 // TODO - implement and move to helper file

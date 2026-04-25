@@ -83,7 +83,7 @@ int writeDirectory(directory_entry *dir);
 
 // Takes in a directory entry and loads all the directory entries in that
 // directory and returns a pointer to the directory entries in memory
-directory_entry * loadDir(const directory_entry * dir);
+directory_entry * loadDir(directory_entry * dir);
 
 // Somewhat similar logic to strtok_r, helper for multiple calls of b_read(), b_write()
 // function updates extentIndex as the 'current position' for the next call (acting as our saveptr)
