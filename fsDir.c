@@ -163,7 +163,7 @@ directory_entry * loadDir(const directory_entry * dir) {
 }
 
 // TODO - implement and move to helper file
-extent * getNextExtent(directory_entry * dir, int ** extentIndex) {
+extent * getNextExtent(directory_entry * dir, int * extentIndex) {
 	DEBUG("Not implemented yet");
 
     return NULL;

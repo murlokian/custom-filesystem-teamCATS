@@ -162,7 +162,7 @@ int b_read (b_io_fd fd, char * buffer, int count)
 		// this is so this caller doesn't have to worry about current block/position in 
 		// entry as b_read() is called 
 		// getNextExtent handles if we need to traverse secondary/tertiary tables for this file
-		int * extIndex; // equivalent of saveptr in strtok_r()
+		int extIndex; // equivalent of saveptr in strtok_r()
 		extent * currExt = getNextExtent(fcbArray[fd].de, &extIndex);
 		
 

@@ -90,7 +90,7 @@ directory_entry * loadDir(const directory_entry * dir);
 // iterate from beginning of DE's extent array up to extentIndex and returns updated position
 // Updated position to be used when calling LBAread() or LBAwrite()
 // TODO - move to helper file
-extent * getNextExtent(directory_entry * dir, int ** extentIndex);
+extent * getNextExtent(directory_entry * dir, int * extentIndex);
 
 // Expands the given file by the given number of blocks and updates the directory 
 // entry accordingly. Will create secondary extent tables as needed if the number 

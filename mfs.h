@@ -32,8 +32,6 @@
 #define FT_LINK	DT_LNK
 #define MAX_PATH_SIZE 4096 //to store the path name
 
-//hello i am abha
-
 #ifndef uint64_t
 typedef u_int64_t uint64_t;
 #endif
