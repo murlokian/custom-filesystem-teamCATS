@@ -83,6 +83,7 @@ int writeDirectory(directory_entry *dir);
 
 // Takes in a directory entry and loads all the directory entries in that
 // directory and returns a pointer to the directory entries in memory
+// If passed NULL, loads the root directory  
 directory_entry * loadDir(directory_entry * dir);
 
 // Somewhat similar logic to strtok_r, helper for multiple calls of b_read(), b_write()

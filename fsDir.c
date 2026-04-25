@@ -150,8 +150,43 @@ int writeDirectory(directory_entry *dir) {
 }
 
 directory_entry * loadDir(directory_entry * dir) {
+	// If passed NULL, load root directory  
+	if(dir == NULL) {
+		directory_entry* deez = malloc(VCBGlobal->blockSize);
+		if(deez == NULL) {
+			DEBUG("malloc failed");
+			return NULL;
+		}
+
+		// Read first block to get root's "." entry  
+		if(LBAread(deez, 1, VCBGlobal->rootLocation) != 1) {
+			DEBUG("lbaread failed loading 1st root block");
+			free(deez);
+			deez = NULL;
+			return NULL;
+		}
+
+		directory_entry* root = loadDir(&deez[0]);
+		free(deez);
+		return root;
+	}
+
+	// Exit if entry is file  
+	if(dir->entryType == 0) {
+		DEBUG("loadDir called on file");
+		return NULL;
+	}
+
+	// Calculate size of all entries  
+	int numBlocks = 0;
+	for(int i = 0; i < NUM_DIR_EXTENTS; i++) {
+		if(dir->exts[i].location == 0) {
+			break;
+		}
+		numBlocks += dir->exts[i].length;
+	}
+
 	// Allocate memory for entry array  
-	int numBlocks = (dir->size + VCBGlobal->blockSize - 1) / VCBGlobal->blockSize;
 	directory_entry* deez = malloc(numBlocks * VCBGlobal->blockSize);
 	if(deez == NULL) {
 		DEBUG("malloc failed");
@@ -171,7 +206,12 @@ directory_entry * loadDir(directory_entry * dir) {
 		}
 
 		// Load into in memory array  
-		LBAread(deez + offset, ext->length, ext->location);
+		if(LBAread((char*)deez + offset, ext->length, ext->location) != ext->length) {
+			DEBUG("lbaread failed");
+			free(deez);
+			deez = NULL;
+			return NULL;
+		}
 		offset += ext->length * VCBGlobal->blockSize;
 	}
 
