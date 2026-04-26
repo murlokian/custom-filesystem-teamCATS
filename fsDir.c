@@ -196,27 +196,45 @@ directory_entry * loadDir(directory_entry * dir) {
 		return NULL;
 	}
 
-	// Iterate through extents  
-	int offset = 0;
-	int extIndex = 0;
-	extent* ext;
-	while(true) {
-		ext = getNextExtent(dir, &extIndex);
-
-		// No more extents  
-		if(ext == NULL) {
-			break;
-		}
-
-		// Load into in memory array  
-		if(LBAread((char*)deez + offset, ext->length, ext->location) != ext->length) {
-			DEBUG("lbaread failed");
-			free(deez);
-			deez = NULL;
-			return NULL;
-		}
-		offset += ext->length * VCBGlobal->blockSize;
+	// vvv TESTING CODE vvv
+	// Using first extent only, so we can test our mfs functions before getNextExtent is
+	// written. This should be fine since our directories are contiguous  
+	if(dir->exts[0].location == 0 || dir->exts[0].length == 0) {
+		DEBUG("directory first extent invalid");
+		free(deez);
+		deez = NULL;
+		return NULL;
 	}
+
+	if(LBAread(deez, dir->exts[0].length, dir->exts[0].location) != dir->exts[0].length) {
+		DEBUG("lbaread failed");
+		free(deez);
+		deez = NULL;
+		return NULL;
+	}
+	// ^^^ TESTING CODE ^^^
+
+	// // Iterate through extents  
+	// int offset = 0;
+	// int extIndex = 0;
+	// extent* ext;
+	// while(true) {
+	// 	ext = getNextExtent(dir, &extIndex);
+
+	// 	// No more extents  
+	// 	if(ext == NULL) {
+	// 		break;
+	// 	}
+
+	// 	// Load into in memory array  
+	// 	if(LBAread((char*)deez + offset, ext->length, ext->location) != ext->length) {
+	// 		DEBUG("lbaread failed");
+	// 		free(deez);
+	// 		deez = NULL;
+	// 		return NULL;
+	// 	}
+	// 	offset += ext->length * VCBGlobal->blockSize;
+	// }
 
 	return deez;
 }
