@@ -26,14 +26,14 @@ int fs_isFile(char *filename)
     if (parsePath(filename, &ppi) != 0)
     {
         freePPI(&ppi);
-        return -1;
+        return 0;
     }
 
     // check result is valid
     if (ppi.parentDir == NULL || ppi.entryIndex < 0)
     {
         freePPI(&ppi);
-        return -1;
+        return 0;
     }
 
     int retVal = (ppi.parentDir[ppi.entryIndex].entryType == 0);
@@ -53,13 +53,13 @@ int fs_isDir(char *pathname)
     if (parsePath(pathname, &ppi) != 0)
     {
         freePPI(&ppi);
-        return -1;
+        return 0;
     }
 
     if (ppi.parentDir == NULL || ppi.entryIndex < 0)
     {
         freePPI(&ppi);
-        return -1;
+        return 0;
     }
 
     int retVal = (ppi.parentDir[ppi.entryIndex].entryType == 1);
