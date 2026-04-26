@@ -8,10 +8,10 @@
 *
 * File:: fsFreeSpace.c
 *
-* Description::  This is the freespace system.  We are using a three-level extent 
-* table system to track free space.  Extents will be organized into primary and
-* secondary levels which are created as needed as the disk becomes fragmented
-* and the number of free extents increases.  
+* Description::  This is the freespace system.  We are using an extent system
+* to track free space.  Extents will be organized into primary and secondary 
+* levels which are created as needed as the disk becomes fragmented and the 
+* number of free extents increases.  
 *
 **************************************************************/
 
@@ -210,6 +210,51 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 }
 
 int freeBlocks(extent* exts) {
-	printf("freeBlocks() not yet implemented");
+	// Iterate through extents to be freed  
+	int i = 0;
+	while(exts[i].location != 0) {
+		// Skip already marked free extents  
+		if(exts[i].length == 0) {
+			i++;
+			continue;
+		}
+
+		// Iterate through freespace extents  
+		extent newFreeExt = exts[i];
+		int numFsExtents = (NUM_FREESPACE_BLOCKS * VCBGlobal->blockSize) / sizeof(extent);
+		for(int j = 0; j < numFsExtents; j++) {
+			// Can be merged at end of existing freespace extent  
+			if(freespaceExts[j].location + freespaceExts[j].length == newFreeExt.location) {
+				freespaceExts[j].length += newFreeExt.length;
+				break;
+			}
+
+			// Can be merged at beginning of existing freespace extent  
+			if(newFreeExt.location + newFreeExt.length == freespaceExts[j].location) {
+				freespaceExts[j].location = newFreeExt.location;
+				freespaceExts[j].length += newFreeExt.length;
+				break;
+			}
+
+			// *** FIX: insert sorted? ***  
+			// Add at end of freespace extents  
+			if(freespaceExts[j].location != 0) {
+				continue;
+			}
+			freespaceExts[j] = newFreeExt;
+			break;
+		}
+
+		i++;
+	}
+
+	// Write updated extents to disk  
+	if(LBAwrite(freespaceExts, NUM_FREESPACE_BLOCKS, VCBGlobal->freespaceLocation) 
+		!= NUM_FREESPACE_BLOCKS) 
+	{
+		DEBUG("LBAwrite failed");
+		return 1;
+	}
+
 	return 0;
 }
