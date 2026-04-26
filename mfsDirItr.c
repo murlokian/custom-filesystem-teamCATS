@@ -33,7 +33,8 @@ fdDir *fs_opendir(const char *pathname)
     }
 
     // If trying to open root  
-    // NOTE: a copy is loaded here instead of the global so it is not freed in closedir  
+    // NOTE: a copy is loaded here instead of the global so it is not freed in closedir.  
+    // NOTE: we could instead use the global and add a check in closedir? less clean imo  
     if(ppi.entryIndex == -2) {
         loadedDir = loadDir(NULL);
         if(loadedDir == NULL) {
@@ -85,32 +86,46 @@ fdDir *fs_opendir(const char *pathname)
 
 struct fs_diriteminfo *fs_readdir(fdDir *dirp)
 {
+    // Null check  
+    if(dirp == NULL || dirp->directory == NULL) {
+        DEBUG("Invalid fdDir");
+        return NULL;
+    }
+
     // Iterate to next entry if not at first / '.' directory
-    if (dirp->di != NULL)
-    {
+    if(dirp->di != NULL) {
         dirp->dirEntryPosition++;
     }
     // Case at '.'
-    else
-    {
+    else {
         // Allocate memory for struct to be returned to caller
-        struct fs_diriteminfo *di = malloc(sizeof(struct fs_diriteminfo));
-        if (di == NULL)
-        {
-            DEBUG("malloc failed in fs_readdir()");
-            free(dirp);
-            dirp = NULL;
+        dirp->di = malloc(sizeof(struct fs_diriteminfo));
+        if(dirp->di == NULL) {
+            DEBUG("malloc failed");
             return NULL;
         }
         dirp->di->d_reclen = sizeof(struct fs_diriteminfo);
     }
 
-    // Set fields in struct to be returned to caller
-    directory_entry currDe = dirp->directory[dirp->dirEntryPosition];
-    dirp->di->fileType = currDe.entryType;
-    strncpy(dirp->di->d_name, currDe.name, MAX_ENTRY_NAME_SIZE);
+    // Ensure not reading past last entry  
+    int numEntries = dirp->directory[0].size / sizeof(directory_entry);
+    while(dirp->dirEntryPosition < numEntries) {
+        directory_entry currDe = dirp->directory[dirp->dirEntryPosition];
 
-    return dirp->di;
+        // Skip unused entries  
+        if(currDe.name[0] != '\0') {
+            // Set fields in struct to be returned to caller  
+            dirp->di->fileType = currDe.entryType;
+            strncpy(dirp->di->d_name, currDe.name, sizeof(dirp->di->d_name) - 1);
+            dirp->di->d_name[sizeof(dirp->di->d_name) - 1] = '\0';
+            return dirp->di;
+        }
+
+        dirp->dirEntryPosition++;
+    }
+
+    // No more entries  
+    return NULL;
 }
 
 int fs_closedir(fdDir *dirp)
