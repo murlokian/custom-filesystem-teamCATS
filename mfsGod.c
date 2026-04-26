@@ -42,14 +42,12 @@ int fs_mkdir(const char *pathname, mode_t mode)
     if (ppi.entryIndex != -1)
     {
         DEBUG("Directory entry already exists. Mkdir failed: mfs.h");
-        freePPI(&ppi);
         return -1;
     }
 
     // Check if parent exists and isDir
     if (ppi.parentDir == NULL)
     {
-        freePPI(&ppi);
         return -1;
     }
 
@@ -58,10 +56,8 @@ int fs_mkdir(const char *pathname, mode_t mode)
     directory_entry *newDir = createDirectory(DEFAULT_NUM_DIR_ENTRIES, ppi.parentDir);
 
     // check if the directory was actually created
-    if (newDir == NULL) {
-        freePPI(&ppi);
+    if (newDir == NULL)
         return -1;
-    }
 
     int index = findUnusedDirEntry(ppi.parentDir);
     // if empty, what about the directory createDirectory created?
@@ -69,7 +65,6 @@ int fs_mkdir(const char *pathname, mode_t mode)
     {
         free(newDir);
         newDir = NULL;
-        freePPI(&ppi);
         return -1;
     }
 
@@ -77,16 +72,10 @@ int fs_mkdir(const char *pathname, mode_t mode)
     ppi.parentDir[index] = newDir[0];
     strcpy(ppi.parentDir[index].name, ppi.lastElementName);
     // write updated parent back to disk
-    if(writeDirectory(ppi.parentDir) == -1) {
-        free(newDir);
-        newDir = NULL;
-        freePPI(&ppi);
-        return -1;
-    }
+    writeDirectory(ppi.parentDir);
 
     free(newDir);
     newDir = NULL;
-    freePPI(&ppi);
     return 0;
 }
 
@@ -105,7 +94,6 @@ int fs_rmdir(const char *pathname)
     // deny invalid parse results
     if (ppi.parentDir == NULL || ppi.entryIndex < 0)
     {
-        freePPI(&ppi);
         return -1;
     }
 
@@ -114,7 +102,6 @@ int fs_rmdir(const char *pathname)
     // only removes directories
     if (entry->entryType != 1)
     {
-        freePPI(&ppi);
         return -1;
     }
 
@@ -122,7 +109,6 @@ int fs_rmdir(const char *pathname)
     directory_entry *dir = loadDir(entry);
     if (dir == NULL)
     {
-        freePPI(&ppi);
         return -1;
     }
 
@@ -134,8 +120,6 @@ int fs_rmdir(const char *pathname)
         if (dir[i].name[0] != '\0')
         {
             free(dir);
-            dir = NULL;
-            freePPI(&ppi);
             return -1;
         }
     }
@@ -144,8 +128,6 @@ int fs_rmdir(const char *pathname)
     if (freeBlocks(entry->exts) != 0)
     {
         free(dir);
-        dir = NULL;
-        freePPI(&ppi);
         return -1;
     }
 
@@ -157,14 +139,10 @@ int fs_rmdir(const char *pathname)
     if (writeDirectory(ppi.parentDir) != 0)
     {
         free(dir);
-        dir = NULL;
-        freePPI(&ppi);
         return -1;
     }
 
     free(dir);
-    dir = NULL;
-    freePPI(&ppi);
     return 0;
 }
 
@@ -176,14 +154,12 @@ int fs_delete(char *filename)
     // find file inside parent directory
     if (parsePath(filename, &ppi) != 0)
     {
-        freePPI(&ppi);
         return -1;
     }
 
     // deny invalid parse results
     if (ppi.parentDir == NULL || ppi.entryIndex < 0)
     {
-        freePPI(&ppi);
         return -1;
     }
 
@@ -192,14 +168,12 @@ int fs_delete(char *filename)
     // only removes regular files
     if (entry->entryType != 0)
     {
-        freePPI(&ppi);
         return -1;
     }
 
     // return file's blocks to free space manager
     if (freeBlocks(entry->exts) != 0)
     {
-        freePPI(&ppi);
         return -1;
     }
 
@@ -210,10 +184,8 @@ int fs_delete(char *filename)
     // write updated parent directory back to disk
     if (writeDirectory(ppi.parentDir) != 0)
     {
-        freePPI(&ppi);
         return -1;
     }
 
-    freePPI(&ppi);
     return 0;
 }

@@ -50,14 +50,11 @@ int fs_setcwd(char *pathname)
     if (res == -1)
     {
         DEBUG("Failed to set directory: mfs.c");
-        freePPI(&s);
         return -1;
     }
     // thne load the directory
     curDir = loadDir(&s.parentDir[s.entryIndex]);
     cwdGlobal = curDir;
-
-    freePPI(&s);
 
     return 0;
 }

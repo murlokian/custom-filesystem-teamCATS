@@ -26,7 +26,7 @@ fdDir *fs_opendir(const char *pathname)
     parsePathInfo ppi;
 
     // Find info via given path
-    if (parsePath(pathname, &ppi) == -1)
+    if (parsePath(pathname, &ppi))
     {
         DEBUG("parsePath failed");
         return NULL;
@@ -36,7 +36,6 @@ fdDir *fs_opendir(const char *pathname)
     if (ppi.parentDir[ppi.entryIndex].entryType != 1)
     {
         DEBUG("Target entry is not a directory");
-        freePPI(&ppi);
         return NULL;
     }
 
@@ -45,7 +44,6 @@ fdDir *fs_opendir(const char *pathname)
     if (dirp == NULL)
     {
         DEBUG("malloc failed in fs_opendir()");
-        freePPI(&ppi);
         return NULL;
     }
 
@@ -53,15 +51,9 @@ fdDir *fs_opendir(const char *pathname)
     dirp->d_reclen = sizeof(struct fs_diriteminfo);
     dirp->dirEntryPosition = 0;
     dirp->directory = loadDir(&ppi.parentDir[ppi.entryIndex]);
-    if(dirp->directory == NULL) {
-        DEBUG("loadDir failed");
-        free(dirp);
-        freePPI(&ppi);
-        return NULL;
-    }
     dirp->di = NULL;
 
-    freePPI(&ppi);
+    DEBUG("opened directory: %s", dirp->di->d_name);
     return dirp;
 }
 
