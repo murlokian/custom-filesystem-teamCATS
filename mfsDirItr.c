@@ -22,23 +22,46 @@
 
 fdDir *fs_opendir(const char *pathname)
 {
-
     parsePathInfo ppi;
+    directory_entry* loadedDir;
 
     // Find info via given path
-    if (parsePath(pathname, &ppi) == -1)
-    {
+    if(parsePath(pathname, &ppi) == -1) {
         DEBUG("parsePath failed");
         freePPI(&ppi);
         return NULL;
     }
 
-    // Ensure target is directory
-    if (ppi.parentDir[ppi.entryIndex].entryType != 1)
-    {
-        DEBUG("Target entry is not a directory");
-        freePPI(&ppi);
-        return NULL;
+    // If trying to open root  
+    // NOTE: a copy is loaded here instead of the global so it is not freed in closedir  
+    if(ppi.entryIndex == -2) {
+        loadedDir = loadDir(NULL);
+        if(loadedDir == NULL) {
+            DEBUG("loadDir failed for root");
+            freePPI(&ppi);
+            return NULL;
+        }
+    } else {
+        // Invalid parse info  
+        if(ppi.parentDir == NULL || ppi.entryIndex < 0) {
+            DEBUG("Invalid parse result");
+            freePPI(&ppi);
+            return NULL;
+        }
+
+        // Ensure target is directory
+        if(ppi.parentDir[ppi.entryIndex].entryType != 1) {
+            DEBUG("Target entry is not a directory");
+            freePPI(&ppi);
+            return NULL;
+        }
+
+        loadedDir = loadDir(&ppi.parentDir[ppi.entryIndex]);
+        if(loadedDir == NULL) {
+            DEBUG("loadDir failed");
+            freePPI(&ppi);
+            return NULL;
+        }
     }
 
     // Allocate memory for directory control block
@@ -53,14 +76,7 @@ fdDir *fs_opendir(const char *pathname)
     // Set fields in directory control block
     dirp->d_reclen = sizeof(struct fs_diriteminfo);
     dirp->dirEntryPosition = 0;
-    dirp->directory = loadDir(&ppi.parentDir[ppi.entryIndex]);
-    if(dirp->directory == NULL) {
-        DEBUG("loadDir failed");
-        free(dirp);
-        dirp = NULL;
-        freePPI(&ppi);
-        return NULL;
-    }
+    dirp->directory = loadedDir;
     dirp->di = NULL;
 
     freePPI(&ppi);
@@ -111,6 +127,10 @@ int fs_closedir(fdDir *dirp)
         free(dirp->di);
         dirp->di = NULL;
     }
+    if(dirp->directory != NULL) {
+        free(dirp->directory);
+        dirp->directory = NULL;
+    } 
     free(dirp);
     dirp = NULL;
 

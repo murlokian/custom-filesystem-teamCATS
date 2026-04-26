@@ -77,7 +77,7 @@ typedef struct directory_entry {
 extern directory_entry* rootGlobal;
 
 // Global instance of current working directory so it can be accessed across many functions
-// and files and because there is only one current working directory per volume.
+// and files and because there is only one current working directory.
 extern directory_entry* cwdGlobal;
 
 // Populates and writes a directory to disk. Minimum 2 initial entries for "." and ".." required
@@ -111,6 +111,8 @@ typedef int dir_index;
 
 // Struct to hold information about the result of parsing a path. This is used to return
 // multiple values from the parsePath function.
+// entryIndex of -1 indicates nonexistent last element in cases like mkdir  
+// entryIndex of -2 indicates path given was "/"  
 typedef struct parsePathInfo
 {
 	directory_entry *parentDir;
