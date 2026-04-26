@@ -1,7 +1,7 @@
 /**************************************************************
  * Class::  CSC-415-03 Spring 2026
- * Name:: Abha Deshpande
- * Student IDs:: 923314454
+ * Name:: Abha Deshpande, Allie Young
+ * Student IDs:: 923314454, 923129607
  * GitHub-Name::  milo-pa
  * Group-Name::  CATS
  * Project:: Basic File System
@@ -19,17 +19,25 @@
 #include "string.h"
 
 // globals for getcwd() and setcwd()
-char path[MAX_PATH_SIZE];
+char path[MAX_PATH_SIZE] = "/";
 directory_entry *curDir;
 
 char *fs_getcwd(char *pathname, size_t size)
 {
-    if (path[0] == '\0')
-    {
-        DEBUG("fs_getcwd() failed, initialize path first");
+    if(pathname == NULL || size == 0) {
+        DEBUG("invalid path buffer");
         return NULL;
     }
+
+    if (path[0] == '\0')
+    {
+        DEBUG("path not initialized");
+        return NULL;
+    }
+
     strncpy(pathname, path, size);
+    pathname[size - 1] = '\0';
+
     return pathname;
 }
 
