@@ -1,7 +1,7 @@
 /**************************************************************
 * Class::  CSC-415-03 Spring 2026
-* Name:: Rosa Melton, Milo Pesce Ares, Patricia Ann Payumo
-* Student IDs:: 921337778, 921926821, 923555591
+* Name:: Rosa Melton, Milo Pesce Ares, Patricia Ann Payumo, Allie Young
+* Student IDs:: 921337778, 921926821, 923555591, 923129607
 * GitHub-Name:: milo-pa
 * Group-Name:: CATS
 * Project:: Basic File System
@@ -56,6 +56,13 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 			return -1;
 		}
 
+		rootGlobal = loadDir(NULL);
+		if(rootGlobal == NULL) {
+			DEBUG("loadDir failed for root");
+			return -1;
+		}
+		cwdGlobal = rootGlobal;
+
 		return 0;
 	}
 
@@ -97,8 +104,9 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
         return -1;
     }
 	VCBGlobal->rootLocation = rootLoc;
-	free(root);
+	rootGlobal = root;
 	root = NULL;
+	cwdGlobal = rootGlobal;
 
 	DEBUG("Root directory created successfully");
 
@@ -120,10 +128,19 @@ void exitFileSystem ()
 	{
 	printf ("System exiting\n");
 
-	// Free the global VCB variable if it has been allocated
-	if (VCBGlobal != NULL) 
-	{
+	// Free used resources  
+	if(VCBGlobal != NULL) {
 		free(VCBGlobal);
 		VCBGlobal = NULL;
+	}
+
+	if(cwdGlobal != NULL && cwdGlobal != rootGlobal) {
+		free(cwdGlobal);
+		cwdGlobal = NULL;
+	}
+
+	if(rootGlobal != NULL) {
+		free(rootGlobal);
+		rootGlobal= NULL;
 	}
 	}

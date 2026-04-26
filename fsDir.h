@@ -72,6 +72,14 @@ typedef struct directory_entry {
 
 } directory_entry;
 
+// Global instance of root directory so it can be accessed across many functions and files
+// and because there is only one root directory per volume.
+extern directory_entry* rootGlobal;
+
+// Global instance of current working directory so it can be accessed across many functions
+// and files and because there is only one current working directory per volume.
+extern directory_entry* cwdGlobal;
+
 // Populates and writes a directory to disk. Minimum 2 initial entries for "." and ".." required
 // Pass NULL for parent if this is the root directory.
 // Returns pointer to directory_entry struct with allocated memory rounded up to blockSize

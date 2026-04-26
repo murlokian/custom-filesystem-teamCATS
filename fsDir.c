@@ -31,6 +31,9 @@
 // sentinel node to indicate location to tertiary extent table  = -3
 #define TERTIARY_EXT_SENTINEL ((uint32_t) 0xFFFFFFFD)
 
+directory_entry* rootGlobal = NULL;
+directory_entry* cwdGlobal = NULL;
+
 directory_entry *createDirectory(int initialEntryCount, directory_entry *parent) {
 
 	// Check that initial entry count is at least 2 for "." and ".." entries

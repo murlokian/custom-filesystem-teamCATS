@@ -54,6 +54,7 @@ int fs_setcwd(char *pathname)
     }
     // thne load the directory
     curDir = loadDir(&s.parentDir[s.entryIndex]);
+    cwdGlobal = curDir;
 
     return 0;
 }
