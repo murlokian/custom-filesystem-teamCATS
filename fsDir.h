@@ -118,10 +118,16 @@ typedef struct parsePathInfo
 	char *lastElementName;
 } parsePathInfo;
 
+// Helper function to free in memory fields in the parsePathInfo struct  
+void freePPI(parsePathInfo* ppi);
+
 // Parses the given path and passes back information about the path in the
-// parsePathInfo struct.
+// parsePathInfo struct. 
+// ppi.entryIndex of -1 indicates nonexistent last element in cases like mkdir  
+// ppi.entryIndex of -2 indicates path given was "/"  
+// Caller must call freePPI() before cwdGlobal is changed  
 // Returns 0 on success, -1 on failure
-int parsePath(const char *path, parsePathInfo *ppi);
+int parsePath(const char* path, parsePathInfo* ppi);
 
 // Finds the index of the directory entry with the given name in the given directory.
 // Returns the index of the entry if found, -1 if not found.
