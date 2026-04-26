@@ -25,17 +25,23 @@ int fs_isFile(char *filename)
     // locate target entry from the given pathname
     if (parsePath(filename, &ppi) != 0)
     {
-        return 0;
+        freePPI(&ppi);
+        return -1;
     }
 
     // check result is valid
     if (ppi.parentDir == NULL || ppi.entryIndex < 0)
     {
-        return 0;
+        freePPI(&ppi);
+        return -1;
     }
 
+    int retVal = (ppi.parentDir[ppi.entryIndex].entryType == 0);
+
+    freePPI(&ppi);
+
     // entryType: 0 = file, 1 = directory
-    return (ppi.parentDir[ppi.entryIndex].entryType == 0);
+    return retVal;
 }
 
 // return 1 if pathname exists and refers to a directory otherwise 0
@@ -46,15 +52,21 @@ int fs_isDir(char *pathname)
     // locate target entry from given pathname
     if (parsePath(pathname, &ppi) != 0)
     {
-        return 0;
+        freePPI(&ppi);
+        return -1;
     }
 
     if (ppi.parentDir == NULL || ppi.entryIndex < 0)
     {
-        return 0;
+        freePPI(&ppi);
+        return -1;
     }
 
-    return (ppi.parentDir[ppi.entryIndex].entryType == 1);
+    int retVal = (ppi.parentDir[ppi.entryIndex].entryType == 1);
+
+    freePPI(&ppi);
+
+    return retVal;
 }
 
 // fs stat
@@ -63,6 +75,8 @@ int fs_isDir(char *pathname)
 // takes a path, looks for that directory entry, copies metadata into the buf struct
 int fs_stat(const char *path, struct fs_stat *buf)
 {
+    DEBUG("Not implemented yet");
+
     // check if the path exists
     parsePathInfo ppi;
 
