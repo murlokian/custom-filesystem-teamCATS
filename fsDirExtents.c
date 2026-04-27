@@ -45,6 +45,10 @@ extent * getNextExtent(directory_entry * dir, int * extentIndex) {
             if (currExt->location == 0 && currExt->length == 0) {
                 return NULL;
             }
+			// SKIP next extent if freed (fragmentation check)
+			if (currExt->length == 0) {
+				continue;
+			}
 
             // TODO: check for secondary/tertiary sentinels and read into memory
             // load on demand/cache in static buffer or lazy load ?
