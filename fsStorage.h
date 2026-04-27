@@ -52,4 +52,8 @@ extent* getBlocks(int numBlocks, int minContiguous);
 // Also returns the freed extents to the freespace system  
 int freeBlocks(extent* exts);
 
+
+// Checks if sentinel is an extent
+bool isSentinel(extent *ext);
+
 #endif

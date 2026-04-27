@@ -258,3 +258,7 @@ int freeBlocks(extent* exts) {
 
 	return 0; 
 }
+
+bool isSentinel(extent* ext) {
+	return ext->location == 0 && ext->length == 0;
+}
