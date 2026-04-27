@@ -89,15 +89,7 @@ directory_entry * loadDir(directory_entry * dir);
 // iterate from beginning of DE's extent array up to extentIndex and returns updated position
 // Updated position to be used when calling LBAread() or LBAwrite()
 // TODO - move to helper file
-extent * getNextExtent(directory_entry * dir, int * extentIndex);
-
-// traverses through extent array and checks for empty extent sentinel value (0, 0)
-int findFirstFree(extent * exts);
-
-// checks the last index of the primary extent table if the legnth contains 
-// our sentinel value for either secondary or tertiary table locations
-// this is called to determine which case to use in growFile() 
-int checkSentinel(directory_entry * dir);
+extent * getNextExtent(extent * exts, int * extentIndex);
 
 // Expands the given file by the given number of blocks and updates the directory 
 // entry accordingly. Will create secondary extent tables as needed if the number 

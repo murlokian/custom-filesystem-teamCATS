@@ -231,3 +231,65 @@ directory_entry * loadDir(directory_entry * dir) {
 
 	return deez;
 }
+
+// Expands the given file by the given number of blocks and updates the directory 
+// entry accordingly. Will create secondary extent tables as needed if the number 
+// of extents exceeds NUM_DIR_EXTENTS.
+// Returns 0 on success, -1 on failure
+int growFile(directory_entry * file, int additionalBlocks) {
+	DEBUG("Not implemented yet");
+
+	if (file == NULL) {
+		DEBUG("file does not exist");
+		return -1;
+	}
+	if (additionalBlocks < 1) {
+		DEBUG("cannot add less than one block");
+		return -1;
+	}
+
+	// get the required blocks from free space first, then populate existing slots or new table
+	// ??? if you want 2 extents... why not just alloc + append one extent of N blocks ?
+	extent *newExts = getBlocks(additionalBlocks, 1);
+	if (newExts == NULL) {
+		DEBUG("getBlocks() failed");
+		return -1;
+	}
+	
+	// look for the first free/unused ext slot used in case 1 or 2
+    int firstFree = findFirstFree(file->exts);
+
+	// look for the sentinel value -2 in length so we know to call either case 2 or 3
+    int hasNryTable = 0;
+	uint32_t nryTableLoc = checkSentinel(file->exts[NUM_DIR_EXTENTS - 1]);
+
+    if (nryTableLoc != 0) { hasNryTable = 1; }
+
+	// 
+	int openSlots = NUM_DIR_EXTENTS - firstFree; 
+
+
+	// iterate over exts array first to find above
+	// if we have unused slots, fill those with as many of new exts that we can
+	// if overflow, create secondary ext (NEEDS A CHECK)
+	// call AddSecondaryExtTable(additionalBlocks) 
+	//	  --> calls getBlocks(additionalBlocks, 1)
+	
+
+	// THREE CASES TO HANDLE
+	// 1) enough free slots to use w/o creating another table
+	// 2) can fill to max slots in primary, create secondary
+	// 3) add straight to secondary (secondary handles creation of tertiary?)
+	
+	// HAVE HELPER FUNCTIONS FOR HANDLING EACH 
+	// ex) check for when contiguous extents can be merged THEN create tables 
+	// ***ADAPTIVE DEFAULT** for number of blocks to add based on the average num
+	// of blocks in the last N files in current directory 
+	
+	// consider adding a trim() for excess unused blocks that would be allocated above
+	// this would be a "partial free" ; does freeBlocks() NEED an array of extents?
+	// consider changing freeBlocks to take in starting extent and num blocks to loop over 
+	// number extents to cover these blocks 
+
+	return -1;
+}
