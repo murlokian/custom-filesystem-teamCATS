@@ -63,6 +63,6 @@ int checkSentinel(const extent ext);
 // traverses all extent tables of a directory entry, returning the next valid extent 
 // after *extentIndex and advances it by one position (acting as our 'cursor')
 // returns null after iterating through all extents 
-extent * getNextExtent(extent * exts, int * extentIndex);
+extent * getNextExtent(const extent * exts, int * extentIndex);
 
 #endif
