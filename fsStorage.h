@@ -52,8 +52,17 @@ extent* getBlocks(int numBlocks, int minContiguous);
 // Also returns the freed extents to the freespace system  
 int freeBlocks(extent* exts);
 
+// traverses through extent array and checks for empty extent sentinel value (0, 0)
+int findFirstFree(const extent * exts);
 
-// Checks if sentinel is an extent
-bool isSentinel(extent *ext);
+// checks the last index of the primary extent table if the legnth contains 
+// our sentinel value for either secondary or tertiary table locations
+// this is called to determine which case to use in growFile() 
+int checkSentinel(const extent ext);
+
+// traverses all extent tables of a directory entry, returning the next valid extent 
+// after *extentIndex and advances it by one position (acting as our 'cursor')
+// returns null after iterating through all extents 
+extent * getNextExtent(extent * exts, int * extentIndex);
 
 #endif
