@@ -91,6 +91,14 @@ directory_entry * loadDir(directory_entry * dir);
 // TODO - move to helper file
 extent * getNextExtent(directory_entry * dir, int * extentIndex);
 
+// traverses through extent array and checks for empty extent sentinel value (0, 0)
+int findFirstFree(extent * exts);
+
+// checks the last index of the primary extent table if the legnth contains 
+// our sentinel value for either secondary or tertiary table locations
+// this is called to determine which case to use in growFile() 
+int checkSentinel(directory_entry * dir);
+
 // Expands the given file by the given number of blocks and updates the directory 
 // entry accordingly. Will create secondary extent tables as needed if the number 
 // of extents exceeds NUM_DIR_EXTENTS.
@@ -114,7 +122,7 @@ typedef struct parsePathInfo
 void freePPI(parsePathInfo* ppi);
 
 // Parses the given path and passes back information about the path in the
-// parsePathInfo struct. 
+// parsePathInfo struct.
 // ppi.entryIndex of -1 indicates nonexistent last element in cases like mkdir  
 // ppi.entryIndex of -2 indicates path given was "/"  
 // Caller must call freePPI() before cwdGlobal is changed  

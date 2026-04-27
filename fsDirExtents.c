@@ -14,6 +14,7 @@
 **************************************************************/
 #include "fsDir.h"
 #include "fsVCB.h"
+#include "fsStorage.h"
 #include "debug.h"
 
 // sentinel node to indicate location to secondary extent table = -2 
@@ -28,7 +29,7 @@
 // after *extentIndex and advances it by one position (acting as our 'cursor')
 // returns null after iterating through all extents 
 extent * getNextExtent(directory_entry * dir, int * extentIndex) {
-	DEBUG("Not implemented yet");
+	DEBUG("implemented for primary traversal only");
 
     int blockSize = VCBGlobal->blockSize;
     
@@ -47,6 +48,8 @@ extent * getNextExtent(directory_entry * dir, int * extentIndex) {
 
             // TODO: check for secondary/tertiary sentinels and read into memory
             // load on demand/cache in static buffer or lazy load ?
+			// LAZY LOAD because diff fds of b_read() and b_write() will be calling
+			
 
             return currExt;
         }
@@ -59,11 +62,14 @@ extent * getNextExtent(directory_entry * dir, int * extentIndex) {
 // checks current extent array (be it primary, secondary, or tertiary) 
 // and returns first instance of sentinel for an empty extent
 int findFirstFree(extent* exts) {
+
     for (int i = 0; i < NUM_DIR_EXTENTS; i++) {
 		if (exts[i].location == 0 && exts[i].length == 0) {
+			DEBUG("returning at %d index, empty extent at location %d", i, exts[i].location);
 			return i;
 		}
     }
+
     return -1;
 }
 
@@ -71,13 +77,17 @@ int findFirstFree(extent* exts) {
 // our sentinel value for either secondary or tertiary table locations
 // this is called to determine which case to use in growFile() 
 int checkSentinel(directory_entry * dir) { 
+	
     if (dir->exts[NUM_DIR_EXTENTS - 1].length == SECONDARY_EXT_SENTINEL) { 
+		DEBUG("returning secondary sentinel value");
         return -2; 
     } else if ( dir->exts[NUM_DIR_EXTENTS - 1].length == TERTIARY_EXT_SENTINEL) {
+		DEBUG("returning tertiary sentinel value");
         return -3; 
     }
 
     // last index in array holds empty extent sentinel (0, 0)
+	DEBUG("returning empty ext sentinel");
     return 0; 
 }
 
