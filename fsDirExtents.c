@@ -14,7 +14,6 @@
 **************************************************************/
 #include "fsDir.h"
 #include "fsVCB.h"
-#include "fsFreeSpace.h"
 #include "debug.h"
 
 // sentinel node to indicate location to secondary extent table = -2 

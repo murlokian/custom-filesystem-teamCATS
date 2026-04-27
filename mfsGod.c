@@ -19,7 +19,7 @@
 #include "mfs.h"
 #include "fsDir.h"
 #include "debug.h"
-#include "fsFreeSpace.h"
+#include "fsStorage.h"
 
 int fs_mkdir(const char *pathname, mode_t mode)
 {

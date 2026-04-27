@@ -23,7 +23,7 @@
 #include "fsLow.h"
 #include "mfs.h"
 #include "fsVCB.h"
-#include "fsFreeSpace.h"
+#include "fsStorage.h"
 #include "fsDir.h"
 #include "debug.h"
 

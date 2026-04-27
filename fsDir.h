@@ -20,6 +20,8 @@
 #include <stdbool.h>
 #include <time.h>
 
+#include "fsStorage.h"
+
 // MAX_ENTRY_NAME_SIZE shall be defined as 255 in order to provide a reasonable
 // file name length that is similar to other major operating systems but fills in 
 // all padding
@@ -31,18 +33,6 @@
 #define NUM_DIR_EXTENTS 5
 
 #define DEFAULT_NUM_DIR_ENTRIES 50
-
-// 0 for length signifies unused/invalid extent, 0 for location is a sentinel value
-// signifying the end of the extent array  
-typedef struct extent {  
-    // location is an unsigned 64-bit value which is the location of a starting
-    // block of contiguous free space  
-    uint32_t location;
-  
-    // length is an unsigned 64-bit value which contains the total amount of blocks
-    // that this extent spans
-    uint32_t length;
-} extent;
 
 typedef struct directory_entry {
 

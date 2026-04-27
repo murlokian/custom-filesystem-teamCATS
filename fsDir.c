@@ -20,7 +20,6 @@
 
 #include "fsDir.h"
 #include "mfs.h"
-#include "fsFreeSpace.h"
 #include "fsLow.h"
 #include "fsVCB.h"
 #include "debug.h"

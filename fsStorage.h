@@ -12,19 +12,30 @@
 *
 **************************************************************/
 
-#ifndef FSFREESPACE_H
-#define FSFREESPACE_H
+#ifndef FSSTORAGE_H
+#define FSSTORAGE_H
 
 #include <stdint.h>
 #include <stdbool.h>
-
-#include "fsDir.h"
 
 // Number of pre-allocated blocks for free space extents. 10 should be more
 // than enough for our purposes, but this can be increased if needed.
 #define NUM_FREESPACE_BLOCKS 10
 
 extern bool freeSpaceInitialized;
+
+// 0 for length signifies unused/invalid extent, 0 for location is a sentinel value
+// signifying the end of the extent array
+typedef struct extent
+{
+    // location is an unsigned 64-bit value which is the location of a starting
+    // block of contiguous free space
+    uint32_t location;
+
+    // length is an unsigned 64-bit value which contains the total amount of blocks
+    // that this extent spans
+    uint32_t length;
+} extent;
 
 // Initialize freespace map with BLOCKCOUNT blocks of size BLOCKSIZE.  
 // Returns start block of free space.

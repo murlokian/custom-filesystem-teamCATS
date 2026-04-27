@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "fsFreeSpace.h"
+#include "fsStorage.h"
 #include "fsLow.h"
 #include "fsDir.h"
 #include "fsVCB.h"
