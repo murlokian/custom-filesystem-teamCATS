@@ -6,7 +6,7 @@
 * Group-Name::  CATS
 * Project:: Basic File System
 *
-* File:: fsDirExtents.c
+* File:: fsExtentHelpers.c
 *
 * Description:: Helper Functions used in traversing and 
 *               updating extent tables for directory entries
