@@ -17,6 +17,9 @@
 #include "fsDir.h"
 #include "debug.h"
 #include "string.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 // globals for getcwd() and setcwd()
 char path[MAX_PATH_SIZE] = "/";
@@ -66,6 +69,46 @@ int fs_setcwd(char *pathname)
         strcat(path, pathname);
     }
 
+    //Stack appoach to clean up path
+   
+    char* pathStack = strdup(path);
+    char *stack[MAX_PATH_SIZE];
+    int top = 0;
+    
+    char* token = strtok(pathStack, "/");
+    //1. For each token, if "..", then pop, if ".", skip, otherwise push
+    while(token != NULL){
+        //case 1 - ".."
+        if(strcmp(token, "..") == 0){
+            //pop
+            top--; 
+            if(top < 0){
+                top = 0;
+            }   
+        }//case 2 - "."
+        else if(strcmp(token, ".") == 0){
+            //skip
+        }
+        else{
+            //case 3 - "name"
+            stack[top] = token;
+            top++;
+
+        }
+        token = strtok(NULL, "/");
+    }
+    //2. Rebuild path from stack
+    strncpy(path, "/", MAX_PATH_SIZE);
+    for(int i = 0; i < top; i++){
+        strcat(path, stack[i]);
+        if(i < top - 1){
+            strcat(path, "/");
+        }
+    }
+
+    //3.free stack 
+    free(pathStack);
+
     //parse path to get the directory entry
     int res = parsePath(pathname, &s);
     // if parse path fails
@@ -78,7 +121,6 @@ int fs_setcwd(char *pathname)
 
     //edge case -- entryIndex == -2 means root directory
     if(s.entryIndex == -2){
-        strncpy(path, "/", MAX_PATH_SIZE);
         freePPI(&s);
         cwdGlobal = rootGlobal;
         return 0;
