@@ -64,6 +64,6 @@ int checkSentinel(const extent ext);
 // function updates extentIndex as the 'current position' for the next call (acting as our saveptr)
 // iterate from beginning of DE's extent array up to extentIndex and returns updated position
 // Updated position to be used when calling LBAread() or LBAwrite()
-extent * getNextExtent(const extent * exts, int * extentIndex);
+extent * getNextExtent(extent * exts, int * extentIndex);
 
 #endif

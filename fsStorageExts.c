@@ -29,7 +29,7 @@
 // traverses all extent tables of a directory entry, returning the next valid extent 
 // after *extentIndex and advances it by one position (acting as our 'cursor')
 // returns null after iterating through all extents 
-extent * getNextExtent(const extent * exts, int * extentIndex) {
+extent * getNextExtent(extent * exts, int * extentIndex) {
 	DEBUG("implemented for primary traversal only");
 
     // for loading secondary or tertiary tables
@@ -40,7 +40,7 @@ extent * getNextExtent(const extent * exts, int * extentIndex) {
 
         // traversing primary extent array
         if (index < NUM_DIR_EXTENTS) {
-            extent *currExt = &exts[index]; 
+            extent * currExt = &exts[index]; 
             (*extentIndex)++;
 
 			// check for sentinel if secondary/tertiary present 
