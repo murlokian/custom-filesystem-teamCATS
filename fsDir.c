@@ -212,7 +212,7 @@ directory_entry * loadDir(directory_entry * dir) {
 	int extIndex = 0;
 	extent* ext;
 	while(true) {
-		ext = getNextExtent(dir, &extIndex);
+		ext = getNextExtent(dir->exts, &extIndex);
 
 		// No more extents  
 		if(ext == NULL) {

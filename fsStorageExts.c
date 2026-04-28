@@ -32,8 +32,9 @@
 extent * getNextExtent(const extent * exts, int * extentIndex) {
 	DEBUG("implemented for primary traversal only");
 
-    int blockSize = VCBGlobal->blockSize;
-    
+    // for loading secondary or tertiary tables
+	int blockSize = VCBGlobal->blockSize;
+
     while(true) {
         int index = *extentIndex;
 
@@ -42,15 +43,20 @@ extent * getNextExtent(const extent * exts, int * extentIndex) {
             extent *currExt = &exts[index]; 
             (*extentIndex)++;
 
+			// check for sentinel if secondary/tertiary present 
+			int sentinelVal = checkSentinel(*currExt);
+
             // hit empty extent sentinel, END OF EXTS
-            if (currExt->location == 0 && currExt->length == 0) {
-				DEBUG("iterated to end of primary");
+            if (sentinelVal == 0) {
+				DEBUG("iterated to end of table");
                 return NULL;
             }
 			// SKIP next extent if empty/freed (fragmentation check)
 			if (currExt->length == 0) {
-				DEBUG("skipping freed extent (length of 0)");
+				DEBUG("skipping freed extent (length 0)");
+
 				continue;
+				// TODO: move extentIndex by 2 positions
 			}
 
             // TODO: check for secondary/tertiary sentinels and read into memory
@@ -83,7 +89,7 @@ int findFirstFree(const extent * exts) {
 // checks the last index of the PRIMARY extent table if the length contains 
 // our sentinel value for either secondary or tertiary table locations
 // this is called to determine which case to use in growFile() 
-int checkSentinel(const extent ext) { 
+int checkSentinel(extent ext) { 
 	switch (ext.length) {
 		case 0:
 			if (ext.location == 0) {

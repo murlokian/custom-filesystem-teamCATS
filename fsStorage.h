@@ -60,9 +60,10 @@ int findFirstFree(const extent * exts);
 // this is called to determine which case to use in growFile() 
 int checkSentinel(const extent ext);
 
-// traverses all extent tables of a directory entry, returning the next valid extent 
-// after *extentIndex and advances it by one position (acting as our 'cursor')
-// returns null after iterating through all extents 
+// Somewhat similar logic to strtok_r, helper for multiple calls of b_read(), b_write()
+// function updates extentIndex as the 'current position' for the next call (acting as our saveptr)
+// iterate from beginning of DE's extent array up to extentIndex and returns updated position
+// Updated position to be used when calling LBAread() or LBAwrite()
 extent * getNextExtent(const extent * exts, int * extentIndex);
 
 #endif

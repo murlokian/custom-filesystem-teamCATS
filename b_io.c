@@ -163,12 +163,12 @@ int b_read (b_io_fd fd, char * buffer, int count)
 		// entry as b_read() is called 
 		// getNextExtent handles if we need to traverse secondary/tertiary tables for this file
 		int * extIndex; // equivalent of saveptr in strtok_r()
-		extent * currExt = getNextExtent(fcbArray[fd].de, &extIndex);
+		extent * currExt = getNextExtent(fcbArray[fd].de->exts, extIndex);
 		
 
 		int currPos = currExt->length * VCBGlobal->blockSize;	
 
-		while ((currExt = getNextExtent(fcbArray[fd].de, &extIndex)) != NULL) {
+		while ((currExt = getNextExtent(fcbArray[fd].de->exts, extIndex)) != NULL) {
 			LBAread(buffer + currPos, currExt->length, currExt->location);
 
 			currPos = currExt->length * VCBGlobal->blockSize;

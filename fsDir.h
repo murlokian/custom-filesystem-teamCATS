@@ -84,13 +84,6 @@ int writeDirectory(directory_entry *dir);
 // If passed NULL, loads the root directory  
 directory_entry * loadDir(directory_entry * dir);
 
-// Somewhat similar logic to strtok_r, helper for multiple calls of b_read(), b_write()
-// function updates extentIndex as the 'current position' for the next call (acting as our saveptr)
-// iterate from beginning of DE's extent array up to extentIndex and returns updated position
-// Updated position to be used when calling LBAread() or LBAwrite()
-// TODO - move to helper file
-extent * getNextExtent(extent * exts, int * extentIndex);
-
 // Expands the given file by the given number of blocks and updates the directory 
 // entry accordingly. Will create secondary extent tables as needed if the number 
 // of extents exceeds NUM_DIR_EXTENTS.
