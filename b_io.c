@@ -105,8 +105,56 @@ int b_seek (b_io_fd fd, off_t offset, int whence)
 		return (-1); 					//invalid file descriptor
 		}
 		
-		
-	return (0); //Change this
+		// make sure FCB is in use
+		if(fcbArray[fd].de == NULL)
+		{
+			DEBUG("ERROR: FD not in use");
+			return -1;
+		}
+
+		int newPos = 0;
+
+		// calculate new file pos 
+		switch (whence)
+		{
+			case SEEK_SET:
+				newPos=offset; // set pos to exact offset
+				break;
+
+			case SEEK_CUR:
+				newPos =fcbArray[fd].fileIndex+offset; // move relative to current pos
+				break;
+			
+			case SEEK_END: 
+				newPos = fcbArray[fd].de->size+offset; // move relative to eof
+				break;
+
+			default:
+			DEBUG("ERROR: invalid whence value"); // invalid whence value
+			return -1;
+		}
+
+		if (newPos<0){ // prevent negative file pos
+			DEBUG("Error: Seek attempted before beginning of file");
+			return -1;
+		}
+
+		int blockSize  = VCBGlobal->blockSize;
+
+		// figure out which block the old and new pos are
+		int oldBlock = fcbArray[fd].fileIndex/blockSize;
+		int newBlock = newPos/blockSize;
+
+		// invalidate buffer if moved to a diff block
+		if(oldBlock!=newBlock){
+			// clear valid data in buff
+			fcbArray[fd].buflen = 0; 
+		}
+
+		// update file pos
+		fcbArray[fd].fileIndex=newPos;
+
+	return newPos; // return new pos
 	}
 
 
