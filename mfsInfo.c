@@ -16,6 +16,7 @@
 #include "mfs.h"
 #include "fsDir.h"
 #include "debug.h"
+#include "fsVCB.h"
 
 // return 1 if pathname exists and refers to a file otherwise 0
 int fs_isFile(char *filename)
@@ -75,7 +76,6 @@ int fs_isDir(char *pathname)
 // takes a path, looks for that directory entry, copies metadata into the buf struct
 int fs_stat(const char *path, struct fs_stat *buf)
 {
-    DEBUG("Not implemented yet");
 
     // check if the path exists
     parsePathInfo ppi;
@@ -93,4 +93,15 @@ int fs_stat(const char *path, struct fs_stat *buf)
         DEBUG("Directory not found error: mfs.h");
         return -1;
     }
+    // copying metadata into buf
+    buf ->st_size = ppi.parentDir[ppi.entryIndex].size;
+    buf ->st_accesstime = ppi.parentDir[ppi.entryIndex].lastAccessDate;
+    buf -> st_modtime = ppi.parentDir[ppi.entryIndex].lastEditDate;
+    buf -> st_createtime = ppi.parentDir[ppi.entryIndex].creationDate;
+    buf -> st_blksize = VCBGlobal -> blockSize;
+    buf -> st_blocks = (ppi.parentDir[ppi.entryIndex].size 
+        + VCBGlobal->blockSize - 1) / VCBGlobal->blockSize;
+
+    return 0;
+
 }
