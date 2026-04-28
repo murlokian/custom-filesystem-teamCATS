@@ -51,8 +51,22 @@ int fs_setcwd(char *pathname)
     }
     // I'm copying the pathname into the path buffer provided by the parameter,
     // and then using the defined size to only copy a certain number
-    strncpy(path, pathname, MAX_PATH_SIZE);
-    // then i'm using parse path to get the directory entry
+
+    //case1 = absolute path
+    //TODO: Handle the .. cleanup
+    if(pathname[0] == '/'){
+        strncpy(path, pathname, MAX_PATH_SIZE);
+
+    }
+    else{
+        //case 2 -- relative path
+        if(!(strcmp(path, "/") == 0)){
+            strcat(path, "/");
+        }
+        strcat(path, pathname);
+    }
+
+    //parse path to get the directory entry
     int res = parsePath(pathname, &s);
     // if parse path fails
     if (res == -1)
@@ -61,11 +75,26 @@ int fs_setcwd(char *pathname)
         freePPI(&s);
         return -1;
     }
-    // thne load the directory
-    curDir = loadDir(&s.parentDir[s.entryIndex]);
-    cwdGlobal = curDir;
 
+    //edge case -- entryIndex == -2 means root directory
+    if(s.entryIndex == -2){
+        strncpy(path, "/", MAX_PATH_SIZE);
+        freePPI(&s);
+        cwdGlobal = rootGlobal;
+        return 0;
+    }
+    
+    // then load the directory
+    curDir = loadDir(&s.parentDir[s.entryIndex]);
+
+    //check if curDir is null before assigning
+    if(curDir == NULL){
+        DEBUG("Loaddir failed : mfsCwd.c");
+        return -1;
+    }
+    
     freePPI(&s);
+    cwdGlobal = curDir;
 
     return 0;
 }
