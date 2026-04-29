@@ -164,18 +164,24 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 
 // checks current extent array (be it primary, secondary, or tertiary) 
 // and returns first instance of sentinel for an empty extent
+// NOT a freed extent (table to be cleaned up by a separate function)
 int findFirstFree(const extent * exts) {
 	int i = 0;
 	int sentinel;
+
 	while(true) {
-		if (checkSentinel(exts[i])== 0) {
+		if ((sentinel = checkSentinel(exts[i])) == 0) {
 			DEBUG("returning at %d index, empty extent at location %d", i, exts[i].location);
 			return i;
 		}
-
-		i++;
+		if (sentinel == -2 | sentinel == -3) {
+			// this is the last ext in table, returning size of table!
+			return i;
+		}
+		i++;	
     }
-
+	// currently operates under the assumption there will always be an empty ext....
+	// needs to track size of secondary/tertiary 
     return -1;
 }
 
