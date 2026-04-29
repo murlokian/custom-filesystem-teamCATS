@@ -439,14 +439,8 @@ int b_close(b_io_fd fd)
 		return -1;
 	}
 
-	// Update timestamps  
-	time_t now = time(NULL);
-	fcbArray[fd].de->lastAccessDate = now;
-	if((fcbArray[fd].flags & O_ACCMODE) != O_RDONLY) {
-		fcbArray[fd].de->lastEditDate = now;
-	}
-
-	// Write parent to disk  
+	// Update access timestamp  
+	fcbArray[fd].de->lastAccessDate = time(NULL);
 	if(fcbArray[fd].parent != NULL) {
 		if(writeDirectory(fcbArray[fd].parent) != 0) {
 			DEBUG("writeDirectory failed");
