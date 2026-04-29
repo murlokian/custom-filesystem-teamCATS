@@ -12,10 +12,13 @@
 *               updating extent tables for directory entries
 *
 **************************************************************/
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "fsDir.h"
 #include "fsVCB.h"
 #include "fsStorage.h"
+#include "fsLow.h"
 #include "debug.h"
 
 // sentinel node to indicate location to secondary extent table = -2 
@@ -24,52 +27,139 @@
 // sentinel node to indicate location to tertiary extent table  = -3
 #define TERTIARY_EXT_SENTINEL ((uint32_t) 0xFFFFFFFD)
 
-
-// TODO - implement
 // traverses all extent tables of a directory entry, returning the next valid extent 
 // after *extentIndex and advances it by one position (acting as our 'cursor')
 // returns null after iterating through all extents 
+// NOTE: CALLER IS RESPONSIBLE FOR FREEING RETURNED EXT 
 extent * getNextExtent(extent * exts, int * extentIndex) {
-	DEBUG("implemented for primary traversal only");
+	DEBUG("secondary/tertiary not yet tested");
 
-    // for loading secondary or tertiary tables
+    // for loading secondary / tertiary tables
 	int blockSize = VCBGlobal->blockSize;
+	int sentinelVal;
 
     while(true) {
         int index = *extentIndex;
-
-        // traversing primary extent array
+		
+        // EXPLORING PRIMARY EXTENT TABLE ------------------------------------------------
         if (index < NUM_DIR_EXTENTS) {
             extent * currExt = &exts[index]; 
             (*extentIndex)++;
 
-			// check for sentinel if secondary/tertiary present 
-			int sentinelVal = checkSentinel(*currExt);
-
-            // hit empty extent sentinel, END OF EXTS
-            if (sentinelVal == 0) {
+			// check if current extent contains a sentinel value 
+			// (0, -2, or -3; -1 if non-sentinel)
+            if ((sentinelVal = checkSentinel(*currExt)) == 0) {
 				DEBUG("iterated to end of table");
+
+			    // hit empty extent sentinel, END OF EXTS
                 return NULL;
             }
+			// all non-sentinels will be returned w/ -1,
+			// if sentinel matches secondary or tertiary, proceed to following loop
+			// for tertiary then secondary traversal
+			if (sentinelVal != -1) {
+				DEBUG("proceeding to secondary/tertiary iterating");
+				*extentIndex = NUM_DIR_EXTENTS;
+				continue;
+			}
+
 			// SKIP next extent if empty/freed (fragmentation check)
 			if (currExt->length == 0) {
 				DEBUG("skipping freed extent (length 0)");
-
 				continue;
-				// TODO: move extentIndex by 2 positions
 			}
-
-            // TODO: check for secondary/tertiary sentinels and read into memory
-            // load on demand/cache in static buffer or lazy load ?
-			// LAZY LOAD because diff fds of b_read() and b_write() will be calling
 			
-
+			// if no conditions above are satisfied, we execute the following lines
+			// return the next extent still in the primary extent array
+			DEBUG("returning primary ext: location %d, length %d",
+				currExt->location, currExt->length);
             return currExt;
         }
-        // TODO: add secondary and tert traversal
-    }
+        // tertiary --> secondary traversal starts here
+		// NOTE: LOADING ON DEMAND 
+		// (different fds from b_read() and b_write() will be calling this; can't cache each)
 
-    return NULL;
+		int pos = index - NUM_DIR_EXTENTS; 
+		DEBUG("current position in \"unwrapped\" ext array: %d", pos);
+
+		int totIterated = 0;  // total secondary exts iterated over since first tertiary ext
+
+		int tertSlot = 0; 	  // index in tertiary table
+		int secLoc = 0; 	  // set by tertiary[tertSlot].location
+		int secExt = 0; 	  // position in secondary table 
+
+		// EXPLORING TERTIARY EXTENT TABLE --------------------------------------------------
+		while (true) {
+			// if ext array ONLY has one secondary table, this part will only loop once 
+			// read in the block containing tertiary table ...
+			extent *tertBuf = malloc(blockSize);
+			if (tertBuf== NULL) {
+				DEBUG_ERR("malloc failed turd buffer");
+				return NULL;
+			}
+
+			if (LBAread(tertBuf, 1, exts[NUM_DIR_EXTENTS - 1].location + tertSlot) != 1) {
+				DEBUG_ERR("LBAread failed for turd block # %d", tertSlot);
+				free(tertBuf);
+				return NULL;
+			}
+
+			extent * tertStart = &tertBuf[tertSlot];
+
+			if (checkSentinel(*tertStart) == 0) {
+				DEBUG("reached EOE < end of exts :-) >");
+				return NULL;
+			}
+			
+			// stop reading through tertiary if we reach extentIndex
+			if (pos < totIterated + tertStart->length) {
+				// enter secondary table from tertiary index
+				secLoc = tertStart->location; 
+				// offset in secondary for corresponding ext to return
+				secExt = pos - totIterated;  
+
+				// updated variables to be used in traversing secondary extents below
+				break;
+			}
+
+			// add secondary table's ext size to total exts iterated over 
+			totIterated += tertStart->length; 
+			// iterate to next tertiary extent (index)
+			tertSlot++; 
+
+			// EXPLORING SECONDARY EXTENT TABLE ------------------------------------------------
+			// read corresponding secondary table from memory and copy first ext 
+			extent * secBuf = malloc(blockSize);
+			if (secBuf == NULL) {
+				DEBUG_ERR("malloc failed turd buffer");
+				return NULL;
+			}
+
+			if (LBAread(secBuf, 1, secLoc + secExt) != 1) {
+				DEBUG_ERR("LBAread failed for turd block # %d", tertSlot);
+				free(secBuf);
+				return NULL;
+			}
+
+			extent * currExt = &secBuf[secExt]; 
+			(*extentIndex)++;
+
+			if (checkSentinel(*currExt) == 0) {
+				DEBUG("iterated to end of secondary");
+				return NULL;
+			}
+
+			// SKIP next extent if empty/freed (fragmentation check)
+			if (currExt->length == 0) {
+				DEBUG("skipping freed extent (length 0)");
+				continue;
+			}
+
+			DEBUG("returning valid secondary ext, location: %d, length %d", 
+			currExt->location, currExt->length);
+			return currExt;
+		}
+    }
 }
 
 // checks current extent array (be it primary, secondary, or tertiary) 
@@ -88,7 +178,7 @@ int findFirstFree(const extent * exts) {
 
 // checks the last index of the PRIMARY extent table if the length contains 
 // our sentinel value for either secondary or tertiary table locations
-// this is called to determine which case to use in growFile() 
+// this is called to determine which case to use in growFile() and getNextExtent()
 int checkSentinel(extent ext) { 
 	switch (ext.length) {
 		case 0:
