@@ -439,7 +439,39 @@ int b_close(b_io_fd fd)
 		return -1;
 	}
 
-	fcbArray[fd].de = NULL; // Mark this FCB as free again
+	// Update timestamps  
+	time_t now = time(NULL);
+	fcbArray[fd].de->lastAccessDate = now;
+	if((fcbArray[fd].flags & O_ACCMODE) != O_RDONLY) {
+		fcbArray[fd].de->lastEditDate = now;
+	}
+
+	// Write parent to disk  
+	if(fcbArray[fd].parent != NULL) {
+		if(writeDirectory(fcbArray[fd].parent) != 0) {
+			DEBUG("writeDirectory failed");
+			return -1;
+		}
+	}
+
+	// Free used resources  
+	if(fcbArray[fd].buf != NULL) {
+		free(fcbArray[fd].buf);
+		fcbArray[fd].buf = NULL;
+	}
+
+	if(fcbArray[fd].parent != NULL && 
+		fcbArray[fd].parent != rootGlobal && fcbArray[fd].parent != cwdGlobal) {
+		free(fcbArray[fd].parent);
+	}
+
+	// Mark this FCB as free again, reset fields  
+	fcbArray[fd].de = NULL;
+	fcbArray[fd].parent = NULL;
+	fcbArray[fd].entryIndex = -1;
+	fcbArray[fd].fileIndex = 0;
+	fcbArray[fd].buflen = 0;
+	fcbArray[fd].flags = 0;
 
 	return 0;
 }
