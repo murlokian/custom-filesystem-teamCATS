@@ -176,8 +176,8 @@ int findFirstFree(const extent * exts) {
     return -1;
 }
 
-// checks the last index of the PRIMARY extent table if the length contains 
-// our sentinel value for either secondary or tertiary table locations
+// checks passed extent if the length contains our sentinel value 
+// for either secondary or tertiary table locations
 // this is called to determine which case to use in growFile() and getNextExtent()
 int checkSentinel(extent ext) { 
 	switch (ext.length) {
@@ -185,10 +185,6 @@ int checkSentinel(extent ext) {
 			if (ext.location == 0) {
 				DEBUG("returning empty ext sentinel");
 				return 0;
-			}
-			else { 
-				DEBUG("passed ext is not a sentinel");
-				return -1;
 			}
 
 		case SECONDARY_EXT_SENTINEL:
