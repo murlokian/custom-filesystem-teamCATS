@@ -75,7 +75,7 @@ extern directory_entry* cwdGlobal;
 // Returns array of directory entries with allocated memory rounded up to blockSize
 directory_entry * createDirectory(int initialEntryCount, directory_entry *parent);
 
-// Writes the given directory to disk
+// Writes the given directory (array of directory entries) to disk
 // Returns 0 on success, -1 on failure
 int writeDirectory(directory_entry *dir);
 
