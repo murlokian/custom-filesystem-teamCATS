@@ -84,6 +84,7 @@ int fs_stat(const char *path, struct fs_stat *buf)
     if (res == -1)
     {
         DEBUG("Parse Path failed: mfs.c");
+        freePPI(&ppi);
         return -1;
     }
 
@@ -91,6 +92,7 @@ int fs_stat(const char *path, struct fs_stat *buf)
     if (ppi.entryIndex == -1)
     {
         DEBUG("Directory not found error: mfs.h");
+        freePPI(&ppi);
         return -1;
     }
     // copying metadata into buf
@@ -102,6 +104,8 @@ int fs_stat(const char *path, struct fs_stat *buf)
     buf -> st_blocks = (ppi.parentDir[ppi.entryIndex].size 
         + VCBGlobal->blockSize - 1) / VCBGlobal->blockSize;
 
+
+    freePPI(&ppi);
     return 0;
 
 }

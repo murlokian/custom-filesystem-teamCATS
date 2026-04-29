@@ -23,7 +23,6 @@
 
 // globals for getcwd() and setcwd()
 char path[MAX_PATH_SIZE] = "/";
-directory_entry *curDir;
 
 char *fs_getcwd(char *pathname, size_t size)
 {
@@ -126,23 +125,34 @@ int fs_setcwd(char *pathname)
     //edge case -- entryIndex == -2 means root directory
     if(s.entryIndex == -2){
         freePPI(&s);
+        //need to free curdir here too 
+        if(cwdGlobal != NULL && cwdGlobal != rootGlobal){
+            free(cwdGlobal);
+        }
         cwdGlobal = rootGlobal;
         return 0;
     }
+
+    directory_entry entryToLoad = s.parentDir[s.entryIndex];
+
+    freePPI(&s);
+
+    //FREE CURDIR
+    if(cwdGlobal != NULL && cwdGlobal!= rootGlobal){
+        free(cwdGlobal);
+        cwdGlobal = NULL;
+    }
     
     // then load the directory
-    curDir = loadDir(&s.parentDir[s.entryIndex]);
+    cwdGlobal = loadDir(&entryToLoad);
 
     //check if curDir is null before assigning
-    if(curDir == NULL){
+    if(cwdGlobal == NULL){
         DEBUG("Loaddir failed : mfsCwd.c");
         return -1;
     }
 
-    DEBUG("fs_setcwd: cwdGlobal updated to '%s'", curDir[0].name);
+    DEBUG("fs_setcwd: cwdGlobal updated to '%s'", cwdGlobal[0].name);
     
-    freePPI(&s);
-    cwdGlobal = curDir;
-
     return 0;
 }
