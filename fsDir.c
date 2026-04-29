@@ -82,7 +82,7 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent)
 	newDir[0].creationDate = curDate;
 	newDir[0].lastEditDate = curDate;
 	newDir[0].lastAccessDate = curDate;
-	for(int i = 0; i < NUM_DIR_EXTENTS && exts[i].length != 0; i++) {
+	for(int i = 0; exts[i].length != 0; i++) {
 		newDir[0].exts[i] = exts[i];
 	}
 
@@ -101,7 +101,7 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent)
 	newDir[1].creationDate = parent[0].creationDate;
 	newDir[1].lastEditDate = parent[0].lastEditDate;
 	newDir[1].lastAccessDate = parent[0].lastAccessDate;
-	for(int i = 0; i < NUM_DIR_EXTENTS && parent[0].exts[i].length != 0; i++) {
+	for(int i = 0; parent[0].exts[i].length != 0; i++) {
 		newDir[1].exts[i] = parent[0].exts[i];
 	}
 
