@@ -135,6 +135,9 @@ b_io_fd b_open(char *filename, int flags)
 		ppi.parentDir[emptyEntry].name[MAX_ENTRY_NAME_SIZE - 1] = '\0';
 		DEBUG("Created new file entry with name: %s", ppi.parentDir[emptyEntry].name);
 
+		// Update parent metadata  
+		ppi.parentDir[0].lastEditDate = now;
+
 		ppi.entryIndex = emptyEntry;
 	} else {
 		// Null check  
@@ -184,6 +187,9 @@ b_io_fd b_open(char *filename, int flags)
 			ppi.parentDir[ppi.entryIndex].exts[i].length = 0;
 		}
 		DEBUG("Truncated file %s", ppi.parentDir[ppi.entryIndex].name);
+
+		// Update parent metadata  
+		ppi.parentDir[0].lastEditDate = now;
 	}
 
 	// Always update access date  
