@@ -265,7 +265,7 @@ extent *cleanExtents(extent *exts)
 	int writeIndex = 0;
 	int removedCount = 0;
 
-	extent *currExt = getNextExtent(exts, index);
+	extent *currExt = getNextExtent(exts, &index);
 
 	while (currExt != NULL)
 	{
@@ -279,7 +279,7 @@ extent *cleanExtents(extent *exts)
 			writeIndex++;
 		}
 		index++;
-		currExt = getNextExtent(exts, index);
+		currExt = getNextExtent(exts, &index);
 	}
 
 	memset(&exts[writeIndex], 0, (index - writeIndex) * sizeof(extent));
