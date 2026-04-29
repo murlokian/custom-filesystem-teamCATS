@@ -38,6 +38,7 @@ void freePPI(parsePathInfo* ppi) {
 }
 
 int parsePath(const char* path, parsePathInfo* ppi) {
+	DEBUG("Parsing path %s", path);
 	directory_entry* parent;
 	directory_entry* startDir;
 	char* token1;
@@ -60,6 +61,7 @@ int parsePath(const char* path, parsePathInfo* ppi) {
 		ppi->parentDir = rootGlobal;
 		ppi->entryIndex = -2;
 		ppi->lastElementName = NULL;
+		DEBUG("Path was just /");
 		return 0;
 	}
 
@@ -111,6 +113,11 @@ int parsePath(const char* path, parsePathInfo* ppi) {
 
 			free(pathCopy);
 			pathCopy = NULL;
+			if(ppi->entryIndex == -1) {
+				DEBUG("'%s' not found in parent", ppi->lastElementName);
+			} else {
+				DEBUG("'%s' found at index %d", ppi->lastElementName, ppi->entryIndex);
+			}
 			return 0;
 		}
 
@@ -171,6 +178,9 @@ dir_index findDirEntry(directory_entry * dir, const char * name) {
 	for (int i = 0; i < numEntries; ++i) {
 		if (strcmp(dir[i].name, name) == 0) 
 		{
+			if(strcmp(name, "\0") != 0) {
+				name = "<unused entry>";
+			}
 			DEBUG("Found '%s' in '%s' at index %d", name, dir[0].name, i);
 			return i;
 		}
