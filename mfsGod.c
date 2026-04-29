@@ -20,6 +20,7 @@
 #include "fsDir.h"
 #include "debug.h"
 #include "fsStorage.h"
+#include <time.h>
 
 int fs_mkdir(const char *pathname, mode_t mode)
 {
