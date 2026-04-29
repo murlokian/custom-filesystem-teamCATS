@@ -1,7 +1,7 @@
 /**************************************************************
  * Class::  CSC-415-03 Spring 2026
- * Name:: Rosa Melton, Patricia Ann Payumo, Abha Deshpande
- * Student IDs:: 921337778, 923555591, 923314454
+ * Name:: Rosa Melton, Patricia Ann Payumo, Abha Deshpande, Allie Young
+ * Student IDs:: 921337778, 923555591, 923314454, 923129607
  * GitHub-Name:: milo-pa
  * Group-Name:: CATS
  * Project:: Basic File System
@@ -88,6 +88,7 @@ b_io_fd b_open(char *filename, int flags)
 		DEBUG("Error: No free file control blocks");
 		return -1;
 	}
+	DEBUG("File control block found with index %d", returnFd);
 
 	// Get info about path  
 	parsePathInfo ppi;
@@ -458,6 +459,7 @@ int b_close(b_io_fd fd)
 	fcbArray[fd].fileIndex = 0;
 	fcbArray[fd].buflen = 0;
 	fcbArray[fd].flags = 0;
+	DEBUG("Closed file at fcb index %d", fd);
 
 	return 0;
 }
