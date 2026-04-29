@@ -33,6 +33,8 @@ typedef struct b_fcb
 	/** TODO add al the information you need in the file control block **/
 	// TWO MORE VARIABLES TO ADD BASED ON BIERMAN'S ASGN5 APPROACH
 	directory_entry *de; // holds the low level systems file info
+	directory_entry* parent; // for writing metadata changes  
+	int entryIndex; // the index of the directory inside its parent  
 
 	char *buf;	   // holds the open file buffer
 	int fileIndex; // holds the current byte position in the file
@@ -76,25 +78,168 @@ b_io_fd b_open(char *filename, int flags)
 {
 	b_io_fd returnFd;
 
-	//*** TODO ***:  Modify to save or set any information needed
-	//
-	//
-
 	if (startup == 0)
 		b_init(); // Initialize our system
 
 	returnFd = b_getFCB(); // get our own file descriptor
 						   // check for error - all used FCB's
-
 	if (returnFd == -1)
 	{
 		DEBUG("Error: No free file control blocks");
 		return -1;
 	}
 
-	fcbArray[returnFd].flags = flags;  //storing flags for b_read
+	// Get info about path  
+	parsePathInfo ppi;
+	if(parsePath(filename, &ppi) != 0) {
+		DEBUG("parsePath failed");
+		freePPI(&ppi);
+		return -1;
+	}
 
-	return (returnFd); // all set
+	// Nonexistent last element  
+	if(ppi.entryIndex == -1) {
+		DEBUG("Nonexistent last element");
+
+		// Exit if not creating file  
+		if(!(flags & O_CREAT)) {
+			DEBUG("Create flag not on");
+			freePPI(&ppi);
+			return -1;
+		}
+		// Handle CREATE  
+
+		// Null check  
+		if(ppi.parentDir == NULL) {
+			freePPI(&ppi);
+			return -1;
+		}
+
+		// Find unused entry in parent  
+		int emptyEntry = findUnusedDirEntry(ppi.parentDir);
+		if(emptyEntry == -1) {
+			DEBUG("No empty entries");
+			freePPI(&ppi);
+			return -1;
+		}
+
+		// Fill in entry for new file  
+		memset(&ppi.parentDir[emptyEntry], 0, sizeof(directory_entry));
+		ppi.parentDir[emptyEntry].size = 0;
+		time_t now = time(NULL);
+		ppi.parentDir[emptyEntry].creationDate = now;
+		ppi.parentDir[emptyEntry].lastEditDate = now;
+		ppi.parentDir[emptyEntry].lastAccessDate = now;
+		ppi.parentDir[emptyEntry].entryType = 0;
+		strncpy(ppi.parentDir[emptyEntry].name, ppi.lastElementName, MAX_ENTRY_NAME_SIZE - 1);
+		ppi.parentDir[emptyEntry].name[MAX_ENTRY_NAME_SIZE - 1] = '\0';
+		DEBUG("Created new file entry with name: %s", ppi.parentDir[emptyEntry].name);
+		
+		// Write parent to disk  
+		if(writeDirectory(ppi.parentDir) != 0) {
+			DEBUG("writeDirectory failed");
+			freePPI(&ppi);
+			return -1;
+		}
+
+		ppi.entryIndex = emptyEntry;
+	} else {
+		// Null check  
+		if(ppi.parentDir == NULL) {
+			freePPI(&ppi);
+			return -1;
+		}
+
+		// Target is root  
+		if(ppi.entryIndex == -2) {
+			DEBUG("Called on root, not a file");
+			freePPI(&ppi);
+			return -1;
+		}
+
+		// Target is a directory  
+		if(ppi.parentDir[ppi.entryIndex].entryType == 1) {
+			DEBUG("Called on directory, not file");
+			freePPI(&ppi);
+			return -1;
+		}
+	}
+
+	// Handle TRUNCATE  
+	if(flags & O_TRUNC) {
+		// Exit if read only file  
+		if((flags & O_ACCMODE) == O_RDONLY) {
+			DEBUG("Truncate called on read only file");
+			freePPI(&ppi);
+			return -1;
+		}
+
+		// Free blocks associated with file  
+		if(freeBlocks(ppi.parentDir[ppi.entryIndex].exts) != 0) {
+			DEBUG("freeBlocks failed during truncate");
+			freePPI(&ppi);
+			return -1;
+		}
+
+		// Update file data  
+		ppi.parentDir[ppi.entryIndex].size = 0;
+		time_t now = time(NULL);
+		ppi.parentDir[ppi.entryIndex].lastEditDate = now;
+		ppi.parentDir[ppi.entryIndex].lastAccessDate = now;
+		for(int i = 0; i < NUM_DIR_EXTENTS; i++) {
+			ppi.parentDir[ppi.entryIndex].exts[i].location = 0;
+			ppi.parentDir[ppi.entryIndex].exts[i].length = 0;
+		}
+		DEBUG("Truncated file %s", ppi.parentDir[ppi.entryIndex].name);
+
+		// Write parent to disk  
+		if(writeDirectory(ppi.parentDir) != 0) {
+			DEBUG("writeDirectory failed");
+			freePPI(&ppi);
+			return -1;
+		}
+	}
+
+	// Always update access date  
+	ppi.parentDir[ppi.entryIndex].lastAccessDate = time(NULL);
+	if(writeDirectory(ppi.parentDir) != 0) {
+		DEBUG("writeDirectory failed");
+		freePPI(&ppi);
+		return -1;
+	}
+
+	// Allocate memory for buffer  
+	char* buffer = malloc(VCBGlobal->blockSize);
+	if(buffer == NULL) {
+		DEBUG("malloc failed");
+		freePPI(&ppi);
+		return -1;
+	}
+
+	// Set fields in file control block  
+	fcbArray[returnFd].de = &ppi.parentDir[ppi.entryIndex];
+	fcbArray[returnFd].parent = ppi.parentDir;
+	fcbArray[returnFd].entryIndex = ppi.entryIndex;
+	fcbArray[returnFd].buf = buffer;
+	fcbArray[returnFd].buflen = 0;
+	fcbArray[returnFd].flags = flags;
+
+	// Move index to end if APPENDing  
+	if(flags & O_APPEND) {
+		fcbArray[returnFd].fileIndex = fcbArray[returnFd].de->size;
+		DEBUG("Opened for appending, file index moved to %d", fcbArray[returnFd].fileIndex);
+	} else {
+		fcbArray[returnFd].fileIndex = 0;
+	}
+
+	// Clean up used resources  
+	if(ppi.lastElementName != NULL) {
+		free(ppi.lastElementName);
+		ppi.lastElementName = NULL;
+	}
+	ppi.parentDir = NULL;
+
+	return returnFd;
 }
 
 // Interface to seek function
