@@ -134,13 +134,6 @@ b_io_fd b_open(char *filename, int flags)
 		strncpy(ppi.parentDir[emptyEntry].name, ppi.lastElementName, MAX_ENTRY_NAME_SIZE - 1);
 		ppi.parentDir[emptyEntry].name[MAX_ENTRY_NAME_SIZE - 1] = '\0';
 		DEBUG("Created new file entry with name: %s", ppi.parentDir[emptyEntry].name);
-		
-		// Write parent to disk  
-		if(writeDirectory(ppi.parentDir) != 0) {
-			DEBUG("writeDirectory failed");
-			freePPI(&ppi);
-			return -1;
-		}
 
 		ppi.entryIndex = emptyEntry;
 	} else {
@@ -191,13 +184,6 @@ b_io_fd b_open(char *filename, int flags)
 			ppi.parentDir[ppi.entryIndex].exts[i].length = 0;
 		}
 		DEBUG("Truncated file %s", ppi.parentDir[ppi.entryIndex].name);
-
-		// Write parent to disk  
-		if(writeDirectory(ppi.parentDir) != 0) {
-			DEBUG("writeDirectory failed");
-			freePPI(&ppi);
-			return -1;
-		}
 	}
 
 	// Always update access date  
