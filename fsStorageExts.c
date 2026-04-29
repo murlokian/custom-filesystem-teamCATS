@@ -77,7 +77,7 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
         }
         // tertiary --> secondary traversal starts here
 		// NOTE: LOADING ON DEMAND 
-		// (different fds from b_read() and b_write() will be calling this; can't cache each)
+		// different fds from b_read() and b_write() will be calling this; can't cache each
 
 		int pos = index - NUM_DIR_EXTENTS; 
 		DEBUG("current position in \"unwrapped\" ext array: %d", pos);

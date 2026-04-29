@@ -131,14 +131,13 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 	extent* exts = calloc(numBlocks / minContiguous, sizeof(extent));
 	if(exts == NULL) 
 	{
-		DEBUG("malloc failed in getBlocks");
+		DEBUG_ERR("malloc failed in getBlocks");
 		return NULL;
 	}
 	int numExts = 0;
 
 	// Iterate through freespace extents  
 	// NOTE: This uses the first fit algorithm
-	// NOTE: consider best fit instead
 	int numFsExtents = (NUM_FREESPACE_BLOCKS * blockSize) / sizeof(extent);
 	for(int i = 0; i < numFsExtents; i++) {
 		// Check for end of valid freespace extents  
