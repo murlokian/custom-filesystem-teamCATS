@@ -1,7 +1,7 @@
 /**************************************************************
  * Class::  CSC-415-03 Spring 2026
- * Name:: Rosa Melton, Patricia Ann Payumo
- * Student IDs:: 921337778, 923555591
+ * Name:: Rosa Melton, Patricia Ann Payumo, Abha Deshpande
+ * Student IDs:: 921337778, 923555591, 923314454
  * GitHub-Name:: milo-pa
  * Group-Name:: CATS
  * Project:: Basic File System
@@ -37,6 +37,7 @@ typedef struct b_fcb
 	char *buf;	   // holds the open file buffer
 	int fileIndex; // holds the current byte position in the file
 	int buflen;	   // holds how many valid bytes are in the buffer
+	int flags;     // stores how the file was opened
 } b_fcb;
 
 b_fcb fcbArray[MAXFCBS];
@@ -90,6 +91,8 @@ b_io_fd b_open(char *filename, int flags)
 		DEBUG("Error: No free file control blocks");
 		return -1;
 	}
+
+	fcbArray[returnFd].flags = flags;  //storing flags for b_read
 
 	return (returnFd); // all set
 }
