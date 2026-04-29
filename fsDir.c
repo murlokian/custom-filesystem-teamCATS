@@ -260,14 +260,19 @@ int growFile(directory_entry * file, int additionalBlocks) {
 	// look for the first free/unused ext slot used in case 1 or 2
     int firstFree = findFirstFree(file->exts);
 
-	// look for the sentinel value -2 in length so we know to call either case 2 or 3
+	// if table has any sentinel present, know to call either case 2 or 3
     int hasNryTable = 0;
-	uint32_t nryTableLoc = checkSentinel(file->exts[NUM_DIR_EXTENTS - 1]);
+	int lastPrimaryExt = NUM_DIR_EXTENTS - 1;
+	int nryTableLoc = checkSentinel(file->exts[lastPrimaryExt]);
 
     if (nryTableLoc != 0) { hasNryTable = 1; }
 
-	// 
-	int openSlots = NUM_DIR_EXTENTS - firstFree; 
+	// CASE 1 - free slots available in primary table
+	// fill and create secondary if necessary
+	if (firstFree != -1 && firstFree < lastPrimaryExt) {
+		int openSlots = lastPrimaryExt - firstFree;
+
+	}
 
 
 	// iterate over exts array first to find above
