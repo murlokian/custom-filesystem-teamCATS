@@ -226,7 +226,9 @@ directory_entry * loadDir(directory_entry * dir) {
 			deez = NULL;
 			return NULL;
 		}
+		
 		offset += ext->length * VCBGlobal->blockSize;
+		free(ext);
 	}
 
 	return deez;
