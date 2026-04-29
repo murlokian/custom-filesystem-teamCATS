@@ -46,5 +46,6 @@ volume_control_block *loadVCB(uint32_t blockSize) {
 		VCBBuffer = NULL;
 	}
 
+	DEBUG("VCB of %d blocks loaded at location %d", blocksNeeded, VCB_BLOCK_LOCATION);
 	return VCBBuffer;
 }
