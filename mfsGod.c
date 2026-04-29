@@ -23,10 +23,6 @@
 
 int fs_mkdir(const char *pathname, mode_t mode)
 {
-    // NOTE: made considering there is a parsedPath struct in mfs.h as such:
-    // char name[];
-    // directory_entry *parent;
-    // int index; //can change if plans change
 
     parsePathInfo ppi; // this is where parsepath returns a struct to mkdir
 
@@ -54,7 +50,6 @@ int fs_mkdir(const char *pathname, mode_t mode)
     }
 
     // call createDir(10, s.parent) -- this allocates disk space
-    // bierman added 50 in class, why 50?
     directory_entry *newDir = createDirectory(DEFAULT_NUM_DIR_ENTRIES, ppi.parentDir);
 
     // check if the directory was actually created
@@ -76,6 +71,11 @@ int fs_mkdir(const char *pathname, mode_t mode)
     // fill the slot
     ppi.parentDir[index] = newDir[0];
     strcpy(ppi.parentDir[index].name, ppi.lastElementName);
+
+    //update parent 
+    time_t curDate = time(NULL);
+    ppi.parentDir[0].lastEditDate = curDate;
+    ppi.parentDir[0].lastAccessDate = curDate;
     // write updated parent back to disk
     if(writeDirectory(ppi.parentDir) == -1) {
         free(newDir);
