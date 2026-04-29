@@ -165,15 +165,12 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 // checks current extent array (be it primary, secondary, or tertiary) 
 // and returns first instance of sentinel for an empty extent
 int findFirstFree(const extent * exts) {
-	int i = 0;
-	int sentinel;
-	while(true) {
-		if (checkSentinel(exts[i])== 0) {
+
+    for (int i = 0; i < NUM_DIR_EXTENTS; i++) {
+		if (exts[i].location == 0 && exts[i].length == 0) {
 			DEBUG("returning at %d index, empty extent at location %d", i, exts[i].location);
 			return i;
 		}
-
-		i++;
     }
 
     return -1;
@@ -186,20 +183,20 @@ int checkSentinel(extent ext) {
 	switch (ext.length) {
 		case 0:
 			if (ext.location == 0) {
-				//DEBUG("returning empty ext sentinel");
+				DEBUG("returning empty ext sentinel");
 				return 0;
 			}
 
 		case SECONDARY_EXT_SENTINEL:
-			//DEBUG("returning secondary sentinel value");
+			DEBUG("returning secondary sentinel value");
         	return -2; 
 
     	case TERTIARY_EXT_SENTINEL:
-			//DEBUG("returning tertiary sentinel value");
+			DEBUG("returning tertiary sentinel value");
 			return -3;	
 
 		default:
-			//DEBUG("passed ext is not a sentinel");
+			DEBUG("passed ext is not a sentinel");
 			return -1;
     }
 }
