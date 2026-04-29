@@ -230,6 +230,7 @@ directory_entry * loadDir(directory_entry * dir) {
 		offset += ext->length * VCBGlobal->blockSize;
 	}
 
+	DEBUG("Loaded directory with size %d blocks", numBlocks);
 	return deez;
 }
 
