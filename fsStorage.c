@@ -277,6 +277,10 @@ int freeBlocks(extent* exts) {
 
 extent *cleanExtents(extent *exts)
 {
+	if (exts == NULL) {
+		DEBUG("exts is NULL");
+		return NULL;
+	}
 
 	int index = 0;
 	int writeIndex = 0;
