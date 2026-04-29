@@ -171,7 +171,7 @@ int findFirstFree(const extent * exts) {
 
 	while(true) {
 		if ((sentinel = checkSentinel(exts[i])) == 0) {
-			DEBUG("returning at %d index, empty extent at location %d", i, exts[i].location);
+			// DEBUG("returning at %d index, empty extent at location %d", i, exts[i].location);
 			return i;
 		}
 		if (sentinel == -2 | sentinel == -3) {
