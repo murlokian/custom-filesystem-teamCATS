@@ -166,6 +166,8 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 			// Add to returned array  
 			exts[numExts].location = freespaceExts[i].location;
 			exts[numExts].length = toTake;
+			DEBUG("Extent of %d blocks taken from freespace at location %d", 
+				exts[numExts].length, exts[numExts].location);
 			numExts++;
 
 			// Shrink freespace extent  
@@ -194,16 +196,20 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 				DEBUG("realloc failed in getBlocks");
 				return NULL;
 			}
+			numExts++;
 		}
 
 		// Set sentinel at end of array  
-		exts[numExts].location = 0;
-		exts[numExts].length = 0;
+		exts[numExts - 1].location = 0;
+		exts[numExts - 1].length = 0;
+
+		DEBUG("Returning %d extents", numExts);
 		return exts;
 	} else {
 		// No space available  
 		free(exts);
 		exts = NULL;
+		DEBUG("No space available");
 		return NULL;
 	}
 }
@@ -214,6 +220,8 @@ int freeBlocks(extent* exts) {
 	while(exts[i].location != 0) {
 		// Skip already marked free extents  
 		if(exts[i].length == 0) {
+			DEBUG("Skip freeing extent at location %d because length is already zeroed", 
+				exts[i].location);
 			i++;
 			continue;
 		}
@@ -225,6 +233,9 @@ int freeBlocks(extent* exts) {
 			// Can be merged at end of existing freespace extent  
 			if(freespaceExts[j].location + freespaceExts[j].length == newFreeExt.location) {
 				freespaceExts[j].length += newFreeExt.length;
+				DEBUG("Extent at location %d with %d blocks merged at end of existing freespace \
+					extent at location %d for a new total of %d blocks", newFreeExt.location,
+					newFreeExt.length, freespaceExts[j].location, freespaceExts[j].length);
 				break;
 			}
 
@@ -232,6 +243,10 @@ int freeBlocks(extent* exts) {
 			if(newFreeExt.location + newFreeExt.length == freespaceExts[j].location) {
 				freespaceExts[j].location = newFreeExt.location;
 				freespaceExts[j].length += newFreeExt.length;
+				DEBUG("Extent at location %d with %d blocks merged at beginning of existing \
+					freespace extent at location %d for a new location of %d and a new total \
+					of %d blocks", newFreeExt.location, newFreeExt.length, 
+					freespaceExts[j].location, newFreeExt.location, freespaceExts[j].length);
 				break;
 			}
 
@@ -241,6 +256,8 @@ int freeBlocks(extent* exts) {
 				continue;
 			}
 			freespaceExts[j] = newFreeExt;
+			DEBUG("Extent of %d blocks added to end of freespace extents at location %d", 
+				freespaceExts[j].length, freespaceExts[j].location);
 			break;
 		}
 
