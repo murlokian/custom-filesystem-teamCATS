@@ -213,7 +213,8 @@ int b_read(b_io_fd fd, char *buffer, int count)
 	// this is so this caller doesn't have to worry about current block/position in
 	// entry as b_read() is called
 	// getNextExtent handles if we need to traverse secondary/tertiary tables for this file
-	int *extIndex; // equivalent of saveptr in strtok_r()
+	int extIndex = 0; // equivalent of saveptr in strtok_r()
+	getNextExtent(fcbArray[fd].de->exts, &extIndex);
 	extent *currExt = getNextExtent(fcbArray[fd].de->exts, extIndex);
 
 	int currPos = currExt->length * VCBGlobal->blockSize;
@@ -226,6 +227,46 @@ int b_read(b_io_fd fd, char *buffer, int count)
 	}
 
 	return (0); // Change this
+
+	//working on this assuming that buf and fileIndex are already set up in b_open
+	//Abha implementation -- currently working on it
+    
+    // flag check
+    // if (fcbArray[fd].flags & O_WRONLY)
+    //     return -1;
+	
+	// int totalBytesCopied = 0;
+	// int blockSize = VCBGlobal -> blockSize;
+	// //Part 1 -- copy from existing buffer 
+
+	// int bytesAvailable = fcbArray[fd].buflen - (fcbArray[fd].fileIndex % blockSize);
+	// int part1 = (bytesAvailable < count)? bytesAvailable : count;
+	// memcpy(buffer, fcbArray[fd].buf + (fcbArray[fd].fileIndex % blockSize), part1);
+
+	// totalBytesCopied += part1;
+	// fcbArray[fd].fileIndex += part1;
+	// count -= part1;
+
+	// //if count is already 0 
+	// if(count == 0) return totalBytesCopied;
+
+
+	// //Part 2 -- read full blocks directly 
+
+	// while(count >= blockSize){
+	// 	extent *curExt = getNextExtent(fcbArray[fd].de -> exts,&extIndex );
+	// 	if (curExt == NULL){
+	// 		DEBUG("getNextExtent returned null in b_read: b_io.c");
+	// 		return totalBytesCopied;
+	// 	}
+	// 	LBAread(buffer + totalBytesCopied, 1, curExt->location);
+	// 	count -= blockSize;
+	// 	totalBytesCopied += blockSize;
+	// 	fcbArray[fd].fileIndex += blockSize;
+
+	// }
+	// //Part 3 -- read remaining partial block 
+
 }
 
 // Interface to Close the file
