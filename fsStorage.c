@@ -235,7 +235,7 @@ int freeBlocks(extent* exts) {
 				break;
 			}
 
-			// *** FIX: insert sorted ***  
+			// *** FIX: insert sorted ***
 			// Add at end of freespace extents  
 			if(freespaceExts[j].location != 0) {
 				continue;
@@ -256,4 +256,34 @@ int freeBlocks(extent* exts) {
 	}
 
 	return 0; 
+}
+
+extent *cleanExtents(extent *exts)
+{
+
+	int index = 0;
+	int writeIndex = 0;
+	int removedCount = 0;
+
+	extent *currExt = getNextExtent(exts, index);
+
+	while (currExt != NULL)
+	{
+		if (exts[index].length == 0)
+		{
+			removedCount++;
+		}
+		else
+		{
+			exts[writeIndex] = exts[index];
+			writeIndex++;
+		}
+		index++;
+		currExt = getNextExtent(exts, index);
+	}
+
+	memset(&exts[writeIndex], 0, (index - writeIndex) * sizeof(extent));
+
+	DEBUG("Cleaned exts: %d removed", removedCount);
+	return exts;
 }

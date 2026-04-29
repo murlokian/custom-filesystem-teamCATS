@@ -55,10 +55,14 @@ int freeBlocks(extent* exts);
 // traverses through extent array and checks for empty extent sentinel value (0, 0)
 int findFirstFree(const extent * exts);
 
+// Removes any empty extents from a list of extents. Handles secondary and
+// tertiary tables
+extent* cleanExtents(extent* exts);
+
 // checks the last index of the primary extent table if the legnth contains 
 // our sentinel value for either secondary or tertiary table locations
 // this is called to determine which case to use in growFile() 
-int checkSentinel(const extent ext);
+int checkSentinel(extent ext);
 
 // Somewhat similar logic to strtok_r, helper for multiple calls of b_read(), b_write()
 // function updates extentIndex as the 'current position' for the next call (acting as our saveptr)
