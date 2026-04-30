@@ -32,7 +32,7 @@
 // returns null after iterating through all extents 
 // NOTE: CALLER IS RESPONSIBLE FOR FREEING RETURNED EXT 
 extent * getNextExtent(extent * exts, int * extentIndex) {
-	DEBUG("secondary/tertiary not yet tested");
+	// DEBUG("secondary/tertiary not yet tested");
 
     // for loading secondary / tertiary tables
 	int blockSize = VCBGlobal->blockSize;
@@ -49,7 +49,7 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			// check if current extent contains a sentinel value 
 			// (0, -2, or -3; -1 if non-sentinel)
             if ((sentinelVal = checkSentinel(*currExt)) == 0) {
-				DEBUG("iterated to end of table");
+				// DEBUG("iterated to end of table");
 
 			    // hit empty extent sentinel, END OF EXTS
                 return NULL;
@@ -58,14 +58,14 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			// if sentinel matches secondary or tertiary, proceed to following loop
 			// for tertiary then secondary traversal
 			if (sentinelVal != -1) {
-				DEBUG("proceeding to secondary/tertiary iterating");
+				// DEBUG("proceeding to secondary/tertiary iterating");
 				*extentIndex = NUM_DIR_EXTENTS;
 				continue;
 			}
 
 			// SKIP next extent if empty/freed (fragmentation check)
 			if (currExt->length == 0) {
-				DEBUG("skipping freed extent (length 0)");
+				// DEBUG("skipping freed extent (length 0)");
 				continue;
 			}
 			
@@ -80,7 +80,7 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 		// different fds from b_read() and b_write() will be calling this; can't cache each
 
 		int pos = index - NUM_DIR_EXTENTS; 
-		DEBUG("current position in \"unwrapped\" ext array: %d", pos);
+		// DEBUG("current position in \"unwrapped\" ext array: %d", pos);
 
 		int totIterated = 0;  // total secondary exts iterated over since first tertiary ext
 
@@ -107,7 +107,7 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			extent * tertStart = &tertBuf[tertSlot];
 
 			if (checkSentinel(*tertStart) == 0) {
-				DEBUG("reached EOE < end of exts :-) >");
+				// DEBUG("reached EOE < end of exts :-) >");
 				return NULL;
 			}
 			
@@ -145,13 +145,13 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			(*extentIndex)++;
 
 			if (checkSentinel(*currExt) == 0) {
-				DEBUG("iterated to end of secondary");
+				// DEBUG("iterated to end of secondary");
 				return NULL;
 			}
 
 			// SKIP next extent if empty/freed (fragmentation check)
 			if (currExt->length == 0) {
-				DEBUG("skipping freed extent (length 0)");
+				// DEBUG("skipping freed extent (length 0)");
 				continue;
 			}
 
