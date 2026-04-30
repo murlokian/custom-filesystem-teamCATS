@@ -881,7 +881,12 @@ int main(int argc, char *argv[])
 
 	while (1)
 	{
-		cmdin = readline("Prompt > ");
+		#ifdef DEBUG_ENABLED
+			cmdin = readline("\nPrompt > ");
+			printf("\n");
+		#else
+			cmdin = readline("Prompt > ");
+		#endif
 #ifdef COMMAND_DEBUG
 		printf("%s\n", cmdin);
 #endif
