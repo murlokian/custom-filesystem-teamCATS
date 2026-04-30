@@ -189,24 +189,6 @@ directory_entry * loadDir(directory_entry * dir) {
 		return NULL;
 	}
 
-	// vvv TESTING CODE vvv
-	// Using first extent only, so we can test our mfs functions before getNextExtent is
-	// written. This should be fine since our directories are contiguous  
-	// if(dir->exts[0].location == 0 || dir->exts[0].length == 0) {
-	// 	DEBUG("directory first extent invalid");
-	// 	free(deez);
-	// 	deez = NULL;
-	// 	return NULL;
-	// }
-
-	// if(LBAread(deez, dir->exts[0].length, dir->exts[0].location) != dir->exts[0].length) {
-	// 	DEBUG("lbaread failed");
-	// 	free(deez);
-	// 	deez = NULL;
-	// 	return NULL;
-	// }
-	// ^^^ TESTING CODE ^^^
-
 	// Iterate through extents  
 	int offset = 0;
 	int extIndex = 0;
@@ -239,7 +221,7 @@ directory_entry * loadDir(directory_entry * dir) {
 // of extents exceeds NUM_DIR_EXTENTS.
 // Returns 0 on success, -1 on failure
 int growFile(directory_entry * file, int additionalBlocks) {
-	DEBUG("Not implemented yet");
+	DEBUG("implemented for primary only **NOT YET TESTED**");
 
 	if (file == NULL) {
 		DEBUG("file does not exist");
@@ -251,12 +233,19 @@ int growFile(directory_entry * file, int additionalBlocks) {
 	}
 
 	// get the required blocks from free space first, then populate existing slots or new table
-	// ??? if you want 2 extents... why not just alloc + append one extent of N blocks ?
 	extent *newExts = getBlocks(additionalBlocks, 1);
 	if (newExts == NULL) {
 		DEBUG("getBlocks() failed");
 		return -1;
 	}
+	// count how many extents returned (stopping at empty ext sentinel)
+    int newExtCount = 0;
+    while (checkSentinel(newExts[newExtCount])!= 0) {
+        newExtCount++;
+    }
+
+	// TODO - account for possible contiguous extents and merge them
+	// requires helper function to iterate through and check
 	
 	// look for the first free/unused ext slot used in case 1 or 2
     int firstFree = findFirstFree(file->exts);
@@ -268,12 +257,65 @@ int growFile(directory_entry * file, int additionalBlocks) {
 
     if (nryTableLoc != 0) { hasNryTable = 1; }
 
-	// CASE 1 - free slots available in primary table
+	// CASE 1 - free slots available in primary table --------------------------------------
 	// fill and create secondary if necessary
 	if (firstFree != -1 && firstFree < lastPrimaryExt) {
 		int openSlots = lastPrimaryExt - firstFree;
 
-	}
+		// CASE 1A - all new extents fit in primary
+		if (newExtCount <= openSlots) {
+			for (int i = 0; i < newExtCount; i++) {
+				file->exts[firstFree + i] = newExts[i];
+			}
+			file->size += additionalBlocks * VCBGlobal->blockSize;
+
+			free(newExts);
+			return 0;
+		}
+		// CASE  1B - fill what fits in primary --> put remainder into new secondary
+		int toFill = openSlots;
+		for (int i = 0; i < toFill; i++) {
+			file->exts[firstFree + i] = newExts[i];
+		}
+
+		int remaining = newExtCount - toFill;
+
+		// assign starting loc of secondary ext array
+		// to position in new extent array that was just added to primary
+		extent *remainingExts = &newExts[toFill];
+
+		// allocate enough blocks for secondary table creation
+		// new tables will be double the size the caller requires
+		extent *secExtTable= getBlocks(additionalBlocks * 2, 1);
+		if (secExtTable == NULL) {
+			DEBUG("getBlocks() failed for secondary table");
+			free(newExts);
+			return -1;
+		}
+
+		int secLoc = secExtTable[0].location;
+		free(secExtTable); // free after copying first ext
+
+		// write new secondary table to disk starting at 
+		// the first block returned from getBlocks(), 
+		// write <remaining> num of blocks to volume
+		if (LBAwrite(remainingExts, remaining, secLoc) != remaining) {
+			DEBUG("LBAwrite failed for secondary table");
+			free(newExts);
+			return -1;
+		}
+
+		// change last ext in primary to secondary loc + sentinel value
+		file->exts[lastPrimaryExt].location = secLoc;
+		file->exts[lastPrimaryExt].length = SECONDARY_EXT_SENTINEL;
+
+		// update file's [total] size before exiting
+		file->size += additionalBlocks * VCBGlobal->blockSize;
+
+		free(newExts);
+		return 0; 
+	} // END CASE 1A + 1B
+
 
 
 	// iterate over exts array first to find above
@@ -287,14 +329,8 @@ int growFile(directory_entry * file, int additionalBlocks) {
 	// 1) enough free slots to use w/o creating another table
 	// 2) can fill to max slots in primary, create secondary
 	// 3) add straight to secondary (secondary handles creation of tertiary?)
-	
-	// HAVE HELPER FUNCTIONS FOR HANDLING EACH 
-	// ex) check for when contiguous extents can be merged THEN create tables 
-	// ***ADAPTIVE DEFAULT** for number of blocks to add based on the average num
-	// of blocks in the last N files in current directory 
-	
+
 	// consider adding a trim() for excess unused blocks that would be allocated above
-	// this would be a "partial free" ; does freeBlocks() NEED an array of extents?
 	// consider changing freeBlocks to take in starting extent and num blocks to loop over 
 	// number extents to cover these blocks 
 

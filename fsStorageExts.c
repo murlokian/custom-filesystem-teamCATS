@@ -21,12 +21,6 @@
 #include "fsLow.h"
 #include "debug.h"
 
-// sentinel node to indicate location to secondary extent table = -2 
-#define SECONDARY_EXT_SENTINEL ((uint32_t) 0xFFFFFFFE)
-
-// sentinel node to indicate location to tertiary extent table  = -3
-#define TERTIARY_EXT_SENTINEL ((uint32_t) 0xFFFFFFFD)
-
 // traverses all extent tables of a directory entry, returning the next valid extent 
 // after *extentIndex and advances it by one position (acting as our 'cursor')
 // returns null after iterating through all extents 
@@ -47,9 +41,9 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
             (*extentIndex)++;
 
 			// check if current extent contains a sentinel value 
-			// (0, -2, or -3; -1 if non-sentinel)
+			// (0, -2, or -3; 1 if non-sentinel)
             if ((sentinelVal = checkSentinel(*currExt)) == 0) {
-				// DEBUG("iterated to end of table");
+				DEBUG("iterated to end of table");
 
 			    // hit empty extent sentinel, END OF EXTS
                 return NULL;
@@ -57,8 +51,8 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			// all non-sentinels will be returned w/ -1,
 			// if sentinel matches secondary or tertiary, proceed to following loop
 			// for tertiary then secondary traversal
-			if (sentinelVal != -1) {
-				// DEBUG("proceeding to secondary/tertiary iterating");
+			if (sentinelVal != 1) {
+				DEBUG("proceeding to secondary/tertiary iterating");
 				*extentIndex = NUM_DIR_EXTENTS;
 				continue;
 			}
@@ -99,7 +93,7 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			}
 
 			if (LBAread(tertBuf, 1, exts[NUM_DIR_EXTENTS - 1].location + tertSlot) != 1) {
-				DEBUG_ERR("LBAread failed for turd block # %d", tertSlot);
+				DEBUG("LBAread failed for turd block # %d", tertSlot);
 				free(tertBuf);
 				return NULL;
 			}
@@ -136,7 +130,7 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			}
 
 			if (LBAread(secBuf, 1, secLoc + secExt) != 1) {
-				DEBUG_ERR("LBAread failed for turd block # %d", tertSlot);
+				DEBUG("LBAread failed for turd block # %d", tertSlot);
 				free(secBuf);
 				return NULL;
 			}
@@ -170,12 +164,12 @@ int findFirstFree(const extent * exts) {
 	int sentinel;
 
 	while(true) {
-		if ((sentinel = checkSentinel(exts[i])) == 0) {
+		if ((checkSentinel(exts[i])) != 0 && exts[i].length == 0) {
 			// DEBUG("returning at %d index, empty extent at location %d", i, exts[i].location);
 			return i;
 		}
-		if (sentinel == -2 | sentinel == -3) {
-			// this is the last ext in table, returning size of table!
+		if (sentinel != 1) {
+			// this is the last ext in table, returning size of table
 			return i;
 		}
 		i++;	
@@ -206,6 +200,6 @@ int checkSentinel(extent ext) {
 
 		default:
 			//DEBUG("passed ext is not a sentinel");
-			return -1;
+			return 1;
     }
 }

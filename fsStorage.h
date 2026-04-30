@@ -22,6 +22,12 @@
 // than enough for our purposes, but this can be increased if needed.
 #define NUM_FREESPACE_BLOCKS 10
 
+// sentinel node to indicate location to secondary extent table = -2 
+#define SECONDARY_EXT_SENTINEL ((uint32_t) 0xFFFFFFFE)
+
+// sentinel node to indicate location to tertiary extent table  = -3
+#define TERTIARY_EXT_SENTINEL ((uint32_t) 0xFFFFFFFD)
+
 extern bool freeSpaceInitialized;
 
 // 0 for length signifies unused/invalid extent, 0 for location is a sentinel value
@@ -68,6 +74,7 @@ int checkSentinel(extent ext);
 // function updates extentIndex as the 'current position' for the next call (acting as our saveptr)
 // iterate from beginning of DE's extent array up to extentIndex and returns updated position
 // Updated position to be used when calling LBAread() or LBAwrite()
+// NOTE: CALLER IS RESPONSIBLE FOR FREEING RETURNED EXT 
 extent * getNextExtent(extent * exts, int * extentIndex);
 
 #endif
