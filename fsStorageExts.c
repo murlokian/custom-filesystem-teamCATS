@@ -164,7 +164,8 @@ int findFirstFree(const extent * exts) {
 	int sentinel;
 
 	while(true) {
-		if ((checkSentinel(exts[i])) != 0 && exts[i].length == 0) {
+		sentinel = checkSentinel(exts[i]);
+		if (sentinel != 0 && exts[i].length == 0) {
 			// DEBUG("returning at %d index, empty extent at location %d", i, exts[i].location);
 			return i;
 		}
@@ -189,6 +190,8 @@ int checkSentinel(extent ext) {
 				//DEBUG("returning empty ext sentinel");
 				return 0;
 			}
+			// non sentinel but freed ext
+			return 1;
 
 		case SECONDARY_EXT_SENTINEL:
 			//DEBUG("returning secondary sentinel value");
