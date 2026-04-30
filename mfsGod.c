@@ -31,14 +31,14 @@ int fs_mkdir(const char *pathname, mode_t mode)
     int result = parsePath(pathname, &ppi);
     if (result == -1)
     {
-        DEBUG("Parse Path failed: mfs.c");
+        DEBUG("parsePath failed");
         return -1;
     }
 
     // Check if the directory already exists
     if (ppi.entryIndex != -1)
     {
-        DEBUG("Directory entry already exists. Mkdir failed: mfs.h");
+        DEBUG("Directory entry already exists");
         freePPI(&ppi);
         return -1;
     }
@@ -150,6 +150,9 @@ int fs_rmdir(const char *pathname)
         return -1;
     }
 
+    DEBUG("Removing dir '%s' at index %d from parent", ppi.parentDir[ppi.entryIndex].name,
+        ppi.entryIndex);
+
     // remove this entry from parent directory
     entry->name[0] = '\0';
     entry->size = 0;
@@ -203,6 +206,9 @@ int fs_delete(char *filename)
         freePPI(&ppi);
         return -1;
     }
+
+    DEBUG("Removing file '%s' at index %d from parent", ppi.parentDir[ppi.entryIndex].name,
+        ppi.entryIndex);
 
     // mark this directory entry unused
     entry->name[0] = '\0';

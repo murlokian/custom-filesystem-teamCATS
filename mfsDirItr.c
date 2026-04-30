@@ -140,8 +140,6 @@ int fs_closedir(fdDir *dirp)
         return -1;
     }
 
-    DEBUG("Closing directory '%s'", dirp->di->d_name);
-
     // Free used resources
     if (dirp->di != NULL)
     {

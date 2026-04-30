@@ -233,20 +233,21 @@ int freeBlocks(extent* exts) {
 			// Can be merged at end of existing freespace extent  
 			if(freespaceExts[j].location + freespaceExts[j].length == newFreeExt.location) {
 				freespaceExts[j].length += newFreeExt.length;
-				DEBUG("Extent at location %d with %d blocks merged at end of existing freespace \
-					extent at location %d for a new total of %d blocks", newFreeExt.location,
+				DEBUG("Extent at location %d with %d blocks merged at end of existing freespace "
+					"extent at location %d for a new total of %d blocks", newFreeExt.location,
 					newFreeExt.length, freespaceExts[j].location, freespaceExts[j].length);
 				break;
 			}
 
 			// Can be merged at beginning of existing freespace extent  
 			if(newFreeExt.location + newFreeExt.length == freespaceExts[j].location) {
+				int oldLoc = freespaceExts[j].location;
 				freespaceExts[j].location = newFreeExt.location;
 				freespaceExts[j].length += newFreeExt.length;
-				DEBUG("Extent at location %d with %d blocks merged at beginning of existing \
-					freespace extent at location %d for a new location of %d and a new total \
-					of %d blocks", newFreeExt.location, newFreeExt.length, 
-					freespaceExts[j].location, newFreeExt.location, freespaceExts[j].length);
+				DEBUG("Extent at location %d with %d blocks merged at beginning of existing "
+					"freespace extent at location %d for a new location of %d and a new total "
+					"of %d blocks", newFreeExt.location, newFreeExt.length, 
+					oldLoc, newFreeExt.location, freespaceExts[j].length);
 				break;
 			}
 
