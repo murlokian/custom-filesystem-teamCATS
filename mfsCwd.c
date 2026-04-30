@@ -40,7 +40,7 @@ char *fs_getcwd(char *pathname, size_t size)
     strncpy(pathname, path, size);
     pathname[size - 1] = '\0';
 
-    DEBUG("fs_getcwd: returning path '%s'", path);
+    DEBUG("Returning path '%s'", pathname);
 
     return pathname;
 }
@@ -50,9 +50,11 @@ int fs_setcwd(char *pathname)
     parsePathInfo s;
     if (fs_isDir(pathname) == 0)
     {
-        DEBUG("fs_setcwd() failed, Directory does not exist error: mfs.c");
+        DEBUG("Directory '%s' does not exist", pathname);
         return -1;
     }
+    DEBUG("Cleaning path from '%s' ...", pathname);
+
     // I'm copying the pathname into the path buffer provided by the parameter,
     // and then using the defined size to only copy a certain number
 
@@ -106,7 +108,7 @@ int fs_setcwd(char *pathname)
             strcat(path, "/");
         }
     }
-    DEBUG("fs_setcwd: path set to '%s'", path);
+    DEBUG("...to '%s'", path);
 
     //3.free stack 
     free(pathStack);
@@ -116,11 +118,10 @@ int fs_setcwd(char *pathname)
     // if parse path fails
     if (res == -1)
     {
-        DEBUG("Failed to set directory: mfs.c");
+        DEBUG("parsePath failed");
         freePPI(&s);
         return -1;
     }
-    DEBUG("fs_setcwd: parsePath succeeded, entryIndex=%d", s.entryIndex);
 
     //edge case -- entryIndex == -2 means root directory
     if(s.entryIndex == -2){
@@ -148,11 +149,9 @@ int fs_setcwd(char *pathname)
 
     //check if curDir is null before assigning
     if(cwdGlobal == NULL){
-        DEBUG("Loaddir failed : mfsCwd.c");
+        DEBUG("loadDir failed");
         return -1;
     }
-
-    DEBUG("fs_setcwd: cwdGlobal updated to '%s'", cwdGlobal[0].name);
     
     return 0;
 }
