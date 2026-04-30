@@ -1,7 +1,7 @@
 /**************************************************************
  * Class::  CSC-415-03 Spring 2026
- * Name:: Patricia Ann Payumo, Abha Deshpande
- * Student IDs:: 923555591, 923314454
+ * Name:: Patricia Ann Payumo, Abha Deshpande, Allie Young
+ * Student IDs:: 923555591, 923314454, 923129607
  * GitHub-Name::  milo-pa
  * Group-Name::  CATS
  * Project:: Basic File System
@@ -104,8 +104,28 @@ int fs_stat(const char *path, struct fs_stat *buf)
     buf -> st_blocks = (ppi.parentDir[ppi.entryIndex].size 
         + VCBGlobal->blockSize - 1) / VCBGlobal->blockSize;
 
+    // Human readable debug prints  
+    char created[32];
+    char modified[32];
+    char accessed[32];
+    formatTime(buf->st_createtime, created, sizeof(created));
+    formatTime(buf->st_modtime, modified, sizeof(modified));
+    formatTime(buf->st_accesstime, accessed, sizeof(accessed));
+    DEBUG("Entry '%s' is %lu bytes or %lu blocks\n\t> Created: %s\n\t> Last modified: %s"
+        "\n\t> Last accessed: %s", ppi.lastElementName, buf->st_size, buf->st_blocks,
+        created, modified, accessed);
 
     freePPI(&ppi);
     return 0;
 
+}
+
+char* formatTime(time_t t, char* buf, size_t bufSize) {
+    struct tm* tmInfo = localtime(&t);
+    if(tmInfo == NULL) {
+        return NULL;
+    }
+
+    strftime(buf, bufSize, "%m/%d/%Y at %H:%M:%S", tmInfo);
+    return buf;
 }
