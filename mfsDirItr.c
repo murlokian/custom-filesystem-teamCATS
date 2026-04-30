@@ -63,13 +63,16 @@ fdDir *fs_opendir(const char *pathname)
             freePPI(&ppi);
             return NULL;
         }
+
+        DEBUG("Opened directory '%s' at index %d of parent", ppi.parentDir[ppi.entryIndex].name,
+        ppi.entryIndex);
     }
 
     // Allocate memory for directory control block
     fdDir *dirp = malloc(sizeof(fdDir));
     if (dirp == NULL)
     {
-        DEBUG("malloc failed in fs_opendir()");
+        DEBUG("malloc failed");
         freePPI(&ppi);
         return NULL;
     }
@@ -118,6 +121,7 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirp)
             dirp->di->fileType = currDe.entryType;
             strncpy(dirp->di->d_name, currDe.name, sizeof(dirp->di->d_name) - 1);
             dirp->di->d_name[sizeof(dirp->di->d_name) - 1] = '\0';
+            DEBUG("Returning entry '%s' at index %d", dirp->di->d_name, dirp->dirEntryPosition);
             return dirp->di;
         }
 
@@ -135,6 +139,8 @@ int fs_closedir(fdDir *dirp)
     {
         return -1;
     }
+
+    DEBUG("Closing directory '%s'", dirp->di->d_name);
 
     // Free used resources
     if (dirp->di != NULL)

@@ -38,7 +38,6 @@ void freePPI(parsePathInfo* ppi) {
 }
 
 int parsePath(const char* path, parsePathInfo* ppi) {
-	DEBUG("Parsing path %s", path);
 	directory_entry* parent;
 	directory_entry* startDir;
 	char* token1;
@@ -178,10 +177,10 @@ dir_index findDirEntry(directory_entry * dir, const char * name) {
 	for (int i = 0; i < numEntries; ++i) {
 		if (strcmp(dir[i].name, name) == 0) 
 		{
-			if(strcmp(name, "\0") != 0) {
+			if(strcmp(name, "\0") == 0) {
 				name = "<unused entry>";
 			}
-			DEBUG("Found '%s' in '%s' at index %d", name, dir[0].name, i);
+			DEBUG("Found '%s' at index %d", name, i);
 			return i;
 		}
 	}
