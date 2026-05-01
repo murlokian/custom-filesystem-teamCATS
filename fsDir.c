@@ -222,7 +222,7 @@ directory_entry * loadDir(directory_entry * dir) {
 // of extents exceeds NUM_DIR_EXTENTS.
 // Returns 0 on success, -1 on failure
 int growFile(directory_entry * file, int additionalBlocks) {
-	DEBUG("implemented for primary only **NOT YET TESTED**");
+	DEBUG("implemented up to secondary exts");
 
 	if (file == NULL) {
 		DEBUG("file does not exist");
@@ -232,6 +232,8 @@ int growFile(directory_entry * file, int additionalBlocks) {
 		DEBUG("cannot add less than one block");
 		return -1;
 	}
+
+	int blockSize = VCBGlobal->blockSize;
 
 	// get the required blocks from free space first, then populate existing slots or new table
 	extent *newExts = getBlocks(additionalBlocks, 1);
@@ -245,11 +247,10 @@ int growFile(directory_entry * file, int additionalBlocks) {
        newExtCount++;
     }
 
-	// TODO - account for possible contiguous extents and merge them
-	// requires helper function to iterate through and check
+	int newExtBlocks = (newExtCount * sizeof(extent) + (blockSize - 1)) / blockSize;
 	
 	// look for the first free/unused ext slot used in case 1 or 2
-   int firstFree = findFirstFree(file->exts);
+    int firstFree = findFirstFree(file->exts);
 
 	int lastPrimaryIndex = NUM_DIR_EXTENTS - 1;
 	extent * lastPrimaryExt = &file->exts[lastPrimaryIndex];
@@ -269,11 +270,12 @@ int growFile(directory_entry * file, int additionalBlocks) {
 			for (int i = 0; i < newExtCount; i++) {
 				file->exts[firstFree + i] = newExts[i];
 			}
-			file->size += additionalBlocks * VCBGlobal->blockSize;
+			file->size += additionalBlocks * blockSize;
 
 			free(newExts);
 			return 0;
 		}
+
 		// CASE 1B - fill what fits in primary --> put remainder into new secondary
 		int toFill = openSlots;
 		for (int i = 0; i < toFill; i++) {
@@ -288,15 +290,12 @@ int growFile(directory_entry * file, int additionalBlocks) {
 
 		// allocate enough blocks for secondary table creation
 		// new tables will be double the size the caller requires
-		extent *secExtTable= getBlocks(additionalBlocks * 2, 1);
-		if (secExtTable == NULL) {
-			DEBUG("getBlocks() failed for secondary table");
+		int secLoc = createSecondaryTable(remainingExts, remaining, additionalBlocks);
+		if (secLoc == -1) {
+			DEBUG("createSecondaryTable failed");
 			free(newExts);
 			return -1;
 		}
-
-		int secLoc = secExtTable[0].location;
-		free(secExtTable); 
 
 		// write new secondary table to disk starting at 
 		// the first block returned from getBlocks(), 
@@ -312,20 +311,30 @@ int growFile(directory_entry * file, int additionalBlocks) {
 		lastPrimaryExt->length = SECONDARY_EXT_SENTINEL;
 
 		// update file's [total] size before exiting
-		file->size += additionalBlocks * VCBGlobal->blockSize;
+		file->size += additionalBlocks * blockSize;
 
 		free(newExts);
 		return 0; 
 	} // END CASE 1A + 1B
 
 	// CASE 2 - primary full, add new exts immediately to new secondary table 
-	if (sentinel == -2) {
+	// 						  IF tertiary/secondary does not exist
+	if (sentinel >= 0) {
 		DEBUG("primary full, creating secondary table");
-		lastPrimaryExt->location = createSecondaryTable(newExts, additionalBlocks);lastPrimaryExt->length = SECONDARY_EXT_SENTINEL;
+		lastPrimaryExt->location = createSecondaryTable(newExts, 
+														newExtCount, 
+														additionalBlocks);
+		lastPrimaryExt->length = SECONDARY_EXT_SENTINEL;
 		
 		if (lastPrimaryExt->location == -1) {
+			DEBUG("createSecondaryTable failed");
+			free(newExts);
 			return -1;
 		}
+		// updating file's size with total bytes of exts added
+		file->size += additionalBlocks * blockSize;
+
+		free(newExts);
 		return 0;
 	}
 
@@ -333,25 +342,98 @@ int growFile(directory_entry * file, int additionalBlocks) {
 
 	// CASE 3 - (A) secondary exists, fill available slots within 
 	//          (B) and/or create tert + another sec
-	int existingSecLoc = lastPrimaryExt->location;
-	int secFirstFree = -1;
-	int secExtCount = 0;
-	// load secondary table to find first free and append new extents
-	// read a block/extent at a time until we hit empty/free slot
-	while (true) {
-		extent secExt[VCBGlobal->blockSize / sizeof(extent)];
-		if (LBAread(secExt, 1, existingSecLoc + secExtCount)) {
-			DEBUG("LBAread failed secondary table");
+	if (sentinel == -2) {
+		int existingSecLoc = lastPrimaryExt->location;
+
+		// get num existing exts in secondary to 
+		int secExtCount = getTableSize(existingSecLoc);
+
+		if (secExtCount == -1) {
+			DEBUG("getTableSize failed for secondary table");
+
 			free(newExts);
 			return -1;
 		}
-		int secPos = findFirstFree(secExt);
+		
+		// get size of existing secondary ext array
+		int secTableBlocks = (secExtCount * sizeof(extent) + (blockSize - 1)) / blockSize;
+
+		// load secondary to call findFirstFree()
+		// need offset to start appending additional exts
+		extent * secBuf = malloc(secTableBlocks * blockSize);
+		if (secBuf == NULL) {
+			DEBUG_ERR("malloc failed for secondary table buffer");
+			free(newExts);
+			return -1;
+		}
+
+		if (LBAread(secBuf,secTableBlocks, existingSecLoc) != secTableBlocks) {
+			DEBUG("LBAread failed for secondary table");
+			free(secBuf);
+			free(newExts);
+			return -1;
+		}
+
+		int secFirstFree = findFirstFree(secBuf);
+		free(secBuf);
+
+
+		// CASE 3 - room in existing secondary, fill and exit
+		if (secFirstFree != -1) {
+			int slotsPerBlock = blockSize / sizeof(extent);
+			int extWritten = 0;
+
+			// iterate block by block starting from the block containing secFirstFree
+			int secByteOffset = secFirstFree * sizeof(extent);
+			int blockOffset = secByteOffset / blockSize;
+			int slotInBlock = (secByteOffset % blockSize) / sizeof(extent);
+
+			while (extWritten < newExtCount) {
+				// read existing block
+				extent *writeBuf = malloc(blockSize);
+				if (writeBuf == NULL) {
+					DEBUG_ERR("malloc failed for write buffer");
+					free(newExts);
+					return -1;
+				}
+				if (LBAread(writeBuf, 1, existingSecLoc + blockOffset) != 1) {
+					DEBUG("LBAread failed reading block %d", blockOffset);
+					free(writeBuf);
+					free(newExts);
+					return -1;
+				}
+
+				// fill slots in this block starting at slotInBlock
+				int slotsAvailable = slotsPerBlock - slotInBlock;
+				int toFill;
+
+				if (newExtCount - extWritten <= slotsAvailable) {
+					toFill = newExtCount - extWritten;
+				} else {
+					toFill = slotsAvailable;
+				}
+
+				for (int i = 0; i < toFill; i++) {
+					writeBuf[slotInBlock + i] = newExts[extWritten + i];
+				}
+
+				if (LBAwrite(writeBuf, 1, existingSecLoc + blockOffset) != 1) {
+					DEBUG("LBAwrite failed for block %d", blockOffset);
+					free(writeBuf);
+					free(newExts);
+					return -1;
+				}
+				free(writeBuf);
+
+				extWritten += toFill;
+				blockOffset++;
+				slotInBlock = 0; // subsequent blocks start at slot 0
+			}
+
+			file->size += additionalBlocks * blockSize;
+			free(newExts);
+			return 0;
+		}
 	}
-
-	// THREE CASES TO HANDLE
-	// 1) enough free slots to use w/o creating another table
-	// 2) can fill to max slots in primary, create secondary
-	// 3) add straight to secondary (secondary handles creation of tertiary?)
-
 	return -1;
 }

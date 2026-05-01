@@ -43,7 +43,7 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			// check if current extent contains a sentinel value 
 			// (0, -2, or -3; 1 if non-sentinel)
             if ((sentinelVal = checkSentinel(*currExt)) == 0) {
-				// DEBUG("iterated to end of table");
+				DEBUG("iterated to end of table");
 
 			    // hit empty extent sentinel, END OF EXTS
                 return NULL;
@@ -162,15 +162,13 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 // returns the block location of the new secondary table for caller to assign to
 // last ext of primary table OR current tertiary index in growFile() case 2B onwards
 // 0 on success; -1 on failure
-int createSecondaryTable(extent *exts, int additionalBlocks) {
+int createSecondaryTable(extent *exts, int extCt, int additionalBlocks) {
     if (exts == NULL) {
         return -1;
     }
 
 	int extsCount = additionalBlocks * 2;
-	// TODO: play around with alloc size, maybe need more
     // allocate double the requested blocks for the secondary table
-	// NOTE: not following adaptive default approach :(
     extent *secTable = getBlocks(extsCount, 1);
     if (secTable== NULL) {
         DEBUG("getBlocks failed");
@@ -186,6 +184,7 @@ int createSecondaryTable(extent *exts, int additionalBlocks) {
         return -1;
     }
 
+	DEBUG("secondary created at location %d with extents %d", secLoc, getTableSize(secLoc));
     return secLoc; // to be assigned to last primary ext or current tert index
 }
 

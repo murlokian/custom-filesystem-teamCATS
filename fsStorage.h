@@ -84,6 +84,6 @@ extent* cleanExtents(extent* exts);
 // called from growFile()
 // allocates and writes a new secondary extent table to disk with double the requested size
 // and writes the passed extents into the table
-int createSecondaryTable(extent * exts, int additionalBlocks);
+int createSecondaryTable(extent * exts, int extCt, int additionalBlocks);
 
 #endif
