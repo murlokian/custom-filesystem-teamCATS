@@ -40,7 +40,7 @@ char *fs_getcwd(char *pathname, size_t size)
     strncpy(pathname, path, size);
     pathname[size - 1] = '\0';
 
-    DEBUG("Returning path '%s'", pathname);
+    // DEBUG("Returning path '%s'", pathname);
 
     return pathname;
 }

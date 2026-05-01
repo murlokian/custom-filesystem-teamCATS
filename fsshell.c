@@ -882,7 +882,11 @@ int main(int argc, char *argv[])
 	while (1)
 	{
 		#ifdef DEBUG_ENABLED
-			cmdin = readline("\nPrompt > ");
+			char cwd[DIRMAX_LEN];
+			char prompt[DIRMAX_LEN + 5];
+			fs_getcwd(cwd, DIRMAX_LEN);
+			snprintf(prompt, sizeof(prompt), "\n%s > ", cwd);
+			cmdin = readline(prompt);
 			printf("\n");
 		#else
 			cmdin = readline("Prompt > ");
