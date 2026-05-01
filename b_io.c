@@ -600,6 +600,7 @@ int b_close(b_io_fd fd)
 			}
 		}
 
+		memset(fcb->buf + fcb->buflen, 0, VCBGlobal->blockSize - fcb->buflen);
 		DEBUG("flushing partial block of %d bytes to LBA %lu on close", fcbArray[fd].buflen, lba);
 		LBAwrite(fcbArray[fd].buf, 1, lba);
 		fcbArray[fd].buflen = 0;
