@@ -43,7 +43,7 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			// check if current extent contains a sentinel value 
 			// (0, -2, or -3; 1 if non-sentinel)
             if ((sentinelVal = checkSentinel(*currExt)) == 0) {
-				DEBUG("iterated to end of table");
+				// DEBUG("iterated to end of table");
 
 			    // hit empty extent sentinel, END OF EXTS
                 return NULL;

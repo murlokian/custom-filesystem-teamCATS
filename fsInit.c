@@ -134,6 +134,7 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	// extent* ext = getBlocks(1, 1);
 	// rootGlobal[newFile].exts[0] = ext[0];
 	// rootGlobal[newFile].exts[1] = ext[1];
+	// free(ext);
 	
 	// writeDirectory(rootGlobal);
 
