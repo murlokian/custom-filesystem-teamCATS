@@ -217,6 +217,7 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 int freeBlocks(extent* exts) {
 	// Iterate through extents to be freed  
 	int i = 0;
+	int needsCleanup = 0;
 	while(exts[i].location != 0) {
 		// Skip already marked free extents  
 		if(exts[i].length == 0) {
@@ -229,40 +230,111 @@ int freeBlocks(extent* exts) {
 		// Iterate through freespace extents  
 		extent newFreeExt = exts[i];
 		int numFsExtents = (NUM_FREESPACE_BLOCKS * VCBGlobal->blockSize) / sizeof(extent);
-		for(int j = 0; j < numFsExtents; j++) {
-			// Can be merged at end of existing freespace extent  
-			if(freespaceExts[j].location + freespaceExts[j].length == newFreeExt.location) {
-				freespaceExts[j].length += newFreeExt.length;
-				DEBUG("Extent at location %d with %d blocks merged at end of existing freespace "
-					"extent at location %d for a new total of %d blocks", newFreeExt.location,
-					newFreeExt.length, freespaceExts[j].location, freespaceExts[j].length);
+		int insertPos = 0;
+		int sentinelPos = -1;
+		while(insertPos < numFsExtents) {
+			// Sentinel check  
+			if(freespaceExts[insertPos].location == 0 && freespaceExts[insertPos].length == 0) {
+				sentinelPos = insertPos;
 				break;
 			}
 
-			// Can be merged at beginning of existing freespace extent  
-			if(newFreeExt.location + newFreeExt.length == freespaceExts[j].location) {
-				int oldLoc = freespaceExts[j].location;
-				freespaceExts[j].location = newFreeExt.location;
-				freespaceExts[j].length += newFreeExt.length;
-				DEBUG("Extent at location %d with %d blocks merged at beginning of existing "
-					"freespace extent at location %d for a new location of %d and a new total "
-					"of %d blocks", newFreeExt.location, newFreeExt.length, 
-					oldLoc, newFreeExt.location, freespaceExts[j].length);
+			// Stop at extent immediately to the right  
+			if(freespaceExts[insertPos].location > newFreeExt.location) {
 				break;
 			}
 
-			// *** FIX: insert sorted ***
-			// Add at end of freespace extents  
-			if(freespaceExts[j].location != 0) {
-				continue;
+			insertPos++;
+		}
+
+		// Find sentinel if not found yet  
+		if(sentinelPos == -1) {
+			for(int k = insertPos; k < numFsExtents; k++) {
+				if(freespaceExts[k].location == 0 && freespaceExts[k].length == 0) {
+					sentinelPos = k;
+					break;
+				}
 			}
-			freespaceExts[j] = newFreeExt;
-			DEBUG("Extent of %d blocks added to end of freespace extents at location %d", 
-				freespaceExts[j].length, freespaceExts[j].location);
-			break;
+		}
+
+		// No room in freespace extent table  
+		if(sentinelPos == -1) {
+			DEBUG("No room in freespace extent table");
+			return -1;
+		}
+
+		// Check before to handle double merge case  
+		int leftMergeable = 0;
+		int rightMergeable = 0;
+		if(insertPos > 0) {
+			if(freespaceExts[insertPos - 1].location + freespaceExts[insertPos - 1].length
+				== newFreeExt.location) {
+				leftMergeable = 1;
+			}
+		}
+		if(insertPos < sentinelPos) {
+			if(newFreeExt.location + newFreeExt.length == freespaceExts[insertPos].location) {
+				rightMergeable = 1;
+			}
+		}
+
+		// Double merge  
+		if(leftMergeable && rightMergeable) {
+			int rightLoc = freespaceExts[insertPos].location;
+
+			freespaceExts[insertPos - 1].length += 
+				newFreeExt.length + freespaceExts[insertPos].length;
+
+			// Set right extent empty  
+			freespaceExts[insertPos].length = 0;
+			needsCleanup = 1;
+
+			DEBUG("Extent at location %d with %d blocks merged between existing freespace "
+				"extents at locations %d and %d for a new extent at location %d with %d blocks",
+				newFreeExt.location, newFreeExt.length, freespaceExts[insertPos - 1].location,
+				rightLoc, freespaceExts[insertPos - 1].location, 
+				freespaceExts[insertPos - 1].length);
+		}
+		// Left merge  
+		else if(leftMergeable) {
+			freespaceExts[insertPos - 1].length += newFreeExt.length;
+
+			DEBUG("Extent at location %d with %d blocks merged at end of existing freespace "
+				"extent at location %d for a new total of %d blocks", newFreeExt.location,
+				newFreeExt.length, freespaceExts[insertPos - 1].location, 
+				freespaceExts[insertPos - 1].length);
+		}
+		// Right merge  
+		else if(rightMergeable) {
+			int rightLoc = freespaceExts[insertPos].location;
+
+			freespaceExts[insertPos].location = newFreeExt.location;
+			freespaceExts[insertPos].length += newFreeExt.length;
+
+			DEBUG("Extent at location %d with %d blocks merged at beginning of existing "
+				"freespace extent at location %d for a new location of %d and a new total "
+				"of %d blocks", newFreeExt.location, newFreeExt.length, rightLoc, 
+				freespaceExts[insertPos].location, freespaceExts[insertPos].length);
+		}
+		// No merge, insert new extent  
+		else {
+			// Shift all extents with larger locations to the right starting from sentinel  
+			for(int j = sentinelPos; j > insertPos; j--) {
+				freespaceExts[j] = freespaceExts[j - 1];
+			}
+
+			freespaceExts[insertPos] = newFreeExt;
+
+			DEBUG("Extent inserted into freespace extents at location %d with %d blocks",
+				freespaceExts[insertPos].location, freespaceExts[insertPos].length);
 		}
 
 		i++;
+	}
+
+	// Remove empty extents from double merges  
+	if(needsCleanup) {
+		cleanExtents(freespaceExts);
 	}
 
 	// Write updated extents to disk  
@@ -270,7 +342,7 @@ int freeBlocks(extent* exts) {
 		!= NUM_FREESPACE_BLOCKS) 
 	{
 		DEBUG("LBAwrite failed");
-		return 1;
+		return -1;
 	}
 
 	return 0; 
@@ -286,11 +358,10 @@ extent *cleanExtents(extent *exts)
 	int index = 0;
 	int writeIndex = 0;
 	int removedCount = 0;
+	int numExts = (NUM_FREESPACE_BLOCKS * VCBGlobal->blockSize) / sizeof(extent);
 
-	extent *currExt = getNextExtent(exts, &index);
-
-	while (currExt != NULL)
-	{
+	// Iterate through freespace extents  
+	while(index < numExts && exts[index].location != 0) {
 		if (exts[index].length == 0)
 		{
 			removedCount++;
@@ -301,10 +372,9 @@ extent *cleanExtents(extent *exts)
 			writeIndex++;
 		}
 		index++;
-		currExt = getNextExtent(exts, &index);
 	}
 
-	memset(&exts[writeIndex], 0, (index - writeIndex) * sizeof(extent));
+	memset(&exts[writeIndex], 0, (numExts - writeIndex) * sizeof(extent));
 
 	DEBUG("Cleaned exts: %d removed", removedCount);
 	return exts;
