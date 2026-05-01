@@ -26,6 +26,7 @@
 
 directory_entry* rootGlobal = NULL;
 directory_entry* cwdGlobal = NULL;
+static void printAllExtents(directory_entry *de);
 
 directory_entry *createDirectory(int initialEntryCount, directory_entry *parent) {
 
@@ -272,6 +273,8 @@ int growFile(directory_entry * file, int additionalBlocks) {
 			}
 			file->size += additionalBlocks * blockSize;
 
+			printAllExtents(file);
+
 			free(newExts);
 			return 0;
 		}
@@ -310,8 +313,7 @@ int growFile(directory_entry * file, int additionalBlocks) {
 		lastPrimaryExt->location = secLoc;
 		lastPrimaryExt->length = SECONDARY_EXT_SENTINEL;
 
-		// update file's [total] size before exiting
-		file->size += additionalBlocks * blockSize;
+		printAllExtents(file);
 
 		free(newExts);
 		return 0; 
@@ -331,10 +333,10 @@ int growFile(directory_entry * file, int additionalBlocks) {
 			free(newExts);
 			return -1;
 		}
-		// updating file's size with total bytes of exts added
-		file->size += additionalBlocks * blockSize;
 
 		free(newExts);
+
+		printAllExtents(file);
 		return 0;
 	}
 
@@ -430,10 +432,105 @@ int growFile(directory_entry * file, int additionalBlocks) {
 				slotInBlock = 0; // subsequent blocks start at slot 0
 			}
 
-			file->size += additionalBlocks * blockSize;
 			free(newExts);
+
+			printAllExtents(file);
 			return 0;
 		}
 	}
 	return -1;
+}
+
+// Prints all extents for a directory entry across primary, secondary, and tertiary tables
+// Call this just before growFile returns to verify extent state
+static void printAllExtents(directory_entry *de) {
+    int blockSize = VCBGlobal->blockSize;
+    DEBUG("=== extents for '%s' (size: %lu) ===", de->name, de->size);
+
+    // Print primary extents
+    for (int i = 0; i < NUM_DIR_EXTENTS; i++) {
+        int s = checkSentinel(de->exts[i]);
+        if (s == 0) {
+            DEBUG("  primary[%d]: EMPTY", i);
+            break;
+        }
+        if (s == -2) {
+            DEBUG("  primary[%d]: SECONDARY SENTINEL -> loc %u", i, de->exts[i].location);
+
+            // Read and print secondary table
+            int secLoc = de->exts[i].location;
+            int slot = 0;
+            while (true) {
+                extent *secBuf = malloc(blockSize);
+                if (secBuf == NULL) {
+                    DEBUG("  printAllExtents: malloc failed reading secondary");
+                    return;
+                }
+                if (LBAread(secBuf, 1, secLoc + slot) != 1) {
+                    DEBUG("  printAllExtents: LBAread failed at secondary block %d", slot);
+                    free(secBuf);
+                    return;
+                }
+                extent e = secBuf[0];
+                free(secBuf);
+
+                if (checkSentinel(e) == 0) break;
+                DEBUG("    secondary[%d]: loc=%u len=%u", slot, e.location, e.length);
+                slot++;
+            }
+            break;
+        }
+        if (s == -3) {
+            DEBUG("  primary[%d]: TERTIARY SENTINEL -> loc %u", i, de->exts[i].location);
+
+            // Walk tertiary table
+            int tertLoc = de->exts[i].location;
+            int tertSlot = 0;
+            while (true) {
+                extent *tertBuf = malloc(blockSize);
+                if (tertBuf == NULL) {
+                    DEBUG("  printAllExtents: malloc failed reading tertiary");
+                    return;
+                }
+                if (LBAread(tertBuf, 1, tertLoc + tertSlot) != 1) {
+                    DEBUG("  printAllExtents: LBAread failed at tertiary block %d", tertSlot);
+                    free(tertBuf);
+                    return;
+                }
+                extent tertEntry = tertBuf[0];
+                free(tertBuf);
+
+                if (checkSentinel(tertEntry) == 0) break;
+                DEBUG("    tertiary[%d]: secLoc=%u secExtCount=%u",
+                    tertSlot, tertEntry.location, tertEntry.length);
+
+                // Read and print that secondary table
+                int secLoc = tertEntry.location;
+                int secSlot = 0;
+                while (true) {
+                    extent *secBuf = malloc(blockSize);
+                    if (secBuf == NULL) {
+                        DEBUG("  printAllExtents: malloc failed reading secondary");
+                        return;
+                    }
+                    if (LBAread(secBuf, 1, secLoc + secSlot) != 1) {
+                        DEBUG("  printAllExtents: LBAread failed at secondary block %d", secSlot);
+                        free(secBuf);
+                        return;
+                    }
+                    extent e = secBuf[0];
+                    free(secBuf);
+
+                    if (checkSentinel(e) == 0) break;
+                    DEBUG("      secondary[%d][%d]: loc=%u len=%u",
+                        tertSlot, secSlot, e.location, e.length);
+                    secSlot++;
+                }
+                tertSlot++;
+            }
+            break;
+        }
+        DEBUG("  primary[%d]: loc=%u len=%u", i, de->exts[i].location, de->exts[i].length);
+    }
+    DEBUG("=== end extents ===");
 }
