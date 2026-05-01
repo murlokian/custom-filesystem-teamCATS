@@ -1,7 +1,7 @@
 /**************************************************************
 * Class::  CSC-415-03 Spring 2026
-* Name:: Milo Pesce Ares
-* Student IDs:: 921926821
+* Name:: Milo Pesce Ares, Allie Young
+* Student IDs:: 921926821, 923129607
 * GitHub-Name:: milo-pa
 * Group-Name:: CATS
 * Project:: Basic File System
@@ -49,5 +49,8 @@
 	#define DEBUG_ERR(...) ((void)0) 
 
 #endif
+
+// Helper to format times into human readable format for debug printing  
+char* formatTime(time_t t, char* buf, size_t bufSize);
 
 #endif

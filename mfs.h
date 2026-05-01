@@ -96,8 +96,5 @@ struct fs_stat
 
 int fs_stat(const char *path, struct fs_stat *buf);
 
-// Helper to format times into human readable format for debug printing  
-char* formatTime(time_t t, char* buf, size_t bufSize);
-
 #endif
 
