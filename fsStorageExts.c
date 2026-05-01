@@ -159,6 +159,24 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
     }
 }
 
+// takes in ext passed from getNextExtent() and the current Ext table
+// checks the table's sentinel value and frees Ext only if sentinel indicates
+// belonging to secondary or tertiary 
+void freeExt(extent * extToFree, extent * exts) {
+	if (extToFree == NULL || exts == NULL) {
+		return;
+	}
+
+	int extsLen = getTableSize(exts[0].location);
+
+	int sentinel = checkSentinel(exts[extsLen - 1]);
+
+	if (sentinel == -2 || sentinel == -3) {
+		free(extToFree);
+		extToFree == NULL;
+	}
+}
+
 // helper function for growFile() only
 // allocates and writes a new secondary extent table to disk with double the requested size
 // and writes the passed extents into the table

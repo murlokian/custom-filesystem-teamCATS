@@ -249,6 +249,7 @@ int growFile(directory_entry * file, int additionalBlocks) {
        newExtCount++;
     }
 
+	DEBUG("adding %d exts to file %s", newExtCount, file->name);
 	int newExtBlocks = (newExtCount * sizeof(extent) + (blockSize - 1)) / blockSize;
 	
 	// look for the first free/unused ext slot used in case 1 or 2
@@ -442,21 +443,22 @@ int growFile(directory_entry * file, int additionalBlocks) {
 }
 
 static void printExts(directory_entry * file) {
-    // DEBUG("=== extents for '%s' (size: %lu) ===", file->name, file->size);
+	DEBUG("\n");
+    DEBUG("=== extents for '%s' (size: %lu) ===", file->name, file->size);
 
-    // int extentIndex = 0;
-    // int count = 0;
-    // extent * ext;
+    int extentIndex = 0;
+    int count = 0;
+    extent * ext;
 
-    // while ((ext = getNextExtent(file->exts, &extentIndex)) != NULL) {
-    //     DEBUG("  ext[%d]: loc=%u len=%u", count, ext->location, ext->length);
-    //     free(ext);
-    //     count++;
-    // }
+    while ((ext = getNextExtent(file->exts, &extentIndex)) != NULL) {
+        DEBUG("  ext[%d]: loc=%u len=%u", count, ext->location, ext->length);
+        freeExt(ext, file->exts);
+        count++;
+    }
 
-    // if (count == 0) {
-    //     DEBUG("  no extents found");
-    // }
+    if (count == 0) {
+        DEBUG("  no extents found");
+    }
 
-    // DEBUG("=== end extents (%d total) ===", count);
+    DEBUG("=== end extents (%d total) ===\n", count);
 }

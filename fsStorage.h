@@ -77,6 +77,11 @@ int getTableSize(int tableLoc);
 // NOTE: CALLER IS RESPONSIBLE FOR FREEING RETURNED EXT 
 extent * getNextExtent(extent * exts, int * extentIndex);
 
+// takes in ext passed from getNextExtent() and the current Ext table
+// checks the table's sentinel value and frees Ext only if sentinel indicates
+// belonging to secondary or tertiary 
+void freeExt(extent * extToFree, extent * exts);
+
 // Removes any empty extents from a list of extents. Handles secondary and
 // tertiary tables
 extent* cleanExtents(extent* exts);
