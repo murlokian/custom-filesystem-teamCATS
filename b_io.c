@@ -36,7 +36,6 @@ typedef struct
 {
 	int extentIndex; // which extent we're on
 	int blockOffset; // how many blocks into the current extent we are
-	extent *curr;	 // the current extent
 } extent_cursor;
 
 typedef struct b_fcb
@@ -396,8 +395,6 @@ int b_write(b_io_fd fd, char *buffer, int count)
 					DEBUG("getNextBlock failed after allocation on fast path");
 					break;
 				}
-
-				break;
 			}
 
 			DEBUG("fast path: writing block directly to LBA %lu", lba);
@@ -446,8 +443,6 @@ int b_write(b_io_fd fd, char *buffer, int count)
 					DEBUG("getNextBlock failed after allocation on fast path");
 					break;
 				}
-
-				break;
 			}
 
 			DEBUG("normal path: flushing full block to LBA %lu", lba);
@@ -586,16 +581,27 @@ int b_close(b_io_fd fd)
 	if (fcbArray[fd].buflen > 0)
 	{
 		uint64_t lba;
-		if (getNextBlock(fcbArray[fd].de, &fcbArray[fd].cursor, &lba) == NULL)
+
+		b_fcb * fcb = &fcbArray[fd];
+
+		if (getNextBlock(fcb->de, &fcb->cursor, &lba) == NULL)
 		{
-			DEBUG("out of extents flushing partial block on close, %d bytes lost", fcbArray[fd].buflen);
+			DEBUG("out of extents flushing partial block on close");
+
+			if (growFile(fcb->de, 100) == -1)
+			{
+				DEBUG("failed to allocate blocks");
+			}
+
+			if (getNextBlock(fcb->de, &fcb->cursor, &lba) == NULL)
+			{
+				DEBUG("getNextBlock failed after allocation on fast path");
+			}
 		}
-		else
-		{
-			DEBUG("flushing partial block of %d bytes to LBA %lu on close", fcbArray[fd].buflen, lba);
-			LBAwrite(fcbArray[fd].buf, 1, lba);
-			fcbArray[fd].buflen = 0;
-		}
+
+		DEBUG("flushing partial block of %d bytes to LBA %lu on close", fcbArray[fd].buflen, lba);
+		LBAwrite(fcbArray[fd].buf, 1, lba);
+		fcbArray[fd].buflen = 0;
 	}
 
 	// Update access timestamp
@@ -643,10 +649,11 @@ int b_close(b_io_fd fd)
 static int seekCursor(directory_entry *de, extent_cursor *cur, int targetBlock)
 {
 	int accumulated = 0;
+	int idx = 0;
 
 	while (1)
 	{
-		extent *ext = getNextExtent(de->exts, &cur->extentIndex);
+		extent *ext = getNextExtent(de->exts, &idx);
 		if (ext == NULL)
 		{
 			DEBUG_ERR("ran out of extents seeking to block %d", targetBlock);
@@ -655,15 +662,16 @@ static int seekCursor(directory_entry *de, extent_cursor *cur, int targetBlock)
 
 		if (accumulated + (int)ext->length > targetBlock)
 		{
-			cur->curr = ext;
+			cur->extentIndex = idx - 1; // getNextExtent already incremented
 			cur->blockOffset = targetBlock - accumulated;
+
 			DEBUG("cursor seeked to block %d: LBA %u, offset %d",
-				  targetBlock, cur->curr->location, cur->blockOffset);
+				  targetBlock, ext->location, cur->blockOffset);
+
 			return 0;
 		}
 
 		accumulated += (int)ext->length;
-		free(ext);
 	}
 }
 
@@ -671,26 +679,47 @@ static int seekCursor(directory_entry *de, extent_cursor *cur, int targetBlock)
 static uint64_t *getNextBlock(
 	directory_entry *de, extent_cursor *cur, uint64_t *out)
 {
-	/* Advance to next extent if current is exhausted */
-	if (cur->curr == NULL || cur->blockOffset >= (int)cur->curr->length)
-	{
-		if (cur->curr != NULL)
-		{
-			DEBUG("extent at LBA %u exhausted, fetching next", cur->curr->location);
-			free(cur->curr);
-		}
+	int idx = 0;
+	int currentExtent = 0;
 
-		cur->curr = getNextExtent(de->exts, &cur->extentIndex);
-		if (cur->curr == NULL)
+	while (1)
+	{
+		extent *ext = getNextExtent(de->exts, &idx);
+		if (ext == NULL)
 		{
 			DEBUG("no more extents available");
 			return NULL;
 		}
 
-		cur->blockOffset = 0;
-	}
+		// Found the extent we care about
+		if (currentExtent == cur->extentIndex)
+		{
+			// If offset is inside this extent
+			if (cur->blockOffset < (int)ext->length)
+			{
+				*out = (uint64_t)(ext->location + cur->blockOffset);
 
-	*out = (uint64_t)(cur->curr->location + cur->blockOffset);
-	cur->blockOffset++;
-	return out;
+				cur->blockOffset++;
+
+				// Move to next extent if we just exhausted this one
+				if (cur->blockOffset >= (int)ext->length)
+				{
+					cur->extentIndex++;
+					cur->blockOffset = 0;
+				}
+
+				return out;
+			}
+			else
+			{
+				// Offset too large → move to next extent
+				cur->extentIndex++;
+				cur->blockOffset = 0;
+
+				return getNextBlock(de, cur, out);
+			}
+		}
+
+		currentExtent++;
+	}
 }
