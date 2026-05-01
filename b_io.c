@@ -1,7 +1,9 @@
 /**************************************************************
  * Class::  CSC-415-03 Spring 2026
- * Name:: Rosa Melton, Patricia Ann Payumo, Abha Deshpande, Allie Young
- * Student IDs:: 921337778, 923555591, 923314454, 923129607
+ * Name:: Rosa Melton, Patricia Ann Payumo, Abha Deshpande,
+ * 			Milo Pesce Ares, Allie Young
+ * Student IDs:: 921337778, 923555591, 923314454, 
+ * 			9212926821, 923129607
  * GitHub-Name:: milo-pa
  * Group-Name:: CATS
  * Project:: Basic File System
@@ -23,28 +25,43 @@
 #include "b_io.h"
 #include "fsLow.h"
 #include "fsDir.h"
-#include "fsVCB.h" // used to get blockSize (can fix/change; current shortcut...)
+#include "fsVCB.h"
+#include "fsStorage.h"
 #include "debug.h"
 
 #define MAXFCBS 20
+
+// Struct for storing current place in file
+typedef struct
+{
+	int extentIndex; // which extent we're on
+	int blockOffset; // how many blocks into the current extent we are
+	extent *curr;	 // the current extent
+} extent_cursor;
 
 typedef struct b_fcb
 {
 	/** TODO add al the information you need in the file control block **/
 	// TWO MORE VARIABLES TO ADD BASED ON BIERMAN'S ASGN5 APPROACH
 	directory_entry *de; // holds the low level systems file info
-	directory_entry* parent; // for writing metadata changes  
+	directory_entry *parent; // for writing metadata changes
 	int entryIndex; // the index of the directory inside its parent  
 
 	char *buf;	   // holds the open file buffer
 	int fileIndex; // holds the current byte position in the file
 	int buflen;	   // holds how many valid bytes are in the buffer
 	int flags;     // stores how the file was opened
+
+	extent_cursor cursor;
 } b_fcb;
+
 
 b_fcb fcbArray[MAXFCBS];
 
 int startup = 0; // Indicates that this has not been initialized
+
+static uint64_t *getNextBlock(directory_entry *de, extent_cursor *cur, uint64_t *out);
+static int seekCursor(directory_entry *de, extent_cursor *cur, int targetBlock);
 
 // Method to initialize our file system
 void b_init()
@@ -216,11 +233,41 @@ b_io_fd b_open(char *filename, int flags)
 	fcbArray[returnFd].buf = buffer;
 	fcbArray[returnFd].buflen = 0;
 	fcbArray[returnFd].flags = flags;
+	fcbArray[returnFd].cursor = (extent_cursor){0};
 
 	// Move index to end if APPENDing  
 	if(flags & O_APPEND) {
 		fcbArray[returnFd].fileIndex = fcbArray[returnFd].de->size;
 		DEBUG("Opened for appending, file index moved to %d", fcbArray[returnFd].fileIndex);
+
+		int lastBlock = fcbArray[returnFd].de->size / VCBGlobal->blockSize;
+		int partialBytes = fcbArray[returnFd].de->size % VCBGlobal->blockSize;
+
+		if (seekCursor(fcbArray[returnFd].de, &fcbArray[returnFd].cursor, lastBlock) != 0)
+		{
+			DEBUG_ERR("seekCursor failed for O_APPEND");
+			free(buffer);
+			freePPI(&ppi);
+			return -1;
+		}
+
+		// If the file doesn't end on a block boundary, read the partial block
+		// into the fcb buffer so b_write appends correctly
+		if (partialBytes > 0)
+		{
+			uint64_t lba;
+			if (getNextBlock(fcbArray[returnFd].de, &fcbArray[returnFd].cursor, &lba) == NULL)
+			{
+				DEBUG_ERR("getNextBlock failed reading partial block for O_APPEND");
+				free(buffer);
+				freePPI(&ppi);
+				return -1;
+			}
+
+			LBAread(buffer, 1, lba);
+			fcbArray[returnFd].buflen = partialBytes;
+			DEBUG("read partial last block from LBA %lu, buflen set to %d", lba, partialBytes);
+		}
 	} else {
 		fcbArray[returnFd].fileIndex = 0;
 	}
@@ -301,19 +348,87 @@ int b_seek(b_io_fd fd, off_t offset, int whence)
 	return newPos; // return new pos
 }
 
-// Interface to write function
 int b_write(b_io_fd fd, char *buffer, int count)
 {
 	if (startup == 0)
-		b_init(); // Initialize our system
+		b_init();
 
-	// check that fd is between 0 and (MAXFCBS-1)
 	if ((fd < 0) || (fd >= MAXFCBS))
 	{
-		return (-1); // invalid file descriptor
+		DEBUG("invalid file descriptor %d", fd);
+		return -1;
 	}
 
-	return (0); // Change this
+	b_fcb *fcb = &fcbArray[fd];
+
+	if (!(fcb->flags & O_WRONLY) && !(fcb->flags & O_RDWR))
+	{
+		DEBUG("fd %d not open for writing, flags: %d", fd, fcb->flags);
+		return -1;
+	}
+
+	int blockSize = VCBGlobal->blockSize;
+	int bytesWritten = 0;
+	int bufIndex = 0;
+
+	DEBUG("fd %d: writing %d bytes (fileIndex %d, buflen %d)",
+		  fd, count, fcb->fileIndex, fcb->buflen);
+
+	while (count > 0)
+	{
+		int spaceInBuf = blockSize - fcb->buflen;
+
+		// Optimization: buffer is empty and caller has a full block or more.
+		//  Write directly from the caller's buffer — no copy needed.
+		if (fcb->buflen == 0 && count >= blockSize)
+		{
+			uint64_t lba;
+			if (getNextBlock(fcb->de, &fcb->cursor, &lba) == NULL)
+			{
+				DEBUG("out of extents on fast path, %d bytes remaining", count);
+				break;
+			}
+
+			DEBUG("fast path: writing block directly to LBA %lu", lba);
+			LBAwrite(buffer + bufIndex, 1, lba);
+
+			bufIndex += blockSize;
+			count -= blockSize;
+			fcb->fileIndex += blockSize;
+			bytesWritten += blockSize;
+			continue;
+		}
+
+		// copy as much as fits into the fcb buffer, then flush if the buffer is now full
+		int toCopy = (count < spaceInBuf) ? count : spaceInBuf;
+
+		memcpy(fcb->buf + fcb->buflen, buffer + bufIndex, toCopy);
+
+		fcb->buflen += toCopy;
+		bufIndex += toCopy;
+		count -= toCopy;
+		fcb->fileIndex += toCopy;
+		bytesWritten += toCopy;
+
+		if (fcb->buflen == blockSize)
+		{
+			uint64_t lba;
+			if (getNextBlock(fcb->de, &fcb->cursor, &lba) == NULL)
+			{
+				DEBUG("out of extents on normal path, %d bytes remaining", count);
+				break;
+			}
+
+			DEBUG("normal path: flushing full block to LBA %lu", lba);
+			LBAwrite(fcb->buf, 1, lba);
+			fcb->buflen = 0;
+		}
+	}
+
+	DEBUG("fd %d: wrote %d bytes, fileIndex now %d, buflen %d",
+		  fd, bytesWritten, fcb->fileIndex, fcb->buflen);
+
+	return bytesWritten;
 }
 
 // Interface to read a buffer
@@ -436,8 +551,30 @@ int b_close(b_io_fd fd)
 		return -1;
 	}
 
-	// Update access timestamp  
-	fcbArray[fd].de->lastAccessDate = time(NULL);
+	// Flush any remaining partial block in the buffer
+	if (fcbArray[fd].buflen > 0)
+	{
+		uint64_t lba;
+		if (getNextBlock(fcbArray[fd].de, &fcbArray[fd].cursor, &lba) == NULL)
+		{
+			DEBUG("out of extents flushing partial block on close, %d bytes lost", fcbArray[fd].buflen);
+		}
+		else
+		{
+			DEBUG("flushing partial block of %d bytes to LBA %lu on close", fcbArray[fd].buflen, lba);
+			LBAwrite(fcbArray[fd].buf, 1, lba);
+			fcbArray[fd].buflen = 0;
+		}
+	}
+
+	// Update access timestamp
+	time_t now = time(NULL);
+	fcbArray[fd].de->lastAccessDate = now;
+
+	// Update write timestamp only if write flag enabled
+	if ((fcbArray[fd].flags & O_WRONLY) || (fcbArray[fd].flags & O_RDWR))
+		fcbArray[fd].de->lastEditDate = now;
+
 	if(fcbArray[fd].parent != NULL) {
 		if(writeDirectory(fcbArray[fd].parent) != 0) {
 			DEBUG("writeDirectory failed");
@@ -452,7 +589,8 @@ int b_close(b_io_fd fd)
 	}
 
 	if(fcbArray[fd].parent != NULL && 
-		fcbArray[fd].parent != rootGlobal && fcbArray[fd].parent != cwdGlobal) {
+		fcbArray[fd].parent != rootGlobal &&
+		fcbArray[fd].parent != cwdGlobal) {
 		free(fcbArray[fd].parent);
 	}
 
@@ -463,7 +601,65 @@ int b_close(b_io_fd fd)
 	fcbArray[fd].fileIndex = 0;
 	fcbArray[fd].buflen = 0;
 	fcbArray[fd].flags = 0;
+	fcbArray[fd].cursor = (extent_cursor){0};
 	DEBUG("Closed file at fcb index %d", fd);
 
 	return 0;
+}
+
+// Walks extents to position cursor at the given file-block index.
+// Called once from b_open for O_APPEND. Returns 0 on success, -1 on failure.
+static int seekCursor(directory_entry *de, extent_cursor *cur, int targetBlock)
+{
+	int accumulated = 0;
+
+	while (1)
+	{
+		extent *ext = getNextExtent(de->exts, &cur->extentIndex);
+		if (ext == NULL)
+		{
+			DEBUG_ERR("ran out of extents seeking to block %d", targetBlock);
+			return -1;
+		}
+
+		if (accumulated + (int)ext->length > targetBlock)
+		{
+			cur->curr = ext;
+			cur->blockOffset = targetBlock - accumulated;
+			DEBUG("cursor seeked to block %d: LBA %u, offset %d",
+				  targetBlock, cur->curr->location, cur->blockOffset);
+			return 0;
+		}
+
+		accumulated += (int)ext->length;
+		free(ext);
+	}
+}
+
+// Helper function that wraps getNextExtent(). This is called by b_write()
+static uint64_t *getNextBlock(
+	directory_entry *de, extent_cursor *cur, uint64_t *out)
+{
+	/* Advance to next extent if current is exhausted */
+	if (cur->curr == NULL || cur->blockOffset >= (int)cur->curr->length)
+	{
+		if (cur->curr != NULL)
+		{
+			DEBUG("extent at LBA %u exhausted, fetching next", cur->curr->location);
+			free(cur->curr);
+		}
+
+		cur->curr = getNextExtent(de->exts, &cur->extentIndex);
+		if (cur->curr == NULL)
+		{
+			DEBUG("no more extents available");
+			return NULL;
+		}
+
+		cur->blockOffset = 0;
+	}
+
+	*out = (uint64_t)(cur->curr->location + cur->blockOffset);
+	cur->blockOffset++;
+	return out;
 }
