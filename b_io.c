@@ -386,6 +386,17 @@ int b_write(b_io_fd fd, char *buffer, int count)
 			if (getNextBlock(fcb->de, &fcb->cursor, &lba) == NULL)
 			{
 				DEBUG("out of extents on fast path, %d bytes remaining", count);
+
+				if (growFile(fcb->de, 100) == -1) {
+					DEBUG("failed to allocate blocks");
+				}
+
+				if (getNextBlock(fcb->de, &fcb->cursor, &lba) == NULL)
+				{
+					DEBUG("getNextBlock failed after allocation on fast path");
+					break;
+				}
+
 				break;
 			}
 
@@ -396,6 +407,10 @@ int b_write(b_io_fd fd, char *buffer, int count)
 			count -= blockSize;
 			fcb->fileIndex += blockSize;
 			bytesWritten += blockSize;
+
+			if ((uint64_t)fcb->fileIndex > fcb->de->size)
+				fcb->de->size = (uint64_t)fcb->fileIndex;
+
 			continue;
 		}
 
@@ -410,12 +425,28 @@ int b_write(b_io_fd fd, char *buffer, int count)
 		fcb->fileIndex += toCopy;
 		bytesWritten += toCopy;
 
+		if ((uint64_t)fcb->fileIndex > fcb->de->size)
+			fcb->de->size = (uint64_t)fcb->fileIndex;
+
 		if (fcb->buflen == blockSize)
 		{
 			uint64_t lba;
 			if (getNextBlock(fcb->de, &fcb->cursor, &lba) == NULL)
 			{
+
 				DEBUG("out of extents on normal path, %d bytes remaining", count);
+
+				if (growFile(fcb->de, 100) == -1)
+				{
+					DEBUG("failed to allocate blocks");
+				}
+
+				if (getNextBlock(fcb->de, &fcb->cursor, &lba) == NULL)
+				{
+					DEBUG("getNextBlock failed after allocation on fast path");
+					break;
+				}
+
 				break;
 			}
 
