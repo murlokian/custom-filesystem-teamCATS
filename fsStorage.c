@@ -138,6 +138,7 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 
 	// Iterate through freespace extents  
 	// NOTE: This uses the first fit algorithm
+	int needsCleanup = 0;
 	int numFsExtents = (NUM_FREESPACE_BLOCKS * blockSize) / sizeof(extent);
 	for(int i = 0; i < numFsExtents; i++) {
 		// Check for end of valid freespace extents  
@@ -173,12 +174,20 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 			// Shrink freespace extent  
 			freespaceExts[i].location += toTake;
 			freespaceExts[i].length -= toTake;  
+			if(freespaceExts[i].length == 0) {
+				needsCleanup = 1;
+			}
 
 			blocksLeft -= toTake;
 		}
 	}
 
 	if(blocksLeft <= 0) {
+		// Remove empty extents if any were emptied  
+		if(needsCleanup) {
+			cleanExtents(freespaceExts);
+		}
+
 		// Write updated extents to disk
 		if(LBAwrite(freespaceExts, NUM_FREESPACE_BLOCKS, VCBGlobal->freespaceLocation) 
 			!= NUM_FREESPACE_BLOCKS) 
@@ -196,14 +205,14 @@ extent* getBlocks(int numBlocks, int minContiguous) {
 				DEBUG("realloc failed in getBlocks");
 				return NULL;
 			}
-			numExts++;
 		}
 
 		// Set sentinel at end of array  
-		exts[numExts - 1].location = 0;
-		exts[numExts - 1].length = 0;
+		exts[numExts].location = 0;
+		exts[numExts].length = 0;
 
-		DEBUG("Returning %d extents", numExts);
+		// This is an index so +1 in the debug  
+		DEBUG("Returning %d extents", numExts + 1);
 		return exts;
 	} else {
 		// No space available  
