@@ -274,7 +274,9 @@ int growFile(directory_entry * file, int additionalBlocks) {
 				file->exts[firstFree + i] = newExts[i];
 			}
 
-			printExts(file);
+			#if (DEBUG_ENABLED == 1)
+				printExts(file);
+			#endif
 
 			free(newExts);
 			return 0;
@@ -314,7 +316,9 @@ int growFile(directory_entry * file, int additionalBlocks) {
 		lastPrimaryExt->location = secLoc;
 		lastPrimaryExt->length = SECONDARY_EXT_SENTINEL;
 
-		printExts(file);
+		#if (DEBUG_ENABLED == 1)
+			printExts(file);
+		#endif
 
 		free(newExts);
 		return 0; 
@@ -337,7 +341,10 @@ int growFile(directory_entry * file, int additionalBlocks) {
 
 		free(newExts);
 
-		printExts(file);
+		#if (DEBUG_ENABLED == 1)
+			printExts(file);
+		#endif
+
 		return 0;
 	}
 
@@ -435,30 +442,35 @@ int growFile(directory_entry * file, int additionalBlocks) {
 
 			free(newExts);
 
-			printExts(file);
+			#if (DEBUG_ENABLED == 1)
+				printExts(file);
+			#endif
+			
 			return 0;
 		}
 	}
 	return -1;
 }
 
-static void printExts(directory_entry * file) {
-	DEBUG("\n");
-    DEBUG("=== extents for '%s' (size: %lu) ===", file->name, file->size);
+#if(DEBUG_ENABLED == 1)
+	static void printExts(directory_entry * file) {
+		DEBUG("\n");
+		DEBUG("=== extents for '%s' (size: %lu) ===", file->name, file->size);
 
-    int extentIndex = 0;
-    int count = 0;
-    extent * ext;
+		int extentIndex = 0;
+		int count = 0;
+		extent * ext;
 
-    while ((ext = getNextExtent(file->exts, &extentIndex)) != NULL) {
-        DEBUG("  ext[%d]: loc=%u len=%u", count, ext->location, ext->length);
-        freeExt(ext, file->exts);
-        count++;
-    }
+		while ((ext = getNextExtent(file->exts, &extentIndex)) != NULL) {
+			DEBUG("  ext[%d]: loc=%u len=%u", count, ext->location, ext->length);
+			freeExt(ext, file->exts);
+			count++;
+		}
 
-    if (count == 0) {
-        DEBUG("  no extents found");
-    }
+		if (count == 0) {
+			DEBUG("  no extents found");
+		}
 
-    DEBUG("=== end extents (%d total) ===\n", count);
-}
+		DEBUG("=== end extents (%d total) ===\n", count);
+	}
+#endif
