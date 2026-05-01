@@ -388,6 +388,7 @@ int b_write(b_io_fd fd, char *buffer, int count)
 
 				if (growFile(fcb->de, 100) == -1) {
 					DEBUG("failed to allocate blocks");
+					break;
 				}
 
 				if (getNextBlock(fcb->de, &fcb->cursor, &lba) == NULL)
@@ -436,6 +437,7 @@ int b_write(b_io_fd fd, char *buffer, int count)
 				if (growFile(fcb->de, 100) == -1)
 				{
 					DEBUG("failed to allocate blocks");
+					break;
 				}
 
 				if (getNextBlock(fcb->de, &fcb->cursor, &lba) == NULL)
@@ -594,16 +596,24 @@ int b_close(b_io_fd fd)
 				DEBUG("failed to allocate blocks");
 			}
 
-			if (getNextBlock(fcb->de, &fcb->cursor, &lba) == NULL)
+			else if (getNextBlock(fcb->de, &fcb->cursor, &lba) == NULL)
 			{
 				DEBUG("getNextBlock failed after allocation on fast path");
 			}
+			else {
+				memset(fcb->buf + fcb->buflen, 0, VCBGlobal->blockSize - fcb->buflen);
+				DEBUG("flushing partial block of %d bytes to LBA %lu on close",
+					fcb->buflen, lba);
+				LBAwrite(fcb->buf, 1, lba);
+				fcb->buflen = 0;
+			}
+		} else {
+			memset(fcb->buf + fcb->buflen, 0, VCBGlobal->blockSize - fcb->buflen);
+			DEBUG("flushing partial block of %d bytes to LBA %lu on close", 
+				fcb->buflen, lba);
+			LBAwrite(fcb->buf, 1, lba);
+			fcb->buflen = 0;
 		}
-
-		memset(fcb->buf + fcb->buflen, 0, VCBGlobal->blockSize - fcb->buflen);
-		DEBUG("flushing partial block of %d bytes to LBA %lu on close", fcbArray[fd].buflen, lba);
-		LBAwrite(fcbArray[fd].buf, 1, lba);
-		fcbArray[fd].buflen = 0;
 	}
 
 	// Update access timestamp
@@ -611,7 +621,8 @@ int b_close(b_io_fd fd)
 	fcbArray[fd].de->lastAccessDate = now;
 
 	// Update write timestamp only if write flag enabled
-	if ((fcbArray[fd].flags & O_WRONLY) || (fcbArray[fd].flags & O_RDWR))
+	if (((fcbArray[fd].flags & O_ACCMODE) == O_WRONLY
+		|| ((fcbArray[fd].flags & O_ACCMODE) == O_RDWR)))
 		fcbArray[fd].de->lastEditDate = now;
 
 	if(fcbArray[fd].parent != NULL) {
