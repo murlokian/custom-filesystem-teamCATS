@@ -578,7 +578,8 @@ int b_close(b_io_fd fd)
 	}
 
 	// Flush any remaining partial block in the buffer
-	if (fcbArray[fd].buflen > 0)
+	if (fcbArray[fd].buflen > 0 && ((fcbArray[fd].flags & O_ACCMODE) == O_WRONLY
+		|| ((fcbArray[fd].flags & O_ACCMODE) == O_RDWR)))
 	{
 		uint64_t lba;
 
