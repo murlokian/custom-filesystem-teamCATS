@@ -63,6 +63,7 @@ directory_entry *createDirectory(int initialEntryCount, directory_entry *parent)
 	// NOTE: directory entries are preferably contiguous since they are small, 
 	// do not change size, and we are the file system  
 	extent* exts = getBlocks(blocksNeeded, blocksNeeded);
+
 	if (exts == NULL)
 	{
 		free(newDir);
@@ -222,7 +223,6 @@ directory_entry * loadDir(directory_entry * dir) {
 // Returns 0 on success, -1 on failure
 int growFile(directory_entry * file, int additionalBlocks) {
 	DEBUG("implemented for primary only **NOT YET TESTED**");
-	// *TODO* split sec and tert table creation up into helpers
 
 	if (file == NULL) {
 		DEBUG("file does not exist");
@@ -242,14 +242,14 @@ int growFile(directory_entry * file, int additionalBlocks) {
 	// count how many extents returned (stopping at empty ext sentinel)
     int newExtCount = 0;
     while (checkSentinel(newExts[newExtCount])!= 0) {
-        newExtCount++;
+       newExtCount++;
     }
 
 	// TODO - account for possible contiguous extents and merge them
 	// requires helper function to iterate through and check
 	
 	// look for the first free/unused ext slot used in case 1 or 2
-    int firstFree = findFirstFree(file->exts);
+   int firstFree = findFirstFree(file->exts);
 
 	int lastPrimaryIndex = NUM_DIR_EXTENTS - 1;
 	extent * lastPrimaryExt = &file->exts[lastPrimaryIndex];
@@ -281,11 +281,6 @@ int growFile(directory_entry * file, int additionalBlocks) {
 		}
 
 		int remaining = newExtCount - toFill;
-
-		// TODO - move snippet to helper createSecondary()
-		// call AddSecondaryExtTable(additionalBlocks) 
-		//	  --> calls getBlocks(additionalBlocks, 1)
-	
 
 		// assign starting loc of secondary ext array
 		// to position in new extent array that was just added to primary
@@ -325,14 +320,19 @@ int growFile(directory_entry * file, int additionalBlocks) {
 
 	// CASE 2 - primary full, add new exts immediately to new secondary table 
 	if (sentinel == -2) {
-		DEBUG("creating secondary table NOT YET IMPLEMENTED");
-		// call createSecondary()
+		DEBUG("primary full, creating secondary table");
+		lastPrimaryExt->location = createSecondaryTable(newExts, additionalBlocks);lastPrimaryExt->length = SECONDARY_EXT_SENTINEL;
+		
+		if (lastPrimaryExt->location == -1) {
+			return -1;
+		}
 		return 0;
 	}
 
 	// TODO - add check tertiary sentinel here
 
-	// CASE 3 - secondary exists, fill available slots within and/or create tert + another sec
+	// CASE 3 - (A) secondary exists, fill available slots within 
+	//          (B) and/or create tert + another sec
 	int existingSecLoc = lastPrimaryExt->location;
 	int secFirstFree = -1;
 	int secExtCount = 0;
@@ -352,10 +352,6 @@ int growFile(directory_entry * file, int additionalBlocks) {
 	// 1) enough free slots to use w/o creating another table
 	// 2) can fill to max slots in primary, create secondary
 	// 3) add straight to secondary (secondary handles creation of tertiary?)
-
-	// consider adding a trim() for excess unused blocks that would be allocated above
-	// consider changing freeBlocks to take in starting extent and num blocks to loop over 
-	// number extents to cover these blocks 
 
 	return -1;
 }

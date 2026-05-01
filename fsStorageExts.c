@@ -48,7 +48,7 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			    // hit empty extent sentinel, END OF EXTS
                 return NULL;
             }
-			// all non-sentinels will be returned w/ -1,
+			// all non-sentinels will be returned w/ 1,
 			// if sentinel matches secondary or tertiary, proceed to following loop
 			// for tertiary then secondary traversal
 			if (sentinelVal != 1) {
@@ -88,7 +88,7 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			// read in the block containing tertiary table ...
 			extent *tertBuf = malloc(blockSize);
 			if (tertBuf== NULL) {
-				DEBUG_ERR("malloc failed turd buffer");
+				DEBUG_ERR("malloc failed turd block");
 				return NULL;
 			}
 
@@ -125,12 +125,12 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			// read corresponding secondary table from memory and copy first ext 
 			extent * secBuf = malloc(blockSize);
 			if (secBuf == NULL) {
-				DEBUG_ERR("malloc failed turd buffer");
+				DEBUG_ERR("malloc failed sec block");
 				return NULL;
 			}
 
 			if (LBAread(secBuf, 1, secLoc + secExt) != 1) {
-				DEBUG("LBAread failed for turd block # %d", tertSlot);
+				DEBUG("LBAread failed for sec block # %d", tertSlot);
 				free(secBuf);
 				return NULL;
 			}
@@ -156,8 +156,73 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
     }
 }
 
+// helper function for growFile() only
+// allocates and writes a new secondary extent table to disk with double the requested size
+// and writes the passed extents into the table
+// returns the block location of the new secondary table for caller to assign to
+// last ext of primary table OR current tertiary index in growFile() case 2B onwards
+// 0 on success; -1 on failure
+int createSecondaryTable(extent *exts, int additionalBlocks) {
+    if (exts == NULL) {
+        return -1;
+    }
+
+	int extsCount = additionalBlocks * 2;
+	// TODO: play around with alloc size, maybe need more
+    // allocate double the requested blocks for the secondary table
+	// NOTE: not following adaptive default approach :(
+    extent *secTable = getBlocks(extsCount, 1);
+    if (secTable== NULL) {
+        DEBUG("getBlocks failed");
+        return -1;
+    }
+
+    int secLoc = secTable[0].location;
+    free(secTable);
+
+    // write extents into new secondary table
+    if (LBAwrite(exts, extsCount, secLoc) != extsCount) {
+        DEBUG("LBAwrite failed");
+        return -1;
+    }
+
+    return secLoc; // to be assigned to last primary ext or current tert index
+}
+
+// iterates through an extent table on disk block by block until empty sentinel (0,0) found
+// returns the number of extents in the table, -1 on failure
+int getTableSize(int tableLoc) {
+    int blockSize = VCBGlobal->blockSize;
+    int slotsPerBlock = blockSize / sizeof(extent);
+    int extCount = 0;
+
+    extent *buf = malloc(blockSize);
+    if (buf == NULL) {
+        DEBUG("malloc failed");
+        return -1;
+    }
+
+    while (true) {
+        if (LBAread(buf, 1, tableLoc + extCount / slotsPerBlock) != 1) {
+            DEBUG("LBAread failed at block %d", extCount / slotsPerBlock);
+            free(buf);
+            return -1;
+        }
+        int firstFree = findFirstFree(buf);
+
+		// returns iteration count uponing hitting a sentinel ext
+        if (firstFree != 1) {
+            free(buf);
+
+            return extCount;
+        }
+
+        extCount += slotsPerBlock;
+    }
+}
+
 // checks current extent array (be it primary, secondary, or tertiary) 
-// and returns first instance of sentinel for an empty extent
+// and returns index of first instance of sentinel for an empty extent
 // NOT a freed extent (table to be cleaned up by a separate function)
 int findFirstFree(const extent * exts) {
 	int i = 0;

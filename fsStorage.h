@@ -61,14 +61,14 @@ int freeBlocks(extent* exts);
 // traverses through extent array and checks for empty extent sentinel value (0, 0)
 int findFirstFree(const extent * exts);
 
-// Removes any empty extents from a list of extents. Handles secondary and
-// tertiary tables
-extent* cleanExtents(extent* exts);
-
 // checks the last index of the primary extent table if the legnth contains 
 // our sentinel value for either secondary or tertiary table locations
 // this is called to determine which case to use in growFile() 
 int checkSentinel(extent ext);
+
+// iterates through an extent table on disk block by block until empty sentinel (0,0) found
+// returns the number of extents in the table, -1 on failure
+int getTableSize(int tableLoc);
 
 // Somewhat similar logic to strtok_r, helper for multiple calls of b_read(), b_write()
 // function updates extentIndex as the 'current position' for the next call (acting as our saveptr)
@@ -76,5 +76,14 @@ int checkSentinel(extent ext);
 // Updated position to be used when calling LBAread() or LBAwrite()
 // NOTE: CALLER IS RESPONSIBLE FOR FREEING RETURNED EXT 
 extent * getNextExtent(extent * exts, int * extentIndex);
+
+// Removes any empty extents from a list of extents. Handles secondary and
+// tertiary tables
+extent* cleanExtents(extent* exts);
+
+// called from growFile()
+// allocates and writes a new secondary extent table to disk with double the requested size
+// and writes the passed extents into the table
+int createSecondaryTable(extent * exts, int additionalBlocks);
 
 #endif
