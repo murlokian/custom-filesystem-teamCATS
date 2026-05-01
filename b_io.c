@@ -352,27 +352,16 @@ int b_read(b_io_fd fd, char *buffer, int count)
 	// entry as b_read() is called
 	// getNextExtent handles if we need to traverse secondary/tertiary tables for this file
 	int extIndex = 0; // equivalent of saveptr in strtok_r()
-	// getNextExtent(fcbArray[fd].de->exts, &extIndex);
-	// extent *currExt = getNextExtent(fcbArray[fd].de->exts, &extIndex);
-
-	// int currPos = currExt->length * VCBGlobal->blockSize;
-
-	// while ((currExt = getNextExtent(fcbArray[fd].de->exts, &extIndex)) != NULL)
-	// {
-	// 	LBAread(buffer + currPos, currExt->length, currExt->location);
-
-	// 	currPos = currExt->length * VCBGlobal->blockSize;
-	// }
-
-	// return (0); // Change this
-
-	//working on this assuming that buf and fileIndex are already set up in b_open
-	//Abha implementation -- currently working on it
-    
+	
     //flag check
     if (fcbArray[fd].flags & O_WRONLY)
         return -1;
 	
+	
+	// cap count to remaining bytes in file
+	int remainingBytes = fcbArray[fd].de->size - fcbArray[fd].fileIndex;
+	if(count > remainingBytes) count = remainingBytes;
+	if(count == 0) return 0;
 	int totalBytesCopied = 0;
 	int blockSize = VCBGlobal -> blockSize;
 	//Part 1 -- copy from existing buffer 

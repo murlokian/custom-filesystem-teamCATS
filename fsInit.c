@@ -140,9 +140,9 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 	// LBAwrite("hgello", 1, rootGlobal[newFile].exts[0].location);
 	// // ^^^ TESTING CODE FOR B_READ ^^^
 
-    return 0;
-}
+	return 0;
 
+}
 void exitFileSystem ()
 	{
 	printf ("System exiting\n");
