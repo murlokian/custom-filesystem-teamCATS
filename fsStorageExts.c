@@ -32,7 +32,7 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 	int blockSize = VCBGlobal->blockSize;
 	int sentinelVal;
 
-    while(true) {
+    while(1) {
         int index = *extentIndex;
 		
         // EXPLORING PRIMARY EXTENT TABLE ------------------------------------------------
@@ -83,7 +83,7 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 		int secExt = 0; 	  // position in secondary table 
 
 		// EXPLORING TERTIARY EXTENT TABLE --------------------------------------------------
-		while (true) {
+		while (1) {
 			// if ext array ONLY has one secondary table, this part will only loop once 
 			// read in the block containing tertiary table ...
 			extent *tertBuf = malloc(blockSize);
@@ -98,10 +98,11 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 				return NULL;
 			}
 
-			extent * tertStart = &tertBuf[tertSlot];
+			extent * tertStart = &tertBuf[0];
 
 			if (checkSentinel(*tertStart) == 0) {
 				// DEBUG("reached EOE < end of exts :-) >");
+				free(tertBuf);
 				return NULL;
 			}
 			
@@ -119,7 +120,9 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			// add secondary table's ext size to total exts iterated over 
 			totIterated += tertStart->length; 
 			// iterate to next tertiary extent (index)
-			tertSlot++; 
+			tertSlot++; 			
+
+			//free(tertBuf);
 
 			// EXPLORING SECONDARY EXTENT TABLE ------------------------------------------------
 			// read corresponding secondary table from memory and copy first ext 
@@ -150,7 +153,7 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			}
 
 			DEBUG("returning valid secondary ext, location: %d, length %d", 
-			currExt->location, currExt->length);
+				currExt->location, currExt->length);
 			return currExt;
 		}
     }
@@ -178,8 +181,8 @@ int createSecondaryTable(extent *exts, int extCt, int additionalBlocks) {
     int secLoc = secTable[0].location;
     free(secTable);
 
-    // write extents into new secondary table
-    if (LBAwrite(exts, extsCount, secLoc) != extsCount) {
+    // write extents to add into new secondary table
+    if (LBAwrite(exts, extCt, secLoc) != extCt) {
         DEBUG("LBAwrite failed");
         return -1;
     }
@@ -201,7 +204,7 @@ int getTableSize(int tableLoc) {
         return -1;
     }
 
-    while (true) {
+    while (1) {
         if (LBAread(buf, 1, tableLoc + extCount / slotsPerBlock) != 1) {
             DEBUG("LBAread failed at block %d", extCount / slotsPerBlock);
             free(buf);
@@ -210,7 +213,7 @@ int getTableSize(int tableLoc) {
         int firstFree = findFirstFree(buf);
 
 		// returns iteration count uponing hitting a sentinel ext
-        if (firstFree != 1) {
+        if (firstFree != -1) {
             free(buf);
 
             return extCount;
@@ -227,7 +230,7 @@ int findFirstFree(const extent * exts) {
 	int i = 0;
 	int sentinel;
 
-	while(true) {
+	while(1) {
 		sentinel = checkSentinel(exts[i]);
 		if (sentinel != 0 && exts[i].length == 0) {
 			// DEBUG("returning at %d index, empty extent at location %d", i, exts[i].location);

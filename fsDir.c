@@ -442,21 +442,21 @@ int growFile(directory_entry * file, int additionalBlocks) {
 }
 
 static void printExts(directory_entry * file) {
-    DEBUG("=== extents for '%s' (size: %lu) ===", file->name, file->size);
+    // DEBUG("=== extents for '%s' (size: %lu) ===", file->name, file->size);
 
-    int extentIndex = 0;
-    int count = 0;
-    extent * ext;
+    // int extentIndex = 0;
+    // int count = 0;
+    // extent * ext;
 
-    while ((ext = getNextExtent(file->exts, &extentIndex)) != NULL) {
-        DEBUG("  ext[%d]: loc=%u len=%u", count, ext->location, ext->length);
-        free(ext);
-        count++;
-    }
+    // while ((ext = getNextExtent(file->exts, &extentIndex)) != NULL) {
+    //     DEBUG("  ext[%d]: loc=%u len=%u", count, ext->location, ext->length);
+    //     free(ext);
+    //     count++;
+    // }
 
-    if (count == 0) {
-        DEBUG("  no extents found");
-    }
+    // if (count == 0) {
+    //     DEBUG("  no extents found");
+    // }
 
-    DEBUG("=== end extents (%d total) ===", count);
+    // DEBUG("=== end extents (%d total) ===", count);
 }
