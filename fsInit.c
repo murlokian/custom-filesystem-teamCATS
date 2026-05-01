@@ -121,6 +121,25 @@ int initFileSystem (uint64_t numberOfBlocks, uint64_t blockSize)
 
 	DEBUG("VCB written to disk successfully. File system initialized");
 
+	// // vvv TESTING CODE FOR B_READ vvv
+	// // Hardcoding file with "hgello" in it to test cat  
+	// int newFile = findUnusedDirEntry(rootGlobal);
+	// memset(&rootGlobal[newFile], 0, sizeof(directory_entry));
+
+	// rootGlobal[newFile].size = 7;
+	// rootGlobal[newFile].entryType = 0;
+	// strncpy(rootGlobal[newFile].name, "hgelloFile", MAX_ENTRY_NAME_SIZE - 1);
+	// rootGlobal[newFile].name[MAX_ENTRY_NAME_SIZE - 1] = '\0';
+
+	// extent* ext = getBlocks(1, 1);
+	// rootGlobal[newFile].exts[0] = ext[0];
+	// rootGlobal[newFile].exts[1] = ext[1];
+	
+	// writeDirectory(rootGlobal);
+
+	// LBAwrite("hgello", 1, rootGlobal[newFile].exts[0].location);
+	// // ^^^ TESTING CODE FOR B_READ ^^^
+
     return 0;
 }
 
