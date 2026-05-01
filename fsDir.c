@@ -26,7 +26,8 @@
 
 directory_entry* rootGlobal = NULL;
 directory_entry* cwdGlobal = NULL;
-static void printAllExtents(directory_entry *de);
+
+static void printExts(directory_entry * file);
 
 directory_entry *createDirectory(int initialEntryCount, directory_entry *parent) {
 
@@ -272,7 +273,7 @@ int growFile(directory_entry * file, int additionalBlocks) {
 				file->exts[firstFree + i] = newExts[i];
 			}
 
-			printAllExtents(file);
+			printExts(file);
 
 			free(newExts);
 			return 0;
@@ -312,7 +313,7 @@ int growFile(directory_entry * file, int additionalBlocks) {
 		lastPrimaryExt->location = secLoc;
 		lastPrimaryExt->length = SECONDARY_EXT_SENTINEL;
 
-		printAllExtents(file);
+		printExts(file);
 
 		free(newExts);
 		return 0; 
@@ -335,7 +336,7 @@ int growFile(directory_entry * file, int additionalBlocks) {
 
 		free(newExts);
 
-		printAllExtents(file);
+		printExts(file);
 		return 0;
 	}
 
@@ -433,9 +434,29 @@ int growFile(directory_entry * file, int additionalBlocks) {
 
 			free(newExts);
 
-			printAllExtents(file);
+			printExts(file);
 			return 0;
 		}
 	}
 	return -1;
+}
+
+static void printExts(directory_entry * file) {
+    DEBUG("=== extents for '%s' (size: %lu) ===", file->name, file->size);
+
+    int extentIndex = 0;
+    int count = 0;
+    extent * ext;
+
+    while ((ext = getNextExtent(file->exts, &extentIndex)) != NULL) {
+        DEBUG("  ext[%d]: loc=%u len=%u", count, ext->location, ext->length);
+        free(ext);
+        count++;
+    }
+
+    if (count == 0) {
+        DEBUG("  no extents found");
+    }
+
+    DEBUG("=== end extents (%d total) ===", count);
 }
