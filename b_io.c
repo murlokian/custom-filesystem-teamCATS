@@ -360,7 +360,7 @@ int b_write(b_io_fd fd, char *buffer, int count)
 
 	b_fcb *fcb = &fcbArray[fd];
 
-	if (!(fcb->flags & O_WRONLY) && !(fcb->flags & O_RDWR))
+	if (!((fcb->flags & O_ACCMODE) == O_WRONLY || (fcb->flags & O_ACCMODE) == O_RDWR))
 	{
 		DEBUG("fd %d not open for writing, flags: %d", fd, fcb->flags);
 		return -1;
