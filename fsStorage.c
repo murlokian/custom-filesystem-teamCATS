@@ -236,7 +236,7 @@ int freeBlocks(extent* exts) {
 			continue;
 		}
 
-		// Iterate through freespace extents  
+		// Iterate through freespace extents
 		extent newFreeExt = exts[i];
 		int numFsExtents = (NUM_FREESPACE_BLOCKS * VCBGlobal->blockSize) / sizeof(extent);
 		int insertPos = 0;

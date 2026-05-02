@@ -61,6 +61,7 @@ int startup = 0; // Indicates that this has not been initialized
 
 static uint64_t *getNextBlock(directory_entry *de, extent_cursor *cur, uint64_t *out);
 static int seekCursor(directory_entry *de, extent_cursor *cur, int targetBlock);
+int trim(directory_entry *de, extent_cursor *cursor);
 
 // Method to initialize our file system
 void b_init()
@@ -614,6 +615,11 @@ int b_close(b_io_fd fd)
 			LBAwrite(fcb->buf, 1, lba);
 			fcb->buflen = 0;
 		}
+
+		// Trim any allocated but unwritten blocks now that the cursor
+		// reflects the true end of written data
+		if (trim(fcbArray[fd].de, &fcbArray[fd].cursor) != 0)
+			DEBUG_ERR("trim failed on close for fd %d", fd);
 	}
 
 	// Update access timestamp
@@ -735,4 +741,64 @@ static uint64_t *getNextBlock(
 
 		currentExtent++;
 	}
+}
+
+int trim(directory_entry *de, extent_cursor *cursor)
+{
+	extent *curExtent = &de->exts[cursor->extentIndex];
+
+	if (curExtent->length > 0 && cursor->blockOffset < (int)curExtent->length)
+	{
+		if (cursor->blockOffset == 0)
+		{
+			// Cursor never advanced into this extent — free everything from here onward.
+			// freeBlocks zeros the slots it owns directly via the pointer.
+			if (freeBlocks(&de->exts[cursor->extentIndex]) != 0)
+			{
+				DEBUG_ERR("freeBlocks failed on fully unused extents starting at extent index %d",
+						  cursor->extentIndex);
+				return -1;
+			}
+
+			DEBUG("trim complete: freed all extents from index %d onward", cursor->extentIndex);
+			return 0;
+		}
+
+		// Partial use — build a temporary table for just the unwritten tail
+		int unusedBlockCount = curExtent->length - cursor->blockOffset;
+		int unusedBlockStart = curExtent->location + cursor->blockOffset;
+
+		extent unusedTail[2] = {
+			{.location = unusedBlockStart, .length = unusedBlockCount},
+			{.location = 0, .length = 0}};
+
+		// Trim de entry to only the written portion before freeing
+		curExtent->length = cursor->blockOffset;
+
+		if (freeBlocks(unusedTail) != 0)
+		{
+			DEBUG_ERR("freeBlocks failed trimming %d unused blocks from tail of extent %d",
+					  unusedBlockCount, cursor->extentIndex);
+			return -1;
+		}
+	}
+
+	// Free every completely unwritten extent after the cursor's extent.
+	// freeBlocks handles sentinel values, secondary tables, and zeroing the slots.
+	int firstUnusedExtentIndex = cursor->extentIndex + 1;
+
+	if (firstUnusedExtentIndex < NUM_DIR_EXTENTS &&
+		de->exts[firstUnusedExtentIndex].length > 0)
+	{
+		if (freeBlocks(&de->exts[firstUnusedExtentIndex]) != 0)
+		{
+			DEBUG_ERR("freeBlocks failed on trailing unused extents from index %d",
+					  firstUnusedExtentIndex);
+			return -1;
+		}
+	}
+
+	DEBUG("trim complete, cursor was at extent index %d block offset %d",
+		  cursor->extentIndex, cursor->blockOffset);
+	return 0;
 }
