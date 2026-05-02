@@ -479,9 +479,7 @@ int b_write(b_io_fd fd, char *buffer, int count)
 //  |             |                                                |        |
 //  | Part1       |  Part 2                                        | Part3  |
 //  +-------------+------------------------------------------------+--------+
-int b_read(b_io_fd fd, char *buffer, int count)
-{
-
+int b_read(b_io_fd fd, char *buffer, int count) {
 	if (startup == 0)
 		b_init(); // Initialize our system
 
@@ -491,16 +489,17 @@ int b_read(b_io_fd fd, char *buffer, int count)
 		return (-1); // invalid file descriptor
 	}
 
-	// helper getNextExtent() called to handle iterating through a directory entry's extents
-	// this is so this caller doesn't have to worry about current block/position in
-	// entry as b_read() is called
-	// getNextExtent handles if we need to traverse secondary/tertiary tables for this file
-	int extIndex = 0; // equivalent of saveptr in strtok_r()
+	// Check that file is open  
+	if(fcbArray[fd].de == NULL) {
+		DEBUG("File not open for fd %d", fd);
+		return -1;
+	}
 	
-    //flag check
-    if (fcbArray[fd].flags & O_WRONLY)
+    // Exit if in write only mode  
+    if((fcbArray[fd].flags & O_ACCMODE) == O_WRONLY) {
+		DEBUG("File with fd %d is in write only mode", fd);
         return -1;
-	
+	}
 	
 	// cap count to remaining bytes in file
 	int remainingBytes = fcbArray[fd].de->size - fcbArray[fd].fileIndex;
@@ -508,49 +507,86 @@ int b_read(b_io_fd fd, char *buffer, int count)
 	if(count == 0) return 0;
 	int totalBytesCopied = 0;
 	int blockSize = VCBGlobal -> blockSize;
+	
 	//Part 1 -- copy from existing buffer 
-
-	int bytesAvailable = fcbArray[fd].buflen - (fcbArray[fd].fileIndex % blockSize);
+	int byteOffset = fcbArray[fd].fileIndex % blockSize;
+	int bytesAvailable = (fcbArray[fd].buflen > byteOffset) ?
+		fcbArray[fd].buflen - byteOffset : 0;
 	int part1 = (bytesAvailable < count)? bytesAvailable : count;
-	memcpy(buffer, fcbArray[fd].buf + (fcbArray[fd].fileIndex % blockSize), part1);
+	memcpy(buffer, fcbArray[fd].buf + byteOffset, part1);
 
 	totalBytesCopied += part1;
 	fcbArray[fd].fileIndex += part1;
 	count -= part1;
 
-	//if count is already 0 
+	// All of current block read, advance cursor to next block  
+	if(part1 > 0 && (byteOffset + part1 >= blockSize)) {
+	    int extIdxCpy = fcbArray[fd].cursor.extentIndex;
+	    extent* curExt = getNextExtent(fcbArray[fd].de->exts, &extIdxCpy);
+	    
+		if(curExt != NULL) {
+	        fcbArray[fd].cursor.blockOffset++;
+			// Advance cursor to next extent if at last block of current extent  
+	        if(fcbArray[fd].cursor.blockOffset >= curExt->length) {
+	            fcbArray[fd].cursor.extentIndex++;
+	            fcbArray[fd].cursor.blockOffset = 0;
+	        }
+	        free(curExt);
+	    }
+	
+	    // Invalidate buffer  
+	    fcbArray[fd].buflen = 0;
+	}
+
+	// No more bytes requested  
 	if(count == 0) return totalBytesCopied;
 
-
 	//Part 2 -- read full blocks directly 
-
 	while(count >= blockSize){
-		extent *curExt = getNextExtent(fcbArray[fd].de -> exts,&extIndex );
-		if (curExt == NULL){
-			DEBUG("getNextExtent returned null in b_read: b_io.c");
+		int extIdxCpy = fcbArray[fd].cursor.extentIndex;
+		extent* curExt = getNextExtent(fcbArray[fd].de->exts, &extIdxCpy);
+		if(curExt == NULL) {
 			return totalBytesCopied;
 		}
-		LBAread(buffer + totalBytesCopied, 1, curExt->location);
+
+		LBAread(buffer + totalBytesCopied, 1, curExt->location + fcbArray[fd].cursor.blockOffset);
 		count -= blockSize;
 		totalBytesCopied += blockSize;
 		fcbArray[fd].fileIndex += blockSize;
 
+		// Advance cursor to next block  
+	    fcbArray[fd].cursor.blockOffset++;
+		// Advance cursor to next extent if at last block of current extent  
+	    if(fcbArray[fd].cursor.blockOffset >= curExt->length) {
+	        fcbArray[fd].cursor.extentIndex++;
+	        fcbArray[fd].cursor.blockOffset = 0;
+	    }
+
+		// Invalidate buffer  
+	    fcbArray[fd].buflen = 0;
+	    free(curExt);
 	}
+
 	//Part 3 -- read remaining partial block 
-	//get the next extent 
-	extent *curExt = getNextExtent(fcbArray[fd].de ->exts, &extIndex);
-	if(curExt == NULL){
-		DEBUG("Failed to get extent in b_read(): b_io.c ");
-		return -1;
+	if(count > 0) {
+	    if(fcbArray[fd].buflen == 0) {
+			int extIdxCpy = fcbArray[fd].cursor.extentIndex;
+			extent* curExt = getNextExtent(fcbArray[fd].de ->exts, &extIdxCpy);
+			if(curExt == NULL) {
+				return totalBytesCopied;
+			}
+
+			LBAread(fcbArray[fd].buf, 1, curExt->location + fcbArray[fd].cursor.blockOffset);
+			fcbArray[fd].buflen = blockSize;
+	
+	        free(curExt);
+	    }
+
+		memcpy(buffer + totalBytesCopied, fcbArray[fd].buf, count);
+
+		fcbArray[fd].fileIndex += count;
+		totalBytesCopied += count;
 	}
-	//read one block into buf
-	LBAread(fcbArray[fd].buf, 1, curExt->location);
-	//copy count bytes from buf to buffer
-	memcpy(buffer + totalBytesCopied, fcbArray[fd].buf, count);
-	//update buflen, fileIndex and totalBytesCopied
-	fcbArray[fd].buflen = blockSize;
-	fcbArray[fd].fileIndex += count;
-	totalBytesCopied += count;
 
 	return totalBytesCopied;
 }
@@ -691,6 +727,8 @@ static int seekCursor(directory_entry *de, extent_cursor *cur, int targetBlock)
 		}
 
 		accumulated += (int)ext->length;
+
+		free(ext);
 	}
 }
 
@@ -727,6 +765,7 @@ static uint64_t *getNextBlock(
 					cur->blockOffset = 0;
 				}
 
+				free(ext);
 				return out;
 			}
 			else

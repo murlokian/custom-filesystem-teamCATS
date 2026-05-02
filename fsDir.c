@@ -215,6 +215,7 @@ directory_entry * loadDir(directory_entry * dir) {
 		}
 		
 		offset += ext->length * VCBGlobal->blockSize;
+		free(ext);
 	}
 
 	DEBUG("Loaded directory with size %d blocks", numBlocks);
