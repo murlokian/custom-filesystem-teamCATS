@@ -34,6 +34,7 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 
     // for loading secondary / tertiary tables
 	int blockSize = VCBGlobal->blockSize;
+	int extsPerBlock = blockSize / sizeof(extent);
 
     while(1) {
         int index = *extentIndex;
@@ -91,7 +92,7 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 		int secLoc = exts[NUM_DIR_EXTENTS - 1].location; 
 
 		int tableType = checkSentinel(exts[NUM_DIR_EXTENTS - 1]);
-		if (tableType != -2 || tableType != -3) { 
+		if (tableType != -2 && tableType != -3) { 
 			DEBUG("iterated past primary; no other existing tables to traverse");
 			free(currExt);
 			return NULL;
@@ -104,6 +105,9 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			int tertSlot = 0; 	  // index in tertiary table
 
 			while (1) {
+				int tertBlockOffset = tertSlot / extsPerBlock; // position in curr block
+				int tertSlotInBlock = tertSlot % extsPerBlock; // corresponding tert index
+
 				// read in the block containing tertiary table ...
 				extent *tertBuf = malloc(blockSize);
 				if (tertBuf == NULL) {
@@ -113,15 +117,15 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 				}
 
 				if (LBAread(tertBuf, 1, 
-					exts[NUM_DIR_EXTENTS - 1].location + tertSlot) != 1) 
+					exts[NUM_DIR_EXTENTS - 1].location + tertBlockOffset) != 1) 
 					{
-					DEBUG("LBAread failed for turd block # %d", tertSlot);
+					DEBUG("LBAread failed for turd block # %d", tertBlockOffset);
 					free(tertBuf);
 					free(currExt);
 					return NULL;
 				}
 				
-				extent tertStart = tertBuf[0];
+				extent tertStart = tertBuf[tertSlotInBlock];
 				free(tertBuf);
 
 				if (checkSentinel(tertStart) == 0) {
@@ -148,6 +152,9 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 			}
 			// EXPLORING SECONDARY EXTENT TABLE ------------------------------------------------
 			// read corresponding secondary table from disk and copy first ext 
+			int secBlockOffset = pos / extsPerBlock;
+			int secSlotInBlock = pos % extsPerBlock;
+			
 			extent * secBuf = malloc(blockSize);
 			if (secBuf == NULL) {
 				DEBUG_ERR("malloc failed sec block");
@@ -155,14 +162,14 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 				return NULL;
 			}
 
-			if (LBAread(secBuf, 1, secLoc + pos) != 1) {
-				DEBUG("LBAread failed for sec block # %d", tertSlot);
+			if (LBAread(secBuf, 1, secLoc + secBlockOffset) != 1) {
+				DEBUG("LBAread failed for sec block # %d", secBlockOffset);
 				free(secBuf);
 				free(currExt);
 				return NULL;
 			}
 
-			*currExt = secBuf[0]; 
+			*currExt = secBuf[secSlotInBlock]; 
 			free(secBuf);
 
 			(*extentIndex)++;
@@ -186,6 +193,8 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
     }
 }
 
+
+
 // helper function for growFile() only
 // allocates and writes a new secondary extent table to disk with double the requested size
 // and writes the passed extents into the table
@@ -203,7 +212,7 @@ int createSecondaryTable(extent *exts, int extCt, int additionalBlocks) {
     if (secTable== NULL) {
         DEBUG("getBlocks failed");
         return -1;
-    }
+    } 
 
     int secLoc = secTable[0].location;
     free(secTable);
