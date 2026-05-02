@@ -240,33 +240,67 @@ b_io_fd b_open(char *filename, int flags)
 		fcbArray[returnFd].fileIndex = fcbArray[returnFd].de->size;
 		DEBUG("Opened for appending, file index moved to %d", fcbArray[returnFd].fileIndex);
 
-		int lastBlock = fcbArray[returnFd].de->size / VCBGlobal->blockSize;
 		int partialBytes = fcbArray[returnFd].de->size % VCBGlobal->blockSize;
 
-		if (seekCursor(fcbArray[returnFd].de, &fcbArray[returnFd].cursor, lastBlock) != 0)
-		{
-			DEBUG_ERR("seekCursor failed for O_APPEND");
-			free(buffer);
-			freePPI(&ppi);
-			return -1;
+		// File is empty  
+		if(fcbArray[returnFd].de->size == 0) {
+			fcbArray[returnFd].cursor.extentIndex = 0;
+			fcbArray[returnFd].cursor.blockOffset = 0;
+		} 
+		// Move cursor to end  
+		else {
+			int lastBlock = (fcbArray[returnFd].de->size - 1) / VCBGlobal->blockSize;
+
+			if (seekCursor(fcbArray[returnFd].de, &fcbArray[returnFd].cursor, lastBlock) != 0)
+			{
+				DEBUG_ERR("seekCursor failed for O_APPEND");
+				free(buffer);
+				freePPI(&ppi);
+				return -1;
+			}
+
+			// If file ends exactly on a block boundary  
+			if(partialBytes == 0 && fcbArray[returnFd].de->size > 0) {
+				int extIdxCpy = fcbArray[returnFd].cursor.extentIndex;
+				extent* curExt = getNextExtent(fcbArray[returnFd].de->exts, &extIdxCpy);
+				if(curExt == NULL) {
+					DEBUG("getNextExtent failed moving append cursor to next block");
+					free(buffer);
+					freePPI(&ppi);
+					return -1;
+				}
+
+				fcbArray[returnFd].cursor.blockOffset++;
+				if(fcbArray[returnFd].cursor.blockOffset >= curExt->length) {
+					fcbArray[returnFd].cursor.extentIndex++;
+					fcbArray[returnFd].cursor.blockOffset = 0;
+				}
+
+				free(curExt);
+			}
 		}
+		DEBUG("Appending, cursor moved to block %d in extent %d", 
+			fcbArray[returnFd].cursor.blockOffset, fcbArray[returnFd].cursor.extentIndex);
 
 		// If the file doesn't end on a block boundary, read the partial block
 		// into the fcb buffer so b_write appends correctly
 		if (partialBytes > 0)
 		{
 			uint64_t lba;
-			if (getNextBlock(fcbArray[returnFd].de, &fcbArray[returnFd].cursor, &lba) == NULL)
-			{
+			int extIdxCpy = fcbArray[returnFd].cursor.extentIndex;
+			extent* curExt = getNextExtent(fcbArray[returnFd].de->exts, &extIdxCpy);
+			if(curExt == NULL) {
 				DEBUG_ERR("getNextBlock failed reading partial block for O_APPEND");
 				free(buffer);
 				freePPI(&ppi);
 				return -1;
 			}
 
+			lba = curExt->location + fcbArray[returnFd].cursor.blockOffset;
 			LBAread(buffer, 1, lba);
 			fcbArray[returnFd].buflen = partialBytes;
 			DEBUG("read partial last block from LBA %lu, buflen set to %d", lba, partialBytes);
+			free(curExt);
 		}
 	} else {
 		fcbArray[returnFd].fileIndex = 0;
@@ -342,8 +376,62 @@ int b_seek(b_io_fd fd, off_t offset, int whence)
 		fcbArray[fd].buflen = 0;
 	}
 
+	// Update cursor  
+	int targetBlock;
+	// Empty file (truncated)  
+	if(fcbArray[fd].de->size == 0) {
+		fcbArray[fd].cursor.extentIndex = 0;
+		fcbArray[fd].cursor.blockOffset = 0;
+	}
+	// Seeking to EOF  
+	else if(newPos == fcbArray[fd].de->size) {
+		// EOF in the middle of a block  
+		if(newPos % blockSize != 0) {
+			targetBlock = newPos / blockSize;
+			if(seekCursor(fcbArray[fd].de, &fcbArray[fd].cursor, targetBlock) != 0) {
+				DEBUG("seekCursor failed at EOF in middle of block");
+				return -1;
+			}
+		}
+		// EOF is exactly at end of block  
+		else {
+			targetBlock = (newPos / blockSize) - 1;
+			if(seekCursor(fcbArray[fd].de, &fcbArray[fd].cursor, targetBlock) != 0) {
+				DEBUG("seekCursor failed at EOF at end of block");
+				return -1;
+			}
+
+			// Advance cursor to next block  
+			int extIdxCpy = fcbArray[fd].cursor.extentIndex;
+			extent* curExt = getNextExtent(fcbArray[fd].de->exts, &extIdxCpy);
+			if(curExt == NULL) {
+				DEBUG("getNextExtent failed at EOF at end of block");
+				return -1;
+			}
+
+			fcbArray[fd].cursor.blockOffset++;
+			if(fcbArray[fd].cursor.blockOffset >= curExt->length) {
+				fcbArray[fd].cursor.extentIndex++;
+				fcbArray[fd].cursor.blockOffset = 0;
+			}
+
+			free(curExt);
+		}
+	}
+	// Normal seek  
+	else {
+		targetBlock = newPos / blockSize;
+		if(seekCursor(fcbArray[fd].de, &fcbArray[fd].cursor, targetBlock) != 0) {
+			DEBUG("seekCursor failed");
+			return -1;
+		}
+	}
+	DEBUG("Cursor moved to block %d in extent %d", fcbArray[fd].cursor.blockOffset,
+		fcbArray[fd].cursor.extentIndex);
+
 	// update file pos
 	fcbArray[fd].fileIndex = newPos;
+	DEBUG("File index moved to %d", fcbArray[fd].fileIndex);
 
 	return newPos; // return new pos
 }
@@ -723,6 +811,7 @@ static int seekCursor(directory_entry *de, extent_cursor *cur, int targetBlock)
 			DEBUG("cursor seeked to block %d: LBA %u, offset %d",
 				  targetBlock, ext->location, cur->blockOffset);
 
+			free(ext);
 			return 0;
 		}
 
@@ -770,6 +859,8 @@ static uint64_t *getNextBlock(
 			}
 			else
 			{
+				free(ext);
+
 				// Offset too large → move to next extent
 				cur->extentIndex++;
 				cur->blockOffset = 0;
@@ -778,6 +869,7 @@ static uint64_t *getNextBlock(
 			}
 		}
 
+		free(ext);
 		currentExtent++;
 	}
 }
