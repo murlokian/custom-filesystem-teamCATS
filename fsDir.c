@@ -27,7 +27,9 @@
 directory_entry* rootGlobal = NULL;
 directory_entry* cwdGlobal = NULL;
 
-static void printExts(directory_entry * file);
+#if (DEBUG_ENABLED == 1)
+	static void printExts(directory_entry * file);
+#endif
 
 directory_entry *createDirectory(int initialEntryCount, directory_entry *parent) {
 
@@ -219,10 +221,10 @@ directory_entry * loadDir(directory_entry * dir) {
 	return deez;
 }
 
-// Expands the given file by the given number of blocks and updates the directory 
-// entry accordingly. Will create secondary extent tables as needed if the number 
+// expands the given file by the given number of blocks and updates the dir entry accordingly
+// will create secondary extent tables as needed if the number 
 // of extents exceeds NUM_DIR_EXTENTS.
-// Returns 0 on success, -1 on failure
+// returns 0 on success, -1 on failure
 int growFile(directory_entry * file, int additionalBlocks) {
 	DEBUG("implemented up to secondary exts");
 
@@ -243,13 +245,14 @@ int growFile(directory_entry * file, int additionalBlocks) {
 		DEBUG("getBlocks() failed");
 		return -1;
 	}
+
 	// count how many extents returned (stopping at empty ext sentinel)
     int newExtCount = 0;
     while (checkSentinel(newExts[newExtCount])!= 0) {
        newExtCount++;
     }
 
-	DEBUG("adding %d exts to file %s", newExtCount, file->name);
+	DEBUG("adding %d  exts to file %s", newExtCount, file->name);
 	int newExtBlocks = (newExtCount * sizeof(extent) + (blockSize - 1)) / blockSize;
 	
 	// look for the first free/unused ext slot used in case 1 or 2
@@ -452,10 +455,10 @@ int growFile(directory_entry * file, int additionalBlocks) {
 	return -1;
 }
 
+
 #if(DEBUG_ENABLED == 1)
 	static void printExts(directory_entry * file) {
-		DEBUG("\n");
-		DEBUG("=== extents for '%s' (size: %lu) ===", file->name, file->size);
+		DEBUG("\n=== extents for '%s' (size: %lu) ===", file->name, file->size);
 
 		int extentIndex = 0;
 		int count = 0;
@@ -463,7 +466,7 @@ int growFile(directory_entry * file, int additionalBlocks) {
 
 		while ((ext = getNextExtent(file->exts, &extentIndex)) != NULL) {
 			DEBUG("  ext[%d]: loc=%u len=%u", count, ext->location, ext->length);
-			freeExt(ext, file->exts);
+			free(ext);
 			count++;
 		}
 
@@ -471,6 +474,6 @@ int growFile(directory_entry * file, int additionalBlocks) {
 			DEBUG("  no extents found");
 		}
 
-		DEBUG("=== end extents (%d total) ===\n", count);
+		DEBUG("=== end extents (%d valid exts, %d total) ===\n", count, count+1);
 	}
 #endif

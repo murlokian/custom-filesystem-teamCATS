@@ -8,8 +8,8 @@
 *
 * File:: fsStorageExts.c
 *
-* Description:: Helper Functions used in traversing and 
-*               updating extent tables for directory entries
+* Description:: Main functions and helpers used in traversing and 
+*               updating extent tables of files
 *
 **************************************************************/
 #include <stdio.h>
@@ -24,28 +24,37 @@
 // traverses all extent tables of a directory entry, returning the next valid extent 
 // after *extentIndex and advances it by one position (acting as our 'cursor')
 // returns null after iterating through all extents 
-// NOTE: CALLER IS RESPONSIBLE FOR FREEING RETURNED EXT 
+// NOTE: CALLER IS RESPONSIBLE FOR FREEING RETURNED EXT AFTER EVERY CALL
 extent * getNextExtent(extent * exts, int * extentIndex) {
-	// DEBUG("secondary/tertiary not yet tested");
+	extent * currExt = malloc(sizeof(extent));
+	if (currExt ==  NULL) {
+		DEBUG_ERR("malloc failed for currExt");
+		return NULL;
+	}
 
     // for loading secondary / tertiary tables
 	int blockSize = VCBGlobal->blockSize;
-	int sentinelVal;
 
     while(1) {
         int index = *extentIndex;
+		int sentinelVal;
 		
         // EXPLORING PRIMARY EXTENT TABLE ------------------------------------------------
         if (index < NUM_DIR_EXTENTS) {
-            extent * currExt = &exts[index]; 
+			*currExt = exts[index];
+
             (*extentIndex)++;
 
-			// check if current extent contains a sentinel value 
+			// check if current extent is a sentinel 
 			// (0, -2, or -3; 1 if non-sentinel)
             if ((sentinelVal = checkSentinel(*currExt)) == 0) {
-				DEBUG("iterated to end of table");
+				DEBUG("iterated to end of table, ext[%d] loc=%d, len=%d",
+						index,
+						currExt->location, 
+						currExt->length);
 
 			    // hit empty extent sentinel, END OF EXTS
+				free(currExt);
                 return NULL;
             }
 			// all non-sentinels will be returned w/ 1,
@@ -69,80 +78,98 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 				currExt->location, currExt->length);
             return currExt;
         }
+
         // tertiary --> secondary traversal starts here
+
 		// NOTE: LOADING ON DEMAND 
 		// different fds from b_read() and b_write() will be calling this; can't cache each
 
 		int pos = index - NUM_DIR_EXTENTS; 
 		// DEBUG("current position in \"unwrapped\" ext array: %d", pos);
 
-		int totIterated = 0;  // total secondary exts iterated over since first tertiary ext
+		 // (overwritten by tertiary case if condition satisfied)
+		int secLoc = exts[NUM_DIR_EXTENTS - 1].location; 
 
-		int tertSlot = 0; 	  // index in tertiary table
-		int secLoc = 0; 	  // set by tertiary[tertSlot].location
-		int secExt = 0; 	  // position in secondary table 
+		int tableType = checkSentinel(exts[NUM_DIR_EXTENTS - 1]);
+		if (tableType != -2 || tableType != -3) { 
+			DEBUG("iterated past primary; no other existing tables to traverse");
+			free(currExt);
+			return NULL;
+		}
 
 		// EXPLORING TERTIARY EXTENT TABLE --------------------------------------------------
-		while (1) {
-			// if ext array ONLY has one secondary table, this part will only loop once 
-			// read in the block containing tertiary table ...
-			extent *tertBuf = malloc(blockSize);
-			if (tertBuf== NULL) {
-				DEBUG_ERR("malloc failed turd block");
-				return NULL;
-			}
+		// find which secondary table pos falls under
+		if (tableType == -3) {
+			int totIterated = 0;  // total secondary exts iterated over since first tertiary ext
+			int tertSlot = 0; 	  // index in tertiary table
 
-			if (LBAread(tertBuf, 1, exts[NUM_DIR_EXTENTS - 1].location + tertSlot) != 1) {
-				DEBUG("LBAread failed for turd block # %d", tertSlot);
+			while (1) {
+				// read in the block containing tertiary table ...
+				extent *tertBuf = malloc(blockSize);
+				if (tertBuf == NULL) {
+					DEBUG_ERR("malloc failed turd block");
+					free(currExt);
+					return NULL;
+				}
+
+				if (LBAread(tertBuf, 1, 
+					exts[NUM_DIR_EXTENTS - 1].location + tertSlot) != 1) 
+					{
+					DEBUG("LBAread failed for turd block # %d", tertSlot);
+					free(tertBuf);
+					free(currExt);
+					return NULL;
+				}
+				
+				extent tertStart = tertBuf[0];
 				free(tertBuf);
-				return NULL;
+
+				if (checkSentinel(tertStart) == 0) {
+					DEBUG("reached end of turd table");
+					free(currExt);
+					return NULL;
+				}
+				
+				// stop reading through tertiary if we reach extentIndex
+				if (pos < totIterated + tertStart.length) {
+					// enter secondary table from tertiary index
+					secLoc = tertStart.location; 
+					// offset in secondary for corresponding ext to return
+					pos = pos - totIterated;  
+
+					DEBUG("from tertiary slot %d: enter secondary table at location %d", pos, secLoc);
+					// updated variables to be used in traversing secondary extents below
+					break;
+				}
+				// add secondary table's ext size to total exts iterated over 
+				totIterated += tertStart.length; 
+				// iterate to next tertiary extent (index)
+				tertSlot++; 			
 			}
-
-			extent * tertStart = &tertBuf[0];
-
-			if (checkSentinel(*tertStart) == 0) {
-				// DEBUG("reached EOE < end of exts :-) >");
-				free(tertBuf);
-				return NULL;
-			}
-			
-			// stop reading through tertiary if we reach extentIndex
-			if (pos < totIterated + tertStart->length) {
-				// enter secondary table from tertiary index
-				secLoc = tertStart->location; 
-				// offset in secondary for corresponding ext to return
-				secExt = pos - totIterated;  
-
-				// updated variables to be used in traversing secondary extents below
-				break;
-			}
-
-			// add secondary table's ext size to total exts iterated over 
-			totIterated += tertStart->length; 
-			// iterate to next tertiary extent (index)
-			tertSlot++; 			
-
-			//free(tertBuf);
-
 			// EXPLORING SECONDARY EXTENT TABLE ------------------------------------------------
-			// read corresponding secondary table from memory and copy first ext 
+			// read corresponding secondary table from disk and copy first ext 
 			extent * secBuf = malloc(blockSize);
 			if (secBuf == NULL) {
 				DEBUG_ERR("malloc failed sec block");
+				free(currExt);
 				return NULL;
 			}
 
-			if (LBAread(secBuf, 1, secLoc + secExt) != 1) {
+			if (LBAread(secBuf, 1, secLoc + pos) != 1) {
 				DEBUG("LBAread failed for sec block # %d", tertSlot);
 				free(secBuf);
+				free(currExt);
 				return NULL;
 			}
 
-			extent * currExt = &secBuf[secExt]; 
+			*currExt = secBuf[0]; 
+			free(secBuf);
+
 			(*extentIndex)++;
 
 			if (checkSentinel(*currExt) == 0) {
-				// DEBUG("iterated to end of secondary");
+				DEBUG("iterated to end of secondary");
+				free(currExt);
 				return NULL;
 			}
 
@@ -151,30 +178,12 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 				// DEBUG("skipping freed extent (length 0)");
 				continue;
 			}
-
+			
 			DEBUG("returning valid secondary ext, location: %d, length %d", 
 				currExt->location, currExt->length);
 			return currExt;
 		}
     }
-}
-
-// takes in ext passed from getNextExtent() and the current Ext table
-// checks the table's sentinel value and frees Ext only if sentinel indicates
-// belonging to secondary or tertiary 
-void freeExt(extent * extToFree, extent * exts) {
-	if (extToFree == NULL || exts == NULL) {
-		return;
-	}
-
-	int extsLen = getTableSize(exts[0].location);
-
-	int sentinel = checkSentinel(exts[extsLen - 1]);
-
-	if (sentinel == -2 || sentinel == -3) {
-		free(extToFree);
-		extToFree == NULL;
-	}
 }
 
 // helper function for growFile() only
@@ -291,3 +300,4 @@ int checkSentinel(extent ext) {
 			return 1;
     }
 }
+

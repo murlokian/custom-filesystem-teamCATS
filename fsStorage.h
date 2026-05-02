@@ -58,6 +58,15 @@ extent* getBlocks(int numBlocks, int minContiguous);
 // Also returns the freed extents to the freespace system  
 int freeBlocks(extent* exts);
 
+// ------------------------- EXTENT FUNCTIONS ------------------------------------
+
+// Somewhat similar logic to strtok_r, helper for multiple calls of b_read(), b_write()
+// function updates extentIndex as the 'current position' for the next call (acting as our saveptr)
+// iterate from beginning of DE's extent array up to extentIndex and returns updated position
+// Updated position to be used when calling LBAread() or LBAwrite()
+// NOTE: CALLER IS RESPONSIBLE FOR FREEING RETURNED EXT 
+extent * getNextExtent(extent * exts, int * extentIndex);
+
 // traverses through extent array and checks for empty extent sentinel value (0, 0)
 int findFirstFree(const extent * exts);
 
@@ -69,18 +78,6 @@ int checkSentinel(extent ext);
 // iterates through an extent table on disk block by block until empty sentinel (0,0) found
 // returns the number of extents in the table, -1 on failure
 int getTableSize(int tableLoc);
-
-// Somewhat similar logic to strtok_r, helper for multiple calls of b_read(), b_write()
-// function updates extentIndex as the 'current position' for the next call (acting as our saveptr)
-// iterate from beginning of DE's extent array up to extentIndex and returns updated position
-// Updated position to be used when calling LBAread() or LBAwrite()
-// NOTE: CALLER IS RESPONSIBLE FOR FREEING RETURNED EXT 
-extent * getNextExtent(extent * exts, int * extentIndex);
-
-// takes in ext passed from getNextExtent() and the current Ext table
-// checks the table's sentinel value and frees Ext only if sentinel indicates
-// belonging to secondary or tertiary 
-void freeExt(extent * extToFree, extent * exts);
 
 // Removes any empty extents from a list of extents. Handles secondary and
 // tertiary tables
