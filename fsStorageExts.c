@@ -193,8 +193,6 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
     }
 }
 
-
-
 // helper function for growFile() only
 // allocates and writes a new secondary extent table to disk with double the requested size
 // and writes the passed extents into the table
@@ -202,13 +200,13 @@ extent * getNextExtent(extent * exts, int * extentIndex) {
 // last ext of primary table OR current tertiary index in growFile() case 2B onwards
 // 0 on success; -1 on failure
 int createSecondaryTable(extent *exts, int extCt, int additionalBlocks) {
-    if (exts == NULL) {
+    if (exts == NULL || additionalBlocks < 1 || extCt < 1) {
         return -1;
     }
-
-	int extsCount = additionalBlocks * 2;
+	
+	int tableCapacity = additionalBlocks * 2;
     // allocate double the requested blocks for the secondary table
-    extent *secTable = getBlocks(extsCount, 1);
+    extent *secTable = getBlocks(tableCapacity, 1);
     if (secTable== NULL) {
         DEBUG("getBlocks failed");
         return -1;

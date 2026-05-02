@@ -307,15 +307,6 @@ int growFile(directory_entry * file, int additionalBlocks) {
 			return -1;
 		}
 
-		// write new secondary table to disk starting at 
-		// the first block returned from getBlocks(), 
-		// write <remaining> num blocks to volume
-		if (LBAwrite(remainingExts, remaining, secLoc) != remaining) {
-			DEBUG("LBAwrite failed for secondary table");
-			free(newExts);
-			return -1;
-		}
-
 		// change last ext in primary to secondary loc + sentinel value to link the tables
 		lastPrimaryExt->location = secLoc;
 		lastPrimaryExt->length = SECONDARY_EXT_SENTINEL;
@@ -351,8 +342,6 @@ int growFile(directory_entry * file, int additionalBlocks) {
 
 		return 0;
 	}
-
-	// TODO - add check tertiary sentinel here
 
 	// CASE 3 - (A) secondary exists, fill available slots within 
 	//          (B) and/or create tert + another sec
@@ -437,6 +426,7 @@ int growFile(directory_entry * file, int additionalBlocks) {
 					free(newExts);
 					return -1;
 				}
+				
 				free(writeBuf);
 
 				extWritten += toFill;
@@ -452,7 +442,9 @@ int growFile(directory_entry * file, int additionalBlocks) {
 			
 			return 0;
 		}
+
 	}
+	DEBUG("could not grow file");
 	return -1;
 }
 
