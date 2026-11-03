@@ -1,9 +1,9 @@
-# Custom File System — Team CATS
+# Unix-Based Extent File System — Team CATS
 
-We built a custom file system in C for our CSC 415 team project. It stores files
-and directories in a persistent volume file and provides an interactive shell
-for navigating directories, managing files, and transferring data between the
-custom volume and the host file system.
+We built a custom file system in C for our Operating Systems course team project. 
+It stores files and directories in a persistent volume file and provides an 
+interactive shell for navigating directories, managing files, and transferring 
+data between the custom volume and the host file system.
 
 Our implementation covers volume initialization, free-space management,
 directory operations, and buffered file I/O. It builds on the provided
